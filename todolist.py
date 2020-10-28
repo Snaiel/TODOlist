@@ -152,17 +152,6 @@ while True:             # Event Loop
         SectionsOpen[event] = not SectionsOpen[event]
         window[f'{event} ARROW'].update(SYMBOL_DOWN if SectionsOpen[event] else SYMBOL_RIGHT)
         window[f'{event} CONTENT'].update(visible=SectionsOpen[event])
-
-    if event.startswith('-OPEN SEC1-'):
-        opened1 = not opened1
-        window['-OPEN SEC1-'].update(SYMBOL_DOWN if opened1 else SYMBOL_RIGHT)
-        window['-SEC1-'].update(visible=opened1)
-
-    if event.startswith('-OPEN SEC2-'):
-        opened2 = not opened2
-        window['-OPEN SEC2-'].update(SYMBOL_DOWN if opened2 else SYMBOL_RIGHT)
-        window['-SEC2-'].update(visible=opened2)
-
     
 
 window.close()

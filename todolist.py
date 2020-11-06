@@ -21,6 +21,8 @@ elementKeys = []
 
 SectionsOpen = {}
 
+combo = []
+
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -33,6 +35,8 @@ data = [
     ['Daily', {'Methods homework': False, 'Physics': True}, [{'Section 1': True}, {'Learn python': False, 'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
     ['Project 1', {'Workout': False}]
 ]
+
+layoutForEachToDoList = {}
 
 def collapse(layout, key, isVisible):
     """
@@ -50,11 +54,6 @@ def symbol(opened):
     else:
         return SYMBOL_RIGHT
 
-
-
-
-combo = []
-
 def createCombo():
     for i in data:
         combo.append(i[0])
@@ -65,21 +64,19 @@ def createCheckBox(name, checked):
     return [sg.Checkbox(name, default=checked)]
 
 def createSection(header, opened, content):
-    listLayout.append([sg.T(symbol(opened), enable_events=True, k=f'{header} ARROW'), sg.T(header, enable_events=True, k=f'{header}', right_click_menu=section_right_click)])
-    listLayout.append([collapse(content, f'{header} CONTENT', opened)])
     elementKeys.append(f'{header}')
     SectionsOpen[f'{header}'] = opened
-
-
+    return [[sg.T(symbol(opened), enable_events=True, k=f'{header} ARROW'), sg.T(header, enable_events=True, k=f'{header}', right_click_menu=section_right_click)], [collapse(content, f'{header} CONTENT', opened)]]
 
 def createListLayout(theList):
+    createdListLayout = []
     for i in data:
         if i[0] is theList:
             contents = i
             for content in contents:
                 if type(content) is dict:
                     for key, value in content.items():
-                        listLayout.append(createCheckBox(key, value))
+                        createdListLayout.append(createCheckBox(key, value))
 
                 if type(content) is list:
                     for key, value in content[0].items():
@@ -94,54 +91,94 @@ def createListLayout(theList):
                                 sectionContent.append(createCheckBox(key, value))
 
                     #print(sectionContent)
-                    createSection(header, opened, sectionContent)
+                    for i in createSection(header, opened, sectionContent):
+                        createdListLayout.append(i)
                     #print(listLayout)
                     #print(dw)
+    #print(createdListLayout)
+    return createdListLayout
+
+def createLayout(listLayout):
+    x = []
+    if listLayout is None:
+        x = createListLayout('Daily')
+    else:
+        x = listLayout
+    return [
+            [sg.Menu(menu)],
+            [sg.Combo(combo,default_value=combo[0] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
+            [sg.Column(layout=x, size=(300,400), key='COL', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10)))],
+            [sg.Button('Add Task', image_size=(130,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(130,40), pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
+            ]
                     
 
+def addTask(task):
+    if task == '':
+        print('bruh')
+        return 'Nevermind'
+        
+    for i in data:
+        currentList = programValues['List']
+        if i[0] == currentList:
+            if type(i[-1]) is dict:
+                checklistdict = i[-1]
+                checklistdict[task] = False
+                i.append(checklistdict)
+                #print('to do')
+            else:
+                #print('theres a section')
+                checklistdict = {}
+                checklistdict[task] = False
+                i.append(checklistdict)
 
 
-section1 =  [
-                [sg.Checkbox('Learn python')],
-                [sg.Checkbox('Buy Furniture')]
-            ]
-
-section2 = [[sg.Checkbox('Workout')]
-            ]
-
-# The layout that has all the sections and tasks
-listLayout = []
-
-# REFERENCE LAYOUT
-dw = [
-            [sg.Checkbox('Methods homework')],
-            #### Section 1 part ####
-            [sg.T(symbol(opened1), enable_events=True, k='-OPEN SEC1-'), sg.T('Section 1', enable_events=True, k='-OPEN SEC1-TEXT', right_click_menu=section_right_click)],
-            [collapse(section1, '-SEC1-', opened1)],
-            #### Section 2 part ####
-            [sg.T(symbol(opened2), enable_events=True, k='-OPEN SEC2-'), sg.T('Section 2', enable_events=True, k='-OPEN SEC2-TEXT', right_click_menu=section_right_click)],
-            [collapse(section2, '-SEC2-', opened2)]
-]
-
-createListLayout(programValues['List'])
+#createListLayout(programValues['List'])
 createCombo()
 
-layout =   [
-            [sg.Menu(menu)],
-            [sg.Combo(combo,default_value=combo[0] , size=(100, 1), key='-COMBO-', readonly=True)],
-            [sg.Column(listLayout,size=(300,400), key='-LB-', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10)))],
-            [sg.Button('Add Task', image_size=(130,40), pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(130,40), pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
-            ]
-
-window = sg.Window('To Do List', layout, size=(300,500))
+window = sg.Window('To Do List', layout=createLayout(None), size=(300,500))
 print(elementKeys)
+
+bruh = 0
 
 while True:             # Event Loop
     event, values = window.read()
     print(event, values)
+
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
 
+    if values['-COMBO-'] == '                         Add List':  # Add a to do list
+        currentLoc = window.CurrentLocation()
+        loc = (currentLoc[0] - 25, currentLoc[1] + 100)
+        text = sg.popup_get_text('List Name', location=loc)
+
+    if event == '-COMBO-':  # Change which list your on
+        programValues['List'] = values['-COMBO-']
+        #print(programValues)
+
+
+    if event == 'ADDTASK' or event == 'Task':       # Add A Task
+
+        currentLoc = window.CurrentLocation()
+        loc = (currentLoc[0] - 25, currentLoc[1] + 100)
+        taskToAdd = sg.popup_get_text('Task Name', location=loc)
+
+        newListLayout = createListLayout(programValues['List'])
+        
+        if addTask(taskToAdd) != 'Nevermind':
+
+            #print(data)
+
+            newListLayout.append(createCheckBox(taskToAdd, False))
+
+            #print(newListLayout)
+            window1 = sg.Window('Window Title',layout=createLayout(newListLayout), location=window.CurrentLocation(), size=(300,500))
+            window.Close()
+            window = window1
+
+
+
+    # Closing and opening sections
     if 'ARROW' in event:
         eventName = event.replace(' ARROW', '')
         SectionsOpen[eventName] = not SectionsOpen[eventName]

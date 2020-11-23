@@ -131,6 +131,17 @@ def addTask(task):
                 checklistdict[task] = False
                 i.append(checklistdict)
 
+def updateData(dataType, name):
+    if dataType == 'section':
+        for l in data:
+            if l[0] == programValues['List']:
+                for thingy in l:
+                    if type(thingy) is list:
+                        if name in thingy[0]:
+                            thingy[0][name] = SectionsOpen[name]
+
+
+
 
 #createListLayout(programValues['List'])
 createCombo()
@@ -184,6 +195,10 @@ while True:             # Event Loop
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f'{event}'].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
         window[f'{eventName} CONTENT'].update(visible=SectionsOpen[eventName])
+        print(SectionsOpen)
+        updateData('section', eventName)
+        print(data)
+
 
     if event in elementKeys:
         SectionsOpen[event] = not SectionsOpen[event]

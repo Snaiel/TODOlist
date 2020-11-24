@@ -23,7 +23,6 @@ SectionsOpen = {}
 
 combo = []
 
-
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
 # The first element of the to do lists is the name of the to do list
@@ -96,18 +95,25 @@ def createListLayout(theList):
                     #print(listLayout)
                     #print(dw)
     #print(createdListLayout)
+    #print(createdListLayout)
     return createdListLayout
 
-def createLayout(listLayout):
-    x = []
-    if listLayout is None:
-        x = createListLayout('Daily')
-    else:
-        x = listLayout
+def createRowOfColumns(listFocused):
+    listsColumns = []
+    for i in data:
+        listLayout = createListLayout(i[0])
+        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
+    return(listsColumns)
+
+print(createRowOfColumns('Daily'))
+
+def createLayout(listFocused):
+    if listFocused is None:
+        listFocused = programValues['List']
     return [
             [sg.Menu(menu)],
             [sg.Combo(combo,default_value=combo[0] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
-            [sg.Column(layout=x, size=(300,400), key='COL', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10)))],
+            createRowOfColumns(listFocused),
             [sg.Button('Add Task', image_size=(130,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(130,40), pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
             ]
                     
@@ -165,8 +171,13 @@ while True:             # Event Loop
 
     if event == '-COMBO-':  # Change which list your on
         programValues['List'] = values['-COMBO-']
-        #print(programValues)
-
+        for i in data:
+            if i[0] == programValues['List']:
+                print('i is the current list')
+                window[f'COL{data.index(i)}'].update(visible=True)
+            else:
+                print('i is not the current list')
+                window[f'COL{data.index(i)}'].update(visible=False)
 
     if event == 'ADDTASK' or event == 'Task':       # Add A Task
 

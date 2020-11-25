@@ -32,7 +32,7 @@ combo = []
 
 data = [
     ['Daily', {'Methods homework': False, 'Physics': True}, [{'Section 1': True}, {'Learn python': False, 'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
-    ['Project 1', {'Workout': False}]
+    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Testing': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}]]]
 ]
 
 layoutForEachToDoList = {}
@@ -60,7 +60,7 @@ def createCombo():
     #print(combo)
 
 def createCheckBox(name, checked):
-    return [sg.Checkbox(name, default=checked)]
+    return [sg.Checkbox(name, default=checked, enable_events=True, key=f'CHECKBOX {name}')]
 
 def createSection(header, opened, content):
     elementKeys.append(f'{header}')
@@ -89,13 +89,25 @@ def createListLayout(theList):
                             for key, value in contentInSection.items():
                                 sectionContent.append(createCheckBox(key, value))
 
+                        if type(contentInSection) is list:
+                            for key, value in contentInSection[0].items():
+                                    subheader = key
+                                    subopened = value
+
+                            for contentInSubSection in contentInSection:
+                                subsectionContent = []
+
+                                if type(contentInSubSection) is dict and content.index(contentInSection) != 0:
+                                    for key, value in contentInSubSection.items():
+                                        subsectionContent.append(createCheckBox(key, value))
+
+                            for i in createSection(subheader, subopened, subsectionContent):
+                                sectionContent.append(i)
+
                     #print(sectionContent)
                     for i in createSection(header, opened, sectionContent):
                         createdListLayout.append(i)
-                    #print(listLayout)
-                    #print(dw)
-    #print(createdListLayout)
-    #print(createdListLayout)
+                    
     return createdListLayout
 
 def createRowOfColumns(listFocused):
@@ -105,18 +117,15 @@ def createRowOfColumns(listFocused):
         listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
     return(listsColumns)
 
-print(createRowOfColumns('Daily'))
-
 def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
     return [
             [sg.Menu(menu)],
-            [sg.Combo(combo,default_value=combo[0] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
+            [sg.Combo(combo,default_value=combo[combo.index(programValues['List'])] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
             [sg.Button('Add Task', image_size=(130,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(130,40), pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
             ]
-                    
 
 def addTask(task):
     if task == '':
@@ -129,7 +138,7 @@ def addTask(task):
             if type(i[-1]) is dict:
                 checklistdict = i[-1]
                 checklistdict[task] = False
-                i.append(checklistdict)
+                #i.append(checklistdict)
                 #print('to do')
             else:
                 #print('theres a section')
@@ -138,13 +147,24 @@ def addTask(task):
                 i.append(checklistdict)
 
 def updateData(dataType, name):
-    if dataType == 'section':
-        for l in data:
+    for l in data:
             if l[0] == programValues['List']:
                 for thingy in l:
-                    if type(thingy) is list:
-                        if name in thingy[0]:
-                            thingy[0][name] = SectionsOpen[name]
+                    if dataType == 'section':
+                        if type(thingy) is list:
+                            if name in thingy[0]:
+                                thingy[0][name] = SectionsOpen[name]
+
+                            for ting in thingy:
+                                if type(ting) is list:
+                                    if name in ting[0]:
+                                        ting[0][name] = SectionsOpen[name]
+
+                    if dataType == 'checkbox':
+                        if type(thingy) is dict:
+                            if name in thingy:
+                                thingy[name] = not thingy[name]
+
 
 
 
@@ -152,7 +172,7 @@ def updateData(dataType, name):
 #createListLayout(programValues['List'])
 createCombo()
 
-window = sg.Window('To Do List', layout=createLayout(None), size=(300,500))
+window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500))
 print(elementKeys)
 
 bruh = 0
@@ -173,10 +193,10 @@ while True:             # Event Loop
         programValues['List'] = values['-COMBO-']
         for i in data:
             if i[0] == programValues['List']:
-                print('i is the current list')
+                #print('i is the current list')
                 window[f'COL{data.index(i)}'].update(visible=True)
             else:
-                print('i is not the current list')
+                #print('i is not the current list')
                 window[f'COL{data.index(i)}'].update(visible=False)
 
     if event == 'ADDTASK' or event == 'Task':       # Add A Task
@@ -194,7 +214,7 @@ while True:             # Event Loop
             newListLayout.append(createCheckBox(taskToAdd, False))
 
             #print(newListLayout)
-            window1 = sg.Window('Window Title',layout=createLayout(newListLayout), location=window.CurrentLocation(), size=(300,500))
+            window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500))
             window.Close()
             window = window1
 
@@ -206,15 +226,20 @@ while True:             # Event Loop
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f'{event}'].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
         window[f'{eventName} CONTENT'].update(visible=SectionsOpen[eventName])
-        print(SectionsOpen)
+        #print(SectionsOpen)
         updateData('section', eventName)
-        print(data)
+        #print(data)
 
 
     if event in elementKeys:
         SectionsOpen[event] = not SectionsOpen[event]
         window[f'{event} ARROW'].update(SYMBOL_DOWN if SectionsOpen[event] else SYMBOL_RIGHT)
         window[f'{event} CONTENT'].update(visible=SectionsOpen[event])
+        updateData('section', event)
+
+    if 'CHECK' in event:
+        eventName = event.replace('CHECKBOX ', '')
+        updateData('checkbox', eventName)
     
 
 window.close()

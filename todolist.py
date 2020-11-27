@@ -45,7 +45,7 @@ def collapse(layout, key, isVisible):
     :return: A pinned column that can be placed directly into your layout
     :rtype: sg.pin
     """
-    return sg.pin(sg.Column(layout, key=key, visible=isVisible))
+    return sg.pin(sg.Column(layout, key=key, visible=isVisible, pad=(15,0)))
 
 def symbol(opened):
     if opened is True:
@@ -59,8 +59,10 @@ def createCombo():
     combo.append('                         Add List')
     #print(combo)
 
-def createCheckBox(name, checked):
-    return [sg.Checkbox(name, default=checked, enable_events=True, key=f'CHECKBOX {name}')]
+def createCheckBox(name, checked, listName):
+    for i in data:
+        if i[0] == listName:
+            return [sg.Checkbox(name, default=checked, enable_events=True, key=f'{data.index(i)} CHECKBOX {name}')]
 
 def createSection(header, opened, content):
     elementKeys.append(f'{header}')
@@ -75,7 +77,7 @@ def createListLayout(theList):
             for content in contents:
                 if type(content) is dict:
                     for key, value in content.items():
-                        createdListLayout.append(createCheckBox(key, value))
+                        createdListLayout.append(createCheckBox(key, value, theList))
 
                 if type(content) is list:
                     for key, value in content[0].items():
@@ -87,7 +89,7 @@ def createListLayout(theList):
 
                         if type(contentInSection) is dict and content.index(contentInSection) != 0:
                             for key, value in contentInSection.items():
-                                sectionContent.append(createCheckBox(key, value))
+                                sectionContent.append(createCheckBox(key, value, theList))
 
                         if type(contentInSection) is list:
                             for key, value in contentInSection[0].items():
@@ -99,7 +101,7 @@ def createListLayout(theList):
 
                                 if type(contentInSubSection) is dict and content.index(contentInSection) != 0:
                                     for key, value in contentInSubSection.items():
-                                        subsectionContent.append(createCheckBox(key, value))
+                                        subsectionContent.append(createCheckBox(key, value, theList))
 
                             for i in createSection(subheader, subopened, subsectionContent):
                                 sectionContent.append(i)
@@ -166,9 +168,6 @@ def updateData(dataType, name):
                                 thingy[name] = not thingy[name]
 
 
-
-
-
 #createListLayout(programValues['List'])
 createCombo()
 
@@ -206,17 +205,21 @@ while True:             # Event Loop
         taskToAdd = sg.popup_get_text('Task Name', location=loc)
 
         newListLayout = createListLayout(programValues['List'])
+
+        if f"{combo.index(programValues['List'])} CHECKBOX {taskToAdd}" in values:
+            sg.popup('Task already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+        else:
+            if addTask(taskToAdd) != 'Nevermind':
+
+                #print(data)
+
+                newListLayout.append(createCheckBox(taskToAdd, False, programValues['List']))
+
+                #print(newListLayout)
+                window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500))
+                window.Close()
+                window = window1
         
-        if addTask(taskToAdd) != 'Nevermind':
-
-            #print(data)
-
-            newListLayout.append(createCheckBox(taskToAdd, False))
-
-            #print(newListLayout)
-            window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500))
-            window.Close()
-            window = window1
 
 
 
@@ -237,7 +240,7 @@ while True:             # Event Loop
         window[f'{event} CONTENT'].update(visible=SectionsOpen[event])
         updateData('section', event)
 
-    if 'CHECK' in event:
+    if 'CHECKBOX' in event:
         eventName = event.replace('CHECKBOX ', '')
         updateData('checkbox', eventName)
     

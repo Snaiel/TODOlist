@@ -15,7 +15,7 @@ menu = [['Add', ['Task', 'Section']],
 section_right_click = ['&Right', [['&Add', ['Task', 'Section', ]], 'Rename', 'Delete']]
 task_right_click = ['&Right', [['&Rename', 'Delete']]]
 
-programValues = {'List': 'Daily'}
+programValues = {'List': 'Today'}
 
 elementKeys = []
 
@@ -31,8 +31,8 @@ combo = []
 # The first dictionary under in a list is the name of the section and whether it is closed or not
 
 data = [
-    ['Daily', {'Methods homework': False, 'Physics': True}, [{'Section 1': True}, {'Learn python': False, 'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
-    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Testing': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}]]]
+    ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False, 'Physics': True}, [{'Section 1': True}, {'Learn python': False, 'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
+    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}]]]
 ]
 
 layoutForEachToDoList = {}
@@ -149,23 +149,30 @@ def addTask(task):
                 i.append(checklistdict)
 
 def updateData(dataType, name):
-    for l in data:
-            if l[0] == programValues['List']:
-                for thingy in l:
+    for todoList in data:
+            if todoList[0] == programValues['List']:
+                for content in todoList:
                     if dataType == 'section':
-                        if type(thingy) is list:
-                            if name in thingy[0]:
-                                thingy[0][name] = SectionsOpen[name]
+                        if type(content) is list:
+                            if name in content[0]:
+                                content[0][name] = SectionsOpen[name]
 
-                            for ting in thingy:
-                                if type(ting) is list:
-                                    if name in ting[0]:
-                                        ting[0][name] = SectionsOpen[name]
+                            for subcontent in content:
+                                if type(subcontent) is list:
+                                    if name in subcontent[0]:
+                                        subcontent[0][name] = SectionsOpen[name]
 
                     if dataType == 'checkbox':
-                        if type(thingy) is dict:
-                            if name in thingy:
-                                thingy[name] = not thingy[name]
+                        if type(content) is dict:
+                            if name in content:
+                                content[name] = not content[name]
+                            
+                        if type(content) is list:
+                            for subcontent in content:
+                                if type(subcontent) is dict:
+                                    if name in subcontent:
+                                        subcontent[name] = not subcontent[name]
+
 
 
 #createListLayout(programValues['List'])
@@ -241,7 +248,8 @@ while True:             # Event Loop
         updateData('section', event)
 
     if 'CHECKBOX' in event:
-        eventName = event.replace('CHECKBOX ', '')
+        listIndex = combo.index(values['-COMBO-'])
+        eventName = event.replace(f'{listIndex} CHECKBOX ', '')
         updateData('checkbox', eventName)
     
 

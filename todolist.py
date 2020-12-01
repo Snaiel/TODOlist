@@ -221,7 +221,7 @@ while True:             # Event Loop
 
         newListLayout = createListLayout(programValues['List'])
 
-        if f"{combo.index(programValues['List'])} CHECKBOX {taskToAdd}" in values:
+        if f"{programValues['ListIndex']} CHECKBOX {taskToAdd}" in values:
             sg.popup('Task already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
             if addTask(taskToAdd) != 'Nevermind':
@@ -242,7 +242,9 @@ while True:             # Event Loop
 
         newListLayout = createListLayout(programValues['List'])
 
-        if addSection(sectionToAdd) != 'Nevermind':
+        if f"{programValues['ListIndex']} {sectionToAdd}" in elementKeys:
+            sg.popup('Section already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+        elif addSection(sectionToAdd) != 'Nevermind':
 
                 #print(data)
 

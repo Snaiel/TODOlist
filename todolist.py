@@ -18,7 +18,8 @@ SectionsOpen = {}
 
 combo = []
 
-latestElementMouseHovered = ''
+latestElementMouseHovered = []
+canChangeLastElementHovered = False
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -65,10 +66,10 @@ def createCheckBox(name, checked, listName):
             return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=task_right_click, pad=(0,0), key=checkBoxTextKey)]
 
 def createSection(header, opened, content, listName):
-    #elementKeys.append(f"{programValues['ListIndex']} {header}")
     SectionsOpen[f'{header}'] = opened
     for i in data:
         if i[0] == listName:
+            elementKeys.append(f"{data.index(i)} {header}")
             return [[sg.T(symbol(opened), enable_events=True, k=f'{data.index(i)} {header} ARROW', pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=f'{data.index(i)} {header}', right_click_menu=section_right_click)], [collapse(content, f'{data.index(i)} {header} CONTENT', opened)]]
 
 def createListLayout(theList):
@@ -102,7 +103,7 @@ def createListLayout(theList):
                             for contentInSubSection in contentInSection:
                                 subsectionContent = []
 
-                                if type(contentInSubSection) is dict and content.index(contentInSection) != 0:
+                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) != 0:
                                     for key, value in contentInSubSection.items():
                                         subsectionContent.append(createCheckBox(key, value, theList))
 
@@ -190,8 +191,7 @@ def updateData(dataType, name):
 
 def hoverOver():
     for i in elementKeys:
-        #window[i].bind('<Enter>', ' +MOUSE OVER+')
-        pass
+        window[i].bind('<Enter>', ' +MOUSE OVER+')
 
 
 #createListLayout(programValues['List'])
@@ -277,11 +277,10 @@ while True:             # Event Loop
         eventName = eventName[2:]
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f"{event}"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
-        window[f"{programValues['ListIndex']} {eventName} CONTENT"].update(visible=SectionsOpen[eventName])
+        window[f"{programValues['ListIndex']} {eventName} CONTENT"].update(visible=SectionsOpen[eventName]) 
         #print(SectionsOpen)
         updateData('section', eventName)
         #print(data)
-
 
     if event in elementKeys:
         print(SectionsOpen)
@@ -291,13 +290,30 @@ while True:             # Event Loop
         window[f"{event} CONTENT"].update(visible=SectionsOpen[eventName])
         updateData('section', event)
 
+
+    # Updating the checkbox
     if 'CHECKBOX' in event:
         eventName = event.replace(f"{programValues['ListIndex']} CHECKBOX ", '')
         updateData('checkbox', eventName)
 
+
+            # Right Click Stuf
+    
+    # Right click functionality
+    if event == 'Rename':
+        print(f'Rename {latestElementMouseHovered[0]}')
+
+    # Checking what element the mouse is hovering over
     if '+MOUSE OVER+' in event:
-        latestElementMouseHovered = event[:-13]
-        print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
+        if len(latestElementMouseHovered) < 2:
+            latestElementMouseHovered.append(event[:-13])
+        elif len(latestElementMouseHovered) == 2:
+            latestElementMouseHovered[0] = latestElementMouseHovered[1]
+            latestElementMouseHovered[1] = event[:-13]
+            #print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
+   
+
+
     
 
 window.close()

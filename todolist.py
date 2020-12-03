@@ -297,12 +297,7 @@ while True:             # Event Loop
         updateData('checkbox', eventName)
 
 
-            # Right Click Stuf
-    
-    # Right click functionality
-    if event == 'Rename':
-        print(f'Rename {latestElementMouseHovered[0]}')
-
+                                                    # Right Click Stuff
     # Checking what element the mouse is hovering over
     if '+MOUSE OVER+' in event:
         if len(latestElementMouseHovered) < 2:
@@ -312,8 +307,10 @@ while True:             # Event Loop
             latestElementMouseHovered[1] = event[:-13]
             #print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
    
+    # Right click functionality
+    if event == 'Rename':
+        print(f'Rename {latestElementMouseHovered[0]}')
 
 
-    
 
 window.close()

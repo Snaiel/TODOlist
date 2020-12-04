@@ -19,7 +19,6 @@ SectionsOpen = {}
 combo = []
 
 latestElementMouseHovered = []
-canChangeLastElementHovered = False
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -29,8 +28,8 @@ canChangeLastElementHovered = False
 # The first dictionary under in a list is the name of the section and whether it is closed or not
 
 data = [
-    ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False, 'Physics': True}, [{'Section 1': True}, {'Learn python': False, 'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
-    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}], {'Feed dog': True, 'Train dragon': False}]]
+    ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False}, {'Physics': True}, [{'Section 1': True}, {'Learn python': False}, {'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
+    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}], {'Feed dog': True}, {'Train dragon': False}]]
 ]
 
 layoutForEachToDoList = {}
@@ -55,7 +54,6 @@ def createCombo():
     for i in data:
         combo.append(i[0])
     combo.append('                         Add List')
-    #print(combo)
 
 def createCheckBox(name, checked, listName):
     for i in data:
@@ -110,17 +108,15 @@ def createListLayout(theList):
                             for i in createSection(subheader, subopened, subsectionContent, theList):
                                 sectionContent.append(i)
 
-                        #print(sectionContent)
                     for i in createSection(header, opened, sectionContent, theList):
-                        createdListLayout.append(i)
-    #print(createdListLayout)                
+                        createdListLayout.append(i)    
     return createdListLayout
 
 def createRowOfColumns(listFocused):
     listsColumns = []
     for i in data:
         listLayout = createListLayout(i[0])
-        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
+        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10)), background_color='green'))
     return(listsColumns)
 
 def createLayout(listFocused):
@@ -141,16 +137,9 @@ def addTask(task):
     for i in data:
         currentList = programValues['List']
         if i[0] == currentList:
-            if type(i[-1]) is dict:
-                checklistdict = i[-1]
-                checklistdict[task] = False
-                #i.append(checklistdict)
-                #print('to do')
-            else:
-                #print('theres a section')
-                checklistdict = {}
-                checklistdict[task] = False
-                i.append(checklistdict)
+            checklistdict = {}
+            checklistdict[task] = False
+            i.append(checklistdict)
 
 def addSection(sectionName):
     sectionToAdd = [{sectionName: False}]
@@ -172,33 +161,76 @@ def updateData(dataType, name):
                         if type(content) is list:
                             if name in content[0]:
                                 content[0][name] = SectionsOpen[name]
+                                break
 
                             for subcontent in content:
                                 if type(subcontent) is list:
                                     if name in subcontent[0]:
                                         subcontent[0][name] = SectionsOpen[name]
+                                        break
 
                     if dataType == 'checkbox':
                         if type(content) is dict:
                             if name in content:
                                 content[name] = not content[name]
+                                break
                             
                         if type(content) is list:
                             for subcontent in content:
                                 if type(subcontent) is dict:
                                     if name in subcontent:
                                         subcontent[name] = not subcontent[name]
+                                        break
 
 def hoverOver():
     for i in elementKeys:
         window[i].bind('<Enter>', ' +MOUSE OVER+')
 
+def renameElement(oldKey, newName):
+    oldName = oldKey[16:]
+    for i in data:
+        if i[0] == programValues['List']:
+            for content in i:
+                if type(content) is dict and oldName in content:
+                    content[newName] = content.pop(oldName)
+                    break
+                elif type(content) is list:
+                    for contentInSection in content:
+                        if type(contentInSection) is dict and oldName in contentInSection:
+                            contentInSection[newName] = contentInSection.pop(oldName)
+                            break
+                        elif type(contentInSection) is list:
+                            for contentInSubSection in contentInSection:
+                                if type(contentInSubSection) is dict and oldName in contentInSubSection:
+                                    contentInSubSection[newName] = contentInSubSection.pop(oldName)
+                                    break
+    global elementKeys
+    elementKeys = []
+    createNewWindow()
+    for i in elementKeys:
+        if oldKey in i:
+            elementKeys.remove(i)
+            break
+    
+                            
 
-#createListLayout(programValues['List'])
+
+def getTxt(msg):
+    currentLoc = window.CurrentLocation()
+    loc = (currentLoc[0] - 25, currentLoc[1] + 100)
+    return sg.popup_get_text(msg, location=loc)
+
 createCombo()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
 #print(elementKeys)
+
+def createNewWindow():
+    global window
+    window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
+    window.Close()
+    window = window1
+    hoverOver()
 
 hoverOver()
 
@@ -219,56 +251,28 @@ while True:             # Event Loop
         programValues['ListIndex'] = combo.index(values['-COMBO-'])
         for i in data:
             if i[0] == programValues['List']:
-                #print('i is the current list')
                 window[f'COL{data.index(i)}'].update(visible=True)
             else:
-                #print('i is not the current list')
                 window[f'COL{data.index(i)}'].update(visible=False)
 
+
+                    # ADDING A TASK OR SECTION
     if event == 'ADDTASK' or event == 'Task':       # Add A Task
-
-        currentLoc = window.CurrentLocation()
-        loc = (currentLoc[0] - 25, currentLoc[1] + 100)
-        taskToAdd = sg.popup_get_text('Task Name', location=loc)
-
-        newListLayout = createListLayout(programValues['List'])
+        taskToAdd = getTxt('Task Name')
 
         if f"{programValues['ListIndex']} CHECKBOX {taskToAdd}" in values:
             sg.popup('Task already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-        else:
-            if addTask(taskToAdd) != 'Nevermind':
+        elif addTask(taskToAdd) != 'Nevermind':
+            createNewWindow()
 
-                #print(data)
-
-                newListLayout.append(createCheckBox(taskToAdd, False, programValues['List']))
-
-                #print(newListLayout)
-                window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
-                window.Close()
-                window = window1
-
-                hoverOver()
-
-    if event == 'ADDSECTION' or event == 'Section':     # Adda Section
-        currentLoc = window.CurrentLocation()
-        loc = (currentLoc[0] - 25, currentLoc[1] + 100)
-        sectionToAdd = sg.popup_get_text('Section Name', location=loc)
-
-        newListLayout = createListLayout(programValues['List'])
+    if event == 'ADDSECTION' or event == 'Section':     # Add a Section
+        sectionToAdd = taskToAdd = getTxt('Section Name')
 
         if f"{programValues['ListIndex']} {sectionToAdd}" in elementKeys:
             sg.popup('Section already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         elif addSection(sectionToAdd) != 'Nevermind':
-
-                #print(data)
-
-                newListLayout.append(createSection(sectionToAdd, False, [], programValues['List']))
-
-                #print(newListLayout)
-                window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500))
-                window.Close()
-                window = window1
-
+            createNewWindow()
+                
 
 
     # Closing and opening sections
@@ -283,7 +287,6 @@ while True:             # Event Loop
         #print(data)
 
     if event in elementKeys:
-        print(SectionsOpen)
         eventName = event[2:]
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f"{event} ARROW"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
@@ -305,12 +308,14 @@ while True:             # Event Loop
         elif len(latestElementMouseHovered) == 2:
             latestElementMouseHovered[0] = latestElementMouseHovered[1]
             latestElementMouseHovered[1] = event[:-13]
-            #print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
+            print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
    
     # Right click functionality
     if event == 'Rename':
-        print(f'Rename {latestElementMouseHovered[0]}')
-
+        newName = getTxt('Rename to:')
+        if 'CHECKBOX' in latestElementMouseHovered[0]:
+            oldKey = latestElementMouseHovered[0]
+        renameElement(oldKey, newName)
 
 
 window.close()

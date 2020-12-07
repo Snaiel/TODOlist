@@ -10,7 +10,7 @@ menu = [['Add', ['Task', 'Section']],
 section_right_click = ['&Right', [['&Add', ['Task', 'Section', ]], 'Rename', 'Delete']]
 task_right_click = ['&Right', [['&Rename', 'Delete']]]
 
-programValues = {'List': 'Project 1', 'ListIndex': 1}
+programValues = {'List': 'Project 1', 'ListIndex': '01'}
 
 elementKeys = []
 
@@ -58,8 +58,9 @@ def createCombo():
 def createCheckBox(name, checked, listName):
     for i in data:
         if i[0] == listName:
-            checkBoxKey = f"{data.index(i)} CHECKBOX {name}"
-            checkBoxTextKey = f"{data.index(i)} CHECKBOX TEXT {name}"
+            ListIndex = str(data.index(i)).zfill(2)
+            checkBoxKey = f"{ListIndex} CHECKBOX {name}"
+            checkBoxTextKey = f"{ListIndex} CHECKBOX TEXT {name}"
             elementKeys.append(checkBoxTextKey)
             return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=task_right_click, pad=(0,0), key=checkBoxTextKey)]
 
@@ -67,8 +68,9 @@ def createSection(header, opened, content, listName):
     SectionsOpen[f'{header}'] = opened
     for i in data:
         if i[0] == listName:
-            elementKeys.append(f"{data.index(i)} {header}")
-            return [[sg.T(symbol(opened), enable_events=True, k=f'{data.index(i)} {header} ARROW', pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=f'{data.index(i)} {header}', right_click_menu=section_right_click)], [collapse(content, f'{data.index(i)} {header} CONTENT', opened)]]
+            ListIndex = str(data.index(i)).zfill(2)
+            elementKeys.append(f"{ListIndex} {header}")
+            return [[sg.T(symbol(opened), enable_events=True, k=f'{ListIndex} {header} ARROW', pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=f'{ListIndex} {header}', right_click_menu=section_right_click)], [collapse(content, f'{ListIndex} {header} CONTENT', opened)]]
 
 def createListLayout(theList):
     createdListLayout = []
@@ -116,7 +118,7 @@ def createRowOfColumns(listFocused):
     listsColumns = []
     for i in data:
         listLayout = createListLayout(i[0])
-        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10)), background_color='green'))
+        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
     return(listsColumns)
 
 def createLayout(listFocused):
@@ -126,7 +128,7 @@ def createLayout(listFocused):
             [sg.Menu(menu)],
             [sg.Combo(combo,default_value=combo[combo.index(programValues['List'])] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
-            [sg.Button('Add Task', image_size=(130,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(130,40), key='ADDSECTION', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
+            [sg.Button('Add Task', image_size=(125,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(125,40), key='ADDSECTION', pad=((16,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
             ]
 
 def addTask(task):
@@ -140,6 +142,7 @@ def addTask(task):
             checklistdict = {}
             checklistdict[task] = False
             i.append(checklistdict)
+    hoverOver()
 
 def addSection(sectionName):
     sectionToAdd = [{sectionName: False}]
@@ -184,10 +187,14 @@ def updateData(dataType, name):
 
 def hoverOver():
     for i in elementKeys:
-        window[i].bind('<Enter>', ' +MOUSE OVER+')
+        window[i].bind('<Button-3>', ' +MOUSE OVER+')
 
 def renameElement(oldKey, newName):
-    oldName = oldKey[16:]
+    if 'CHECKBOX' in oldKey:
+        oldName = oldKey[16:]
+    else:
+        oldName = oldKey[2:]
+
     for i in data:
         if i[0] == programValues['List']:
             for content in i:
@@ -211,9 +218,37 @@ def renameElement(oldKey, newName):
         if oldKey in i:
             elementKeys.remove(i)
             break
-    
-                            
 
+def delElement(elementKey):
+    if 'CHECKBOX' in elementKey:
+        elementName = elementKey[16:]
+    else:
+        elementName = elementKey[2:]
+
+    for i in data:
+        if i[0] == programValues['List']:
+            for content in i:
+                if type(content) is dict and elementName in content:
+                    i.remove(content)
+                    break
+                elif type(content) is list:
+                    for contentInSection in content:
+                        if type(contentInSection) is dict and content.index(contentInSection) == 0 and elementName in contentInSection:
+                            i.remove(content)
+                            break
+                        elif type(contentInSection) is list:
+                            for contentInSubSection in contentInSection:
+                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) == 0 and elementName is content in contentInSubSection:
+                                    content.remove(contentInSection)
+                                    break
+    
+    global elementKeys
+    elementKeys = []
+    createNewWindow()
+    for i in elementKeys:
+        if elementKey is i:
+            elementKeys.remove(i)
+            break
 
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
@@ -223,7 +258,7 @@ def getTxt(msg):
 createCombo()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
-#print(elementKeys)
+print(elementKeys)
 
 def createNewWindow():
     global window
@@ -236,7 +271,7 @@ hoverOver()
 
 while True:             # Event Loop
     event, values = window.read()
-    #print(event, values)
+    print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
@@ -248,7 +283,7 @@ while True:             # Event Loop
 
     if event == '-COMBO-':  # Change which list your on
         programValues['List'] = values['-COMBO-']
-        programValues['ListIndex'] = combo.index(values['-COMBO-'])
+        programValues['ListIndex'] = str(combo.index(values['-COMBO-'])).zfill(2)
         for i in data:
             if i[0] == programValues['List']:
                 window[f'COL{data.index(i)}'].update(visible=True)
@@ -261,6 +296,7 @@ while True:             # Event Loop
         taskToAdd = getTxt('Task Name')
 
         if f"{programValues['ListIndex']} CHECKBOX {taskToAdd}" in values:
+            currentLoc = window.CurrentLocation()
             sg.popup('Task already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         elif addTask(taskToAdd) != 'Nevermind':
             createNewWindow()
@@ -269,6 +305,7 @@ while True:             # Event Loop
         sectionToAdd = taskToAdd = getTxt('Section Name')
 
         if f"{programValues['ListIndex']} {sectionToAdd}" in elementKeys:
+            currentLoc = window.CurrentLocation()
             sg.popup('Section already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         elif addSection(sectionToAdd) != 'Nevermind':
             createNewWindow()
@@ -278,7 +315,7 @@ while True:             # Event Loop
     # Closing and opening sections
     if 'ARROW' in event:
         eventName = event.replace(' ARROW', '')
-        eventName = eventName[2:]
+        eventName = eventName[3:]
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f"{event}"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
         window[f"{programValues['ListIndex']} {eventName} CONTENT"].update(visible=SectionsOpen[eventName]) 
@@ -287,7 +324,7 @@ while True:             # Event Loop
         #print(data)
 
     if event in elementKeys:
-        eventName = event[2:]
+        eventName = event[3:]
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f"{event} ARROW"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
         window[f"{event} CONTENT"].update(visible=SectionsOpen[eventName])
@@ -303,19 +340,27 @@ while True:             # Event Loop
                                                     # Right Click Stuff
     # Checking what element the mouse is hovering over
     if '+MOUSE OVER+' in event:
-        if len(latestElementMouseHovered) < 2:
-            latestElementMouseHovered.append(event[:-13])
-        elif len(latestElementMouseHovered) == 2:
-            latestElementMouseHovered[0] = latestElementMouseHovered[1]
-            latestElementMouseHovered[1] = event[:-13]
+        x = [i for i in latestElementMouseHovered]
+        if len(x) < 2:
+            x.append(event[:-13])
+        elif len(x) == 2:
+            x[0] = x[1]
+            x[1] = event[:-13]
+
+        if x != latestElementMouseHovered:
+            latestElementMouseHovered = x
             print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
-   
+
+    
     # Right click functionality
     if event == 'Rename':
         newName = getTxt('Rename to:')
-        if 'CHECKBOX' in latestElementMouseHovered[0]:
+        if newName is not None:
             oldKey = latestElementMouseHovered[0]
-        renameElement(oldKey, newName)
+            renameElement(oldKey, newName)
+
+    if event == 'Delete':
+        delElement(latestElementMouseHovered[0])
 
 
 window.close()

@@ -10,15 +10,13 @@ menu = [['Add', ['Task', 'Section']],
 section_right_click = ['&Right', [['&Add', ['Task', 'Section', ]], 'Rename', 'Delete']]
 task_right_click = ['&Right', [['&Rename', 'Delete']]]
 
-programValues = {'List': 'Project 1', 'ListIndex': '01'}
+programValues = {'List': 'Project 1', 'ListIndex': '01', 'latestElementRightClicked': ''}
 
 elementKeys = []
 
 SectionsOpen = {}
 
 combo = []
-
-latestElementMouseHovered = []
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -142,7 +140,6 @@ def addTask(task):
             checklistdict = {}
             checklistdict[task] = False
             i.append(checklistdict)
-    hoverOver()
 
 def addSection(sectionName):
     sectionToAdd = [{sectionName: False}]
@@ -185,9 +182,9 @@ def updateData(dataType, name):
                                         subcontent[name] = not subcontent[name]
                                         break
 
-def hoverOver():
+def bindRightClick():
     for i in elementKeys:
-        window[i].bind('<Button-3>', ' +MOUSE OVER+')
+        window[i].bind('<Button-3>', ' +RIGHT CLICK+')
 
 def renameElement(oldKey, newName):
     if 'CHECKBOX' in oldKey:
@@ -221,9 +218,9 @@ def renameElement(oldKey, newName):
 
 def delElement(elementKey):
     if 'CHECKBOX' in elementKey:
-        elementName = elementKey[16:]
+        elementName = elementKey[17:]
     else:
-        elementName = elementKey[2:]
+        elementName = elementKey[3:]
 
     for i in data:
         if i[0] == programValues['List']:
@@ -238,9 +235,16 @@ def delElement(elementKey):
                             break
                         elif type(contentInSection) is list:
                             for contentInSubSection in contentInSection:
-                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) == 0 and elementName is content in contentInSubSection:
+                                if contentInSection.index(contentInSubSection) == 0 and elementName in contentInSubSection:
                                     content.remove(contentInSection)
                                     break
+                                elif elementName in contentInSubSection:
+                                    contentInSection.remove(contentInSubSection)
+                                    break
+                        elif type(contentInSection) is dict and elementName in contentInSection:
+                            content.remove(contentInSection)
+                            break
+
     
     global elementKeys
     elementKeys = []
@@ -258,20 +262,20 @@ def getTxt(msg):
 createCombo()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
-print(elementKeys)
+#print(elementKeys)
 
 def createNewWindow():
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
     window.Close()
     window = window1
-    hoverOver()
+    bindRightClick()
 
-hoverOver()
+bindRightClick()
 
 while True:             # Event Loop
     event, values = window.read()
-    print(event)
+    #print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
@@ -339,28 +343,27 @@ while True:             # Event Loop
 
                                                     # Right Click Stuff
     # Checking what element the mouse is hovering over
-    if '+MOUSE OVER+' in event:
-        x = [i for i in latestElementMouseHovered]
-        if len(x) < 2:
-            x.append(event[:-13])
-        elif len(x) == 2:
-            x[0] = x[1]
-            x[1] = event[:-13]
+    if '+RIGHT CLICK+' in event:
+        elementKey = event[:-14]
 
-        if x != latestElementMouseHovered:
-            latestElementMouseHovered = x
-            print(f'The latest element the mouse hovered over was: {latestElementMouseHovered}')
+        if elementKey is not programValues['latestElementRightClicked']:
+            programValues['latestElementRightClicked'] = elementKey
+            #print(f"latest element right clicked was: {elementKey}")
+
+        event = window[elementKey].user_bind_event
+        window[elementKey]._RightClickMenuCallback(event)
 
     
     # Right click functionality
     if event == 'Rename':
+        elementKey = event[:-14]
         newName = getTxt('Rename to:')
         if newName is not None:
-            oldKey = latestElementMouseHovered[0]
-            renameElement(oldKey, newName)
+            renameElement(elementKey, newName)
 
     if event == 'Delete':
-        delElement(latestElementMouseHovered[0])
+        #print(programValues['latestElementRightClicked'])
+        delElement(programValues['latestElementRightClicked'])
 
 
 window.close()

@@ -188,9 +188,9 @@ def bindRightClick():
 
 def renameElement(oldKey, newName):
     if 'CHECKBOX' in oldKey:
-        oldName = oldKey[16:]
+        oldName = oldKey[17:]
     else:
-        oldName = oldKey[2:]
+        oldName = oldKey[3:]
 
     for i in data:
         if i[0] == programValues['List']:
@@ -275,7 +275,7 @@ bindRightClick()
 
 while True:             # Event Loop
     event, values = window.read()
-    #print(event)
+    print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
@@ -356,7 +356,7 @@ while True:             # Event Loop
     
     # Right click functionality
     if event == 'Rename':
-        elementKey = event[:-14]
+        elementKey = programValues['latestElementRightClicked']
         newName = getTxt('Rename to:')
         if newName is not None:
             renameElement(elementKey, newName)

@@ -4,26 +4,26 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Add', ['Task', 'Section']],['Lists', ['View', 'Add']]],
-        'Task 0 & 1': ['Right', [['Insert', ['Task', 'Section']], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['&Add', ['Task', 'Section'], '&Insert', ['Task', 'Section'], 'Rename', 'Delete']],
+        'Menu Bar': [['Add', ['Task::ADD', 'Section::ADD']],['Lists', ['Modify']]],
+        'Task 0 & 1': ['Right', [['Insert', ['Task::INSERT', 'Section::INSERT']], 'Rename', 'Delete']],
+        'Section 0 & 1': ['&Right', ['&Add', ['Task::ADDTO', 'Section::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Task 2': ['Right', [['Insert', ['Task']], 'Rename', 'Delete']],
-        'Section 2': ['&Right', ['&Add', ['Task'], '&Insert', ['Task', 'Section'], 'Rename', 'Delete']]
+        'Section 2': ['&Right', ['&Add', ['Task::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']]
         }
 
-menu = [['Add', ['Task', 'Section']],      
-        ['Lists', ['View', 'Add']
-     ]]
+programValues = {
+                'List': 'Project 1',
+                'ListIndex': '01', 
+                'latestElementRightClicked': ''
+                }
 
-section_right_click = ['&Right', ['&Add', ['Task', 'Section'], '&Insert', ['Task', 'Section'], 'Rename', 'Delete']]
-
-programValues = {'List': 'Project 1', 'ListIndex': '01', 'latestElementRightClicked': ''}
-
-elementKeys = []
-
+tempData = {
+            'elementKeys': [],
+            'sectionsOpen': {},
+            'combo': [],
+            'latestElementRightClicked': ''
+            }
 SectionsOpen = {}
-
-combo = []
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -34,7 +34,7 @@ combo = []
 
 data = [
     ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False}, {'Physics': True}, [{'Section 1': True}, {'Learn python': False}, {'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
-    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}], {'Feed dog': True}, {'Train dragon': False}]]
+    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}, {'Play ping pong': True}], {'Feed dog': True}, {'Train dragon': False}]]
 ]
 
 def collapse(layout, key, isVisible):
@@ -54,6 +54,7 @@ def symbol(opened):
         return SYMBOL_RIGHT
 
 def createCombo():
+    combo = tempData['combo']
     for i in data:
         combo.append(i[0])
     combo.append('                         Add List')
@@ -72,7 +73,7 @@ def createTask(name, checked, listName, hierarchyIndex):
             if hierarchyIndex == '02':
                 rightClickMenu = menus['Task 2']
 
-            elementKeys.append(f"{elementIndexes} TASK {name}")
+            tempData['elementKeys'].append(f"{elementIndexes} TASK {name}")
             return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=rightClickMenu, pad=(0,0), key=checkBoxTextKey, enable_events=True)]
 
 def createSection(header, opened, content, listName, hierarchyIndex):
@@ -88,10 +89,10 @@ def createSection(header, opened, content, listName, hierarchyIndex):
             sectionContentKey = f'{elementIndexes} SECTION CONTENT {header}'
 
             rightClickMenu = menus['Section 0 & 1']
-            if hierarchyIndex == '02':
+            if hierarchyIndex == '01':
                 rightClickMenu = menus['Section 2']
 
-            elementKeys.append(f"{elementIndexes} SECTION {header}")
+            tempData['elementKeys'].append(f"{elementIndexes} SECTION {header}")
             return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=rightClickMenu)], [collapse(content, sectionContentKey, opened)]]
 
 def createListLayout(theList):
@@ -121,8 +122,9 @@ def createListLayout(theList):
                                     subheader = key
                                     subopened = value
 
+                            subsectionContent = []
+
                             for contentInSubSection in contentInSection:
-                                subsectionContent = []
 
                                 if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) != 0:
                                     for key, value in contentInSubSection.items():
@@ -146,67 +148,84 @@ def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
     return [
-            [sg.Menu(menu)],
-            [sg.Combo(combo,default_value=combo[combo.index(programValues['List'])] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
+            [sg.Menu(menus['Menu Bar'])],
+            [sg.Combo(tempData['combo'],default_value=tempData['combo'][tempData['combo'].index(programValues['List'])] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
-            [sg.Button('Add Task', image_size=(125,40), key='ADDTASK', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(125,40), key='ADDSECTION', pad=((16,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
+            [sg.Button('Add Task', image_size=(125,40), key='Task::ADD(BUTTON)', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(125,40), key='Section::ADD(BUTTON)', pad=((16,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
             ]
 
-def addTask(task):
-    if task == '' or task is None:
-        print('bruh')
-        return 'Nevermind'
-        
-    for i in data:
-        currentList = programValues['List']
-        if i[0] == currentList:
-            checklistdict = {}
-            checklistdict[task] = False
-            i.append(checklistdict)
+def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
 
-def addSection(sectionName):
-    sectionToAdd = [{sectionName: False}]
+    done = False
 
-    if sectionName == '' or sectionName is None:
-        print('bruh')
+    if name == '' or name is None:
         return 'Nevermind'
+
+    if elementType == 'Task':
+        elementToAdd = {name: False}
+    elif elementType == 'Section':
+        elementToAdd = [{name: False}]
 
     for i in data:
         currentList = programValues['List']
         if i[0] == currentList:
-            i.append(sectionToAdd)
+            if hierarchyIndex == '00':
+                i.append(elementToAdd)
+                done = True
+            elif hierarchyIndex == '01':
+                for content in i:
+                    if type(content) is list and sectionNameToAddTo in content[0]:
+                        content.append(elementToAdd)
+                        done = True
+                        break
+            elif hierarchyIndex == '02':
+                for content in i:
+                    if type(content) is list:
+                        for contentInSection in content:
+                            if type(contentInSection) is list and sectionNameToAddTo in contentInSection[0]:
+                                contentInSection.append(elementToAdd)
+                                done = True
+                                break
+        if done is True:
+            break
 
-def updateData(dataType, name):
+    createNewWindow()
+
+def updateData(elementType, name):
     for todoList in data:
             if todoList[0] == programValues['List']:
                 for content in todoList:
-                    if dataType == 'section':
+                    if elementType == 'Section':
                         if type(content) is list:
                             if name in content[0]:
                                 content[0][name] = SectionsOpen[name]
                                 break
 
-                            for subcontent in content:
-                                if type(subcontent) is list:
-                                    if name in subcontent[0]:
-                                        subcontent[0][name] = SectionsOpen[name]
+                            for contentInSection in content:
+                                if type(contentInSection) is list:
+                                    if name in contentInSection[0]:
+                                        contentInSection[0][name] = SectionsOpen[name]
                                         break
 
-                    if dataType == 'checkbox':
+                    if elementType == 'Task':
                         if type(content) is dict:
                             if name in content:
                                 content[name] = not content[name]
                                 break
                             
                         if type(content) is list:
-                            for subcontent in content:
-                                if type(subcontent) is dict:
-                                    if name in subcontent:
-                                        subcontent[name] = not subcontent[name]
+                            for contentInSection in content:
+                                if type(contentInSection) is dict:
+                                    if name in contentInSection:
+                                        contentInSection[name] = not contentInSection[name]
                                         break
+                                if type(contentInSection) is list:
+                                    for contentInSubSection in contentInSection:
+                                        if name in contentInSubSection:
+                                            contentInSubSection[name] = not contentInSubSection[name]
 
 def bindRightClick():
-    for i in elementKeys:
+    for i in tempData['elementKeys']:
         elementKey = i.split(' ')
         elementKey.insert(3, 'TEXT')
         window[' '.join(elementKey)].bind('<Button-3>', ' +RIGHT CLICK+')
@@ -233,8 +252,9 @@ def renameElement(oldKey, newName):
                                 if type(contentInSubSection) is dict and oldName in contentInSubSection:
                                     contentInSubSection[newName] = contentInSubSection.pop(oldName)
                                     break
-    global elementKeys
-    elementKeys = []
+
+    tempData['elementKeys'].clear()
+    elementKeys = tempData['elementKeys']
     createNewWindow()
     for i in elementKeys:
         if oldKey in i:
@@ -272,9 +292,8 @@ def delElement(elementKey):
                             content.remove(contentInSection)
                             break
 
-    
-    global elementKeys
-    elementKeys = []
+    tempData['elementKeys'].clear()
+    elementKeys = tempData['elementKeys']
     createNewWindow()
     for i in elementKeys:
         if elementKey is i:
@@ -289,7 +308,7 @@ def getTxt(msg):
 createCombo()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
-print(elementKeys)
+print(tempData['elementKeys'])
 #print(SectionsOpen)
 
 def createNewWindow():
@@ -303,7 +322,7 @@ bindRightClick()
 
 while True:             # Event Loop
     event, values = window.read()
-    #print(event)
+    print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
@@ -315,7 +334,7 @@ while True:             # Event Loop
 
     if event == '-COMBO-':  # Change which list your on
         programValues['List'] = values['-COMBO-']
-        programValues['ListIndex'] = str(combo.index(values['-COMBO-'])).zfill(2)
+        programValues['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
             if i[0] == programValues['List']:
                 window[f'COL{data.index(i)}'].update(visible=True)
@@ -324,24 +343,25 @@ while True:             # Event Loop
 
 
                     # ADDING A TASK OR SECTION
-    if event == 'ADDTASK' or event == 'Task':       # Add A Task
-        taskToAdd = getTxt('Task Name')
-        #hierarchyIndex = 0
+    if '::ADD' in event:
 
-        if f"{programValues['ListIndex']} CHECKBOX {taskToAdd}" in values:
+        sectionNameToAddTo = None
+        hierarchyIndex = '00'
+        elementType = event[:-13]
+
+        if 'ADDTO' in event:
+            sectionNameToAddTo = programValues['latestElementRightClicked'][19:]
+            hierarchyIndex = programValues['latestElementRightClicked'][3:5]
+            hierarchyIndex = (str((int(hierarchyIndex) + 1)).zfill(2))
+            elementType = event[:-7]
+
+        elementName = getTxt(f'{elementType} Name:')
+
+        if f"{programValues['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
-            sg.popup('Task already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-        elif addTask(taskToAdd) != 'Nevermind':
-            createNewWindow()
-
-    if event == 'ADDSECTION' or event == 'Section':     # Add a Section
-        sectionToAdd = taskToAdd = getTxt('Section Name')
-
-        if f"{programValues['ListIndex']} {sectionToAdd}" in elementKeys:
-            currentLoc = window.CurrentLocation()
-            sg.popup('Section already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-        elif addSection(sectionToAdd) != 'Nevermind':
-            createNewWindow()
+            sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+        else:
+            addElement(elementType, elementName, sectionNameToAddTo, hierarchyIndex)
                 
 
     # Opening and closing sections
@@ -356,7 +376,7 @@ while True:             # Event Loop
         SectionsOpen[eventName] = not SectionsOpen[eventName]
         window[f"{elementIndexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
         window[f"{elementIndexes} SECTION CONTENT {eventName}"].update(visible=SectionsOpen[eventName]) 
-        updateData('section', eventName)
+        updateData('Section', eventName)
 
 
     # Updating the checkbox
@@ -373,7 +393,7 @@ while True:             # Event Loop
         else:
             eventName = event[20:]
 
-        updateData('checkbox', eventName)
+        updateData('Task', eventName)
 
 
                                                     # Right Click Stuff

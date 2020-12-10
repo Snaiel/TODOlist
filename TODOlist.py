@@ -307,7 +307,7 @@ def getTxt(msg):
 
 createCombo()
 
-window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True, right_click_menu_background_color=None)
+window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
 print(tempData['elementKeys'])
 #print(SectionsOpen)
 

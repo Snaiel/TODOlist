@@ -347,7 +347,10 @@ while True:             # Event Loop
 
         sectionNameToAddTo = None
         hierarchyIndex = '00'
-        elementType = event[:-13]
+        if 'BUTTON' in event:
+            elementType = event[:-13]
+        else:
+            elementType = event[:-5]
 
         if 'ADDTO' in event:
             sectionNameToAddTo = programValues['latestElementRightClicked'][19:]

@@ -4,10 +4,10 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Add', ['Task::ADD', 'Section::ADD']],['Lists', ['Modify']]],
-        'Task 0 & 1': ['Right', [['Insert', ['Task::INSERT', 'Section::INSERT']], 'Rename', 'Delete']],
+        'Menu Bar': ['Add', ['Task::ADD', 'Section::ADD'],['Lists', ['Modify']]],
+        'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Add', ['Task::ADDTO', 'Section::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
-        'Task 2': ['Right', [['Insert', ['Task']], 'Rename', 'Delete']],
+        'Task 2': ['Right', ['Insert', ['Task'], 'Rename', 'Delete']],
         'Section 2': ['&Right', ['&Add', ['Task::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']]
         }
 
@@ -307,7 +307,7 @@ def getTxt(msg):
 
 createCombo()
 
-window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
+window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True, right_click_menu_background_color=None)
 print(tempData['elementKeys'])
 #print(SectionsOpen)
 

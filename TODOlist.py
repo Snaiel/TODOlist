@@ -106,6 +106,9 @@ def createListLayout(theList):
                         createdListLayout.append(createTask(key, value, theList, 0))
 
                 if type(content) is list:
+                    header = None
+                    opened = None
+
                     for key, value in content[0].items():
                             header = key
                             opened = value
@@ -118,6 +121,9 @@ def createListLayout(theList):
                                 sectionContent.append(createTask(key, value, theList, 1))
 
                         if type(contentInSection) is list:
+                            subheader = None
+                            subopened = None
+                            
                             for key, value in contentInSection[0].items():
                                     subheader = key
                                     subopened = value
@@ -161,9 +167,8 @@ def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
     if name == '' or name is None:
         return 'Nevermind'
 
-    if elementType == 'Task':
-        elementToAdd = {name: False}
-    elif elementType == 'Section':
+    elementToAdd = {name: False}
+    if elementType == 'Section':
         elementToAdd = [{name: False}]
 
     for i in data:

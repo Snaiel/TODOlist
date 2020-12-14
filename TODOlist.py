@@ -1,20 +1,27 @@
 import PySimpleGUI as sg
+from PySimpleGUI.PySimpleGUI import ELEM_TYPE_INPUT_SLIDER, theme
+
+color = None
+
+sg.theme_background_color(color)
+sg.theme_element_background_color(color)
+sg.theme_text_element_background_color(color)
+
 
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': ['Add', ['Task::ADD', 'Section::ADD'],['Lists', ['Modify']]],
+        'Menu Bar': [['Add', ['Task::ADD', 'Section::ADD']], ['Lists', ['Modify']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['&Add', ['Task::ADDTO', 'Section::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
-        'Task 2': ['Right', ['Insert', ['Task'], 'Rename', 'Delete']],
-        'Section 2': ['&Right', ['&Add', ['Task::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']]
+        'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
+        'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
+        'Section 2': ['Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO'], 'Rename', 'Delete']]
         }
 
 programValues = {
                 'List': 'Project 1',
-                'ListIndex': '01', 
-                'latestElementRightClicked': ''
+                'ListIndex': '01',
                 }
 
 tempData = {
@@ -23,7 +30,6 @@ tempData = {
             'combo': [],
             'latestElementRightClicked': ''
             }
-SectionsOpen = {}
 
 # data is pretty much everything from the to do lists, sections and tasks
 # it is a list of lists that shows each To do list
@@ -77,7 +83,7 @@ def createTask(name, checked, listName, hierarchyIndex):
             return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=rightClickMenu, pad=(0,0), key=checkBoxTextKey, enable_events=True)]
 
 def createSection(header, opened, content, listName, hierarchyIndex):
-    SectionsOpen[f'{header}'] = opened
+    tempData['sectionsOpen'][f'{header}'] = opened
     for i in data:
         if i[0] == listName:
             ListIndex = str(data.index(i)).zfill(2)
@@ -162,8 +168,6 @@ def createLayout(listFocused):
 
 def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
 
-    done = False
-
     if name == '' or name is None:
         return 'Nevermind'
 
@@ -176,25 +180,55 @@ def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
         if i[0] == currentList:
             if hierarchyIndex == '00':
                 i.append(elementToAdd)
-                done = True
+                return createNewWindow()
             elif hierarchyIndex == '01':
                 for content in i:
                     if type(content) is list and sectionNameToAddTo in content[0]:
                         content.append(elementToAdd)
-                        done = True
-                        break
+                        return createNewWindow()
             elif hierarchyIndex == '02':
                 for content in i:
                     if type(content) is list:
                         for contentInSection in content:
                             if type(contentInSection) is list and sectionNameToAddTo in contentInSection[0]:
                                 contentInSection.append(elementToAdd)
-                                done = True
-                                break
-        if done is True:
-            break
+                                return createNewWindow()
 
-    createNewWindow()
+def insertElement(elementType, name, elementNameOfInsertPos, hierarchyIndex):
+
+    if name == '' or name is None:
+        return 'Nevermind'
+
+    elementToInsert = {name: False}
+    if elementType == 'Section':
+        elementToInsert = [{name: False}]
+
+    for i in data:
+        if i[0] == programValues['List']:
+            if hierarchyIndex == '00':
+                for content in i:
+                    if type(content) is dict and elementNameOfInsertPos in content:
+                        i.insert(i.index(content), elementToInsert)
+                        return createNewWindow()
+                    elif type(content) is list and elementNameOfInsertPos in content[0]:
+                        i.insert(i.index(content), elementToInsert)
+                        return createNewWindow()
+            elif hierarchyIndex == '01':
+                for section in [content for content in i if type(content) is list]:
+                    for contentInSection in section:
+                        if type(contentInSection) is dict and elementNameOfInsertPos in contentInSection and section.index(contentInSection) != 0:
+                            section.insert(section.index(contentInSection), elementToInsert)
+                            return createNewWindow()
+                        elif type(contentInSection) is list and elementNameOfInsertPos in contentInSection[0]:
+                            section.insert(section.index(contentInSection), elementToInsert)
+                            return createNewWindow()
+            elif hierarchyIndex == '02':
+                for section in [content for content in i if type(content) is list]:
+                    for subSection in [contentInSection for contentInSection in section if type(contentInSection) is list]:
+                        for contentInSubSection in subSection:
+                            if type(contentInSubSection) is dict and elementNameOfInsertPos in contentInSubSection and subSection.index(contentInSubSection) != 0:
+                                subSection.insert(subSection.index(contentInSubSection), elementToInsert)
+                                return createNewWindow()
 
 def updateData(elementType, name):
     for todoList in data:
@@ -203,31 +237,32 @@ def updateData(elementType, name):
                     if elementType == 'Section':
                         if type(content) is list:
                             if name in content[0]:
-                                content[0][name] = SectionsOpen[name]
-                                break
+                                content[0][name] = tempData['sectionsOpen'][name]
+                                return
 
                             for contentInSection in content:
                                 if type(contentInSection) is list:
                                     if name in contentInSection[0]:
-                                        contentInSection[0][name] = SectionsOpen[name]
-                                        break
+                                        contentInSection[0][name] = tempData['sectionsOpen'][name]
+                                        return
 
                     if elementType == 'Task':
                         if type(content) is dict:
                             if name in content:
                                 content[name] = not content[name]
-                                break
+                                return
                             
                         if type(content) is list:
                             for contentInSection in content:
                                 if type(contentInSection) is dict:
                                     if name in contentInSection:
                                         contentInSection[name] = not contentInSection[name]
-                                        break
+                                        return
                                 if type(contentInSection) is list:
                                     for contentInSubSection in contentInSection:
                                         if name in contentInSubSection:
                                             contentInSubSection[name] = not contentInSubSection[name]
+                                            return
 
 def bindRightClick():
     for i in tempData['elementKeys']:
@@ -257,6 +292,15 @@ def renameElement(oldKey, newName):
                                 if type(contentInSubSection) is dict and oldName in contentInSubSection:
                                     contentInSubSection[newName] = contentInSubSection.pop(oldName)
                                     break
+                            else:
+                                continue
+                            break
+                    else:
+                        continue
+                    break
+            else:
+                continue
+            break
 
     tempData['elementKeys'].clear()
     elementKeys = tempData['elementKeys']
@@ -264,7 +308,7 @@ def renameElement(oldKey, newName):
     for i in elementKeys:
         if oldKey in i:
             elementKeys.remove(i)
-            break
+            return
 
 def delElement(elementKey):
     if 'TASK' in elementKey:
@@ -293,9 +337,18 @@ def delElement(elementKey):
                                 elif elementName in contentInSubSection:
                                     contentInSection.remove(contentInSubSection)
                                     break
+                            else:
+                                continue
+                            break
                         elif type(contentInSection) is dict and elementName in contentInSection:
                             content.remove(contentInSection)
                             break
+                    else:
+                        continue
+                    break
+            else:
+                continue
+            break
 
     tempData['elementKeys'].clear()
     elementKeys = tempData['elementKeys']
@@ -303,7 +356,7 @@ def delElement(elementKey):
     for i in elementKeys:
         if elementKey is i:
             elementKeys.remove(i)
-            break
+            return
 
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
@@ -313,8 +366,6 @@ def getTxt(msg):
 createCombo()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
-print(tempData['elementKeys'])
-#print(SectionsOpen)
 
 def createNewWindow():
     global window
@@ -325,19 +376,22 @@ def createNewWindow():
 
 bindRightClick()
 
-while True:             # Event Loop
+# Event Loop
+while True:             
     event, values = window.read()
     print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
 
-    if values['-COMBO-'] == '                         Add List':  # Add a to do list
+    # Add a to do list
+    if values['-COMBO-'] == '                         Add List': 
         currentLoc = window.CurrentLocation()
         loc = (currentLoc[0] - 25, currentLoc[1] + 100)
         text = sg.popup_get_text('List Name', location=loc)
 
-    if event == '-COMBO-':  # Change which list your on
+    # Change which list your on
+    if event == '-COMBO-':  
         programValues['List'] = values['-COMBO-']
         programValues['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
@@ -347,7 +401,7 @@ while True:             # Event Loop
                 window[f'COL{data.index(i)}'].update(visible=False)
 
 
-                    # ADDING A TASK OR SECTION
+    # Adding an element to the end of the list or section
     if '::ADD' in event:
 
         sectionNameToAddTo = None
@@ -358,8 +412,8 @@ while True:             # Event Loop
             elementType = event[:-5]
 
         if 'ADDTO' in event:
-            sectionNameToAddTo = programValues['latestElementRightClicked'][19:]
-            hierarchyIndex = programValues['latestElementRightClicked'][3:5]
+            sectionNameToAddTo = tempData['latestElementRightClicked'][19:]
+            hierarchyIndex = tempData['latestElementRightClicked'][3:5]
             hierarchyIndex = (str((int(hierarchyIndex) + 1)).zfill(2))
             elementType = event[:-7]
 
@@ -370,7 +424,25 @@ while True:             # Event Loop
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
             addElement(elementType, elementName, sectionNameToAddTo, hierarchyIndex)
-                
+
+    # Inserting elements before the element you right clicked
+    if '::INSERT' in event:
+
+        hierarchyIndex = tempData['latestElementRightClicked'][3:5]
+        elementType = event[:-8]
+        elementName = getTxt(f'{elementType} Name:')
+
+        if tempData['latestElementRightClicked'][6:7] == 'T':
+            elementNameOfInsertPos = tempData['latestElementRightClicked'][16:]
+        else:
+            elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
+
+        if f"{programValues['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
+            currentLoc = window.CurrentLocation()
+            sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+        else:
+            print('inserting')
+            insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex)
 
     # Opening and closing sections
     if 'SECTION' in event and 'RIGHT CLICK' not in event:
@@ -381,9 +453,9 @@ while True:             # Event Loop
         else:
             eventName = event[19:]
 
-        SectionsOpen[eventName] = not SectionsOpen[eventName]
-        window[f"{elementIndexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if SectionsOpen[eventName] else SYMBOL_RIGHT)
-        window[f"{elementIndexes} SECTION CONTENT {eventName}"].update(visible=SectionsOpen[eventName]) 
+        tempData['sectionsOpen'][eventName] = not tempData['sectionsOpen'][eventName]
+        window[f"{elementIndexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if tempData['sectionsOpen'][eventName] else SYMBOL_RIGHT)
+        window[f"{elementIndexes} SECTION CONTENT {eventName}"].update(visible=tempData['sectionsOpen'][eventName]) 
         updateData('Section', eventName)
 
 
@@ -409,8 +481,8 @@ while True:             # Event Loop
     if '+RIGHT CLICK+' in event:
         elementKey = event[:-14]
 
-        if elementKey is not programValues['latestElementRightClicked']:
-            programValues['latestElementRightClicked'] = elementKey
+        if elementKey is not tempData['latestElementRightClicked']:
+            tempData['latestElementRightClicked'] = elementKey
             print(f"Element right clicked was: {elementKey}")
 
         event = window[elementKey].user_bind_event
@@ -419,14 +491,14 @@ while True:             # Event Loop
     
     # Right click functionality
     if event == 'Rename':
-        elementKey = programValues['latestElementRightClicked']
+        elementKey = tempData['latestElementRightClicked']
         newName = getTxt('Rename to:')
         if newName is not None:
             renameElement(elementKey, newName)
 
     if event == 'Delete':
-        #print(programValues['latestElementRightClicked'])
-        delElement(programValues['latestElementRightClicked'])
+        #print(tempData['latestElementRightClicked'])
+        delElement(tempData['latestElementRightClicked'])
 
 
 window.close()

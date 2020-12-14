@@ -1,5 +1,12 @@
 import PySimpleGUI as sg
-from PySimpleGUI.PySimpleGUI import ELEM_TYPE_INPUT_SLIDER, theme
+
+
+#  __     __         _       _     _           
+#  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
+#   \ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ __|
+#    \ V / (_| | |  | | (_| | |_) | |  __/\__ \
+#     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
+                                             
 
 color = None
 
@@ -42,6 +49,15 @@ data = [
     ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False}, {'Physics': True}, [{'Section 1': True}, {'Learn python': False}, {'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
     ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}, {'Play ping pong': True}], {'Feed dog': True}, {'Train dragon': False}]]
 ]
+
+
+
+#   _____                 _   _                 
+#  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___ 
+#  | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+#  |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
+#  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+                                              
 
 def collapse(layout, key, isVisible):
     """
@@ -376,7 +392,15 @@ def createNewWindow():
 
 bindRightClick()
 
-# Event Loop
+
+
+#   _____                 _     _                   
+#  | ____|_   _____ _ __ | |_  | | ___   ___  _ __  
+#  |  _| \ \ / / _ \ '_ \| __| | |/ _ \ / _ \| '_ \ 
+#  | |___ \ V /  __/ | | | |_  | | (_) | (_) | |_) |
+#  |_____| \_/ \___|_| |_|\__| |_|\___/ \___/| .__/ 
+#                                            |_|     
+  
 while True:             
     event, values = window.read()
     print(event)

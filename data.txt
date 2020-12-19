@@ -1,0 +1,31 @@
+Settings:
+Colour1: #575757
+Data:
+- Today
+-- Daily (O)
+--- Cry (F)
+--- Protien shake (T)
+-- Methods (F)
+-- Physics (T)
+-- Section 1 (O)
+--- Learn python (F)
+--- Buy Furniture (T)
+-- Section 2 (C)
+--- Workout (F)
+- Project 1 !
+-- Build (O)
+--- Website (T)
+-- Sell stocks (F)
+-- Section 3 (C)
+--- Lift weights (F)
+-- Tessubcontent (O)
+--- Cook (F)
+--- Work (C)
+---- Fix bug (F)
+---- Play ping pong (T)
+--- Feed dog (T)
+--- Train dragon (F)
+-- Play (O)
+--- CS:GO (F)
+--- Train (C)
+---- Aim (F)

@@ -1,13 +1,12 @@
 import PySimpleGUI as sg
 
-
 #  __     __         _       _     _           
 #  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
 #   \ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ __|
 #    \ V / (_| | |  | | (_| | |_) | |  __/\__ \
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
-color = None
+color = '#575757'
 
 sg.theme_background_color(color)
 sg.theme_element_background_color(color)
@@ -18,7 +17,7 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Add', ['Task::ADD', 'Section::ADD']], ['Lists', ['Modify']], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Edit', ['Lists', 'Appearance']], ['Add', ['Task::ADD', 'Section::ADD']], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
@@ -26,28 +25,18 @@ menus = {
         }
 
 programValues = {
-                'List': 'Project 1',
-                'ListIndex': '01',
+                'List': '',
                 }
 
 tempData = {
+            'ListIndex': '',
             'elementKeys': [],
             'sectionsOpen': {},
             'combo': [],
             'latestElementRightClicked': ''
             }
 
-# data is pretty much everything from the to do lists, sections and tasks
-# it is a list of lists that shows each To do list
-# The first element of the to do lists is the name of the to do list
-# Dictionaries are checkboxes that say whether they are ticked or not.
-# lists are sections that contain dicitonaries
-# The first dictionary under in a list is the name of the section and whether it is closed or not
-
-data = [
-    ['Today', [{'Daily': True}, {'Cry': False, 'Protein shake': True}], {'Methods homework': False}, {'Physics': True}, [{'Section 1': True}, {'Learn python': False}, {'Buy Furniture': True}], [{'Section 2': False}, {'Workout': False}]],
-    ['Project 1', {'Sell stocks': False}, [{'Section 3': False}, {'Lift weights': False}], [{'Tessubcontent': True}, {'Cook': False}, [{'Work': False}, {'Fix bug': False}, {'Play ping pong': True}], {'Feed dog': True}, {'Train dragon': False}]]
-]
+data = []
 
 
 
@@ -56,7 +45,87 @@ data = [
 #  | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
 #  |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
 #  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
-                                              
+
+def readDataFile():
+    tasks = ['(T)', '(F)']
+    booleans = {
+        '(T)': True,
+        '(F)': False,
+        '(O)': True,
+        '(C)': False
+    }
+
+    with open('data.txt') as f:
+        file = f.read().splitlines()
+
+        taskData = file[(file.index('Data:') + 1):]
+
+        previousLine = None
+
+        todolistData = []
+        listData = []
+        section = []
+        subsection = []
+
+        for i in taskData:
+            i = i.split()
+
+            if previousLine != None and previousLine[0] == '---' and i[0] != '---':
+                if i[0] == '----':
+                    subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
+                elif len(section) != 0:
+                    listData.append(section.copy())
+                    section.clear() 
+
+            if previousLine != None and previousLine[0] == '----' and i[0] != '----':
+                if len(subsection) != 0:
+                    section.append(subsection.copy())
+                    subsection.clear() 
+
+            if i[0] == '----' and previousLine[0] == '----':
+                subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
+
+            if i[0] == '---':
+                if i[-1] in tasks:
+                    section.append({' '.join(i[1:-1]): booleans[i[-1]]})
+                else:
+                    subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
+
+            if i[0] == '--':
+                if i[-1] in tasks:
+                    listData.append({' '.join(i[1:-1]): booleans[i[-1]]})
+                else:
+                    section.append({' '.join(i[1:-1]): booleans[i[-1]]})
+
+            if i[0] == '-':
+                if len(listData) != 0:
+                    todolistData.append(listData.copy())
+                    listData.clear()
+
+                if i[-1] == '!':
+                    listData.append(' '.join(i[1:-1]))
+                    programValues['List'] = ' '.join(i[1:-1])
+                else:
+                    listData.append(' '.join(i[1:]))
+
+            previousLine = i
+
+
+        if len(subsection) != 0:
+            section.append(subsection.copy())
+            subsection.clear()
+        if len(section) != 0:
+            listData.append(section.copy())
+            section.clear()
+        if len(listData) != 0:
+            todolistData.append(listData.copy())
+            listData.clear()
+
+        global data
+        data = todolistData
+            
+
+
 
 def collapse(layout, key, isVisible):
     """
@@ -78,7 +147,7 @@ def createCombo():
     combo = tempData['combo']
     for i in data:
         combo.append(i[0])
-    combo.append('                         Add List')
+    combo.append('                           Add List')
 
 def createTask(name, checked, listName, hierarchyIndex, sectionID):
     for i in data:
@@ -122,7 +191,6 @@ def createListLayout(theList):
     createdListLayout = []
 
     sectionID = 0
-    print(sectionID)
 
     for i in data:
         if i[0] is theList:
@@ -134,7 +202,6 @@ def createListLayout(theList):
 
                 if type(content) is list:
                     sectionID += 1
-                    print(str(sectionID) + 'section')
 
                     header = None
                     opened = None
@@ -152,7 +219,6 @@ def createListLayout(theList):
 
                         if type(contentInSection) is list:
                             sectionID += 1
-                            print(str(sectionID) + 'sub')
 
                             subheader = None
                             subopened = None
@@ -390,7 +456,19 @@ def getTxt(msg):
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
     return sg.popup_get_text(msg, location=loc)
 
-createCombo()
+
+def startup():
+    readDataFile()
+
+    for i in data:
+        if i[0] == programValues['List']:
+            tempData['ListIndex'] = str(data.index(i)).zfill(2)
+            break
+
+    createCombo()
+    bindRightClick()
+    
+startup()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
 
@@ -400,8 +478,6 @@ def createNewWindow():
     window.Close()
     window = window1
     bindRightClick()
-
-bindRightClick()
 
 
 #   _____                 _     _                   
@@ -413,21 +489,30 @@ bindRightClick()
   
 while True:             
     event, values = window.read()
-    print(event)
+    #print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
 
     # Add a to do list
-    if values['-COMBO-'] == '                         Add List': 
+    if values['-COMBO-'] == '                           Add List': 
         currentLoc = window.CurrentLocation()
         loc = (currentLoc[0] - 25, currentLoc[1] + 100)
-        text = sg.popup_get_text('List Name', location=loc)
+        listName = getTxt('List Name:')
+
+        if listName not in tempData['combo']:
+            data.append([listName])
+            programValues['List'] = listName
+            tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
+            tempData['combo'] = []
+            createCombo()
+            createNewWindow()
+        
 
     # Change which list your on
-    if event == '-COMBO-':  
+    if event == '-COMBO-' and values['-COMBO-'] != '                           Add List':  
         programValues['List'] = values['-COMBO-']
-        programValues['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
+        tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
             if i[0] == programValues['List']:
                 window[f'COL{data.index(i)}'].update(visible=True)
@@ -456,7 +541,7 @@ while True:
 
         elementName = getTxt(f'{elementType} Name:')
 
-        if f"{programValues['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
+        if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
@@ -474,7 +559,7 @@ while True:
         else:
             elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
 
-        if f"{programValues['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
+        if f"{tempData['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:

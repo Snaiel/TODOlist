@@ -6,12 +6,7 @@ import PySimpleGUI as sg
 #    \ V / (_| | |  | | (_| | |_) | |  __/\__ \
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
-color = '#575757'
-
-sg.theme_background_color(color)
-sg.theme_element_background_color(color)
-sg.theme_text_element_background_color(color)
-
+colour = ''
 
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
@@ -58,6 +53,7 @@ def readDataFile():
     with open('data.txt') as f:
         file = f.read().splitlines()
 
+        settings = file[(file.index('Settings:') + 1):file.index('Data:')]
         taskData = file[(file.index('Data:') + 1):]
 
         previousLine = None
@@ -66,6 +62,14 @@ def readDataFile():
         listData = []
         section = []
         subsection = []
+
+        for i in settings:
+            i = i.split()
+
+            global colour
+            
+            if i[0] == 'Colour1:':
+                colour = i[1]
 
         for i in taskData:
             i = i.split()
@@ -123,9 +127,66 @@ def readDataFile():
 
         global data
         data = todolistData
-            
 
+def writeDataFile():
+    with open('data.txt', 'w') as f:
 
+        lines = ['Settings:' ,'Data:']
+        filesettings = [f"Colour1: {colour}"]
+        filedata = []
+
+        for i in data:
+            todolist = i
+            for content in todolist:
+                if todolist.index(content) == 0:
+                    filedata.append(f"- {content}{' !' if programValues['List'] == content else ''}")
+
+                if type(content) is dict:
+                    for key, value in content.items():
+                        filedata.append(f"-- {key} {'(T)' if value == True else '(F)'}")
+
+                if type(content) is list:
+
+                    header = None
+                    opened = None
+
+                    for key, value in content[0].items():
+                        header = key
+                        opened = value
+
+                    filedata.append(f"-- {header} {'(O)' if opened == True else '(C)'}")
+
+                    for contentInSection in content:
+                        if type(contentInSection) is dict and content.index(contentInSection) != 0:
+                            for key, value in contentInSection.items():
+                                filedata.append(f"--- {key} {'(T)' if value == True else '(F)'}")
+
+                        if type(contentInSection) is list:
+
+                            subheader = None
+                            subopened = None
+
+                            for key, value in contentInSection[0].items():
+                                subheader = key
+                                subopened = value
+
+                            filedata.append(f"--- {subheader} {'(O)' if subopened == True else '(C)'}")
+
+                            for contentInSubSection in contentInSection:
+                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) != 0:
+                                    for key, value in contentInSubSection.items():
+                                        filedata.append(f"---- {key} {'(T)' if value == True else '(F)'}")
+
+        lines[1:1] = filesettings
+        lines.extend(filedata)
+
+        f.write('\n'.join(lines))
+
+def colours():
+    if colour != '':
+        sg.theme_background_color(colour)
+        sg.theme_element_background_color(colour)
+        sg.theme_text_element_background_color(colour)
 
 def collapse(layout, key, isVisible):
     """
@@ -365,9 +426,9 @@ def bindRightClick():
 
 def renameElement(oldKey, newName):
     if 'TASK' in oldKey:
-        oldName = oldKey[16:]
-    else:
         oldName = oldKey[19:]
+    else:
+        oldName = oldKey[22:]
 
     for i in data:
         if i[0] == programValues['List']:
@@ -405,9 +466,9 @@ def renameElement(oldKey, newName):
 
 def delElement(elementKey):
     if 'TASK' in elementKey:
-        elementName = elementKey[16:]
-    else:
         elementName = elementKey[19:]
+    else:
+        elementName = elementKey[22:]
 
     print(elementName)
 
@@ -465,12 +526,13 @@ def startup():
             tempData['ListIndex'] = str(data.index(i)).zfill(2)
             break
 
+    colours()
     createCombo()
-    bindRightClick()
     
 startup()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
+bindRightClick()
 
 def createNewWindow():
     global window
@@ -492,6 +554,7 @@ while True:
     #print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
+        writeDataFile()
         break
 
     # Add a to do list

@@ -187,6 +187,7 @@ def colours():
         sg.theme_background_color(colour)
         sg.theme_element_background_color(colour)
         sg.theme_text_element_background_color(colour)
+    sg.theme_button_color((None, '#ffffff'))
 
 def collapse(layout, key, isVisible):
     """
@@ -563,7 +564,7 @@ while True:
         loc = (currentLoc[0] - 25, currentLoc[1] + 100)
         listName = getTxt('List Name:')
 
-        if listName not in tempData['combo']:
+        if listName is not None and listName not in tempData['combo']:
             data.append([listName])
             programValues['List'] = listName
             tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)

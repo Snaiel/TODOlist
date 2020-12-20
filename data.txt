@@ -12,7 +12,6 @@ Data:
 --- Buy Furniture (T)
 -- Section 2 (C)
 --- Workout (F)
--- Hello (F)
 - Project 1
 -- Build (O)
 --- Website (T)

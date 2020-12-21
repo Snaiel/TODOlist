@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-from PySimpleGUI.PySimpleGUI import theme_list
 
 #  __     __         _       _     _           
 #  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
@@ -13,7 +12,7 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['File', ['Appearance']], ['Add', ['Task::ADD', 'Section::ADD']], ['List', ['Delete::LIST']], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Edit', ['Lists', 'Appearance']], ['Add', ['Task::ADD', 'Section::ADD']], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
@@ -513,18 +512,6 @@ def delElement(elementKey):
             elementKeys.remove(i)
             return
 
-def delList():
-    theList = programValues['List']
-    for i in data:
-        if i[0] == theList:
-            data.remove(i)
-            tempData['combo'].remove(theList)
-            for listName in tempData['combo']:
-                if listName is not theList:
-                    programValues['List'] = listName
-                    break
-            return createNewWindow()
-
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
@@ -568,7 +555,7 @@ while True:
     #print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
-        #writeDataFile()
+        writeDataFile()
         break
 
     # Add a to do list
@@ -695,10 +682,6 @@ while True:
     # Delete
     if event == 'Delete':
         delElement(tempData['latestElementRightClicked'])
-
-    if event == 'Delete::LIST':
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents") == 'OK':
-            delList()
 
 
 window.close()

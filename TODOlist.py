@@ -568,7 +568,7 @@ while True:
     #print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
-        writeDataFile()
+        #writeDataFile()
         break
 
     # Add a to do list

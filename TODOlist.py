@@ -13,7 +13,7 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['File', ['Appearance']], ['Add', ['Task::ADD', 'Section::ADD']], ['List', ['Delete::LIST']], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Add', ['Task::ADD', 'Section::ADD']], ['List', ['Delete::LIST']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],

@@ -265,6 +265,8 @@ def createListLayout(theList):
                 if type(content) is list:
                     sectionID += 1
 
+                    ID_of_section = sectionID
+
                     header = None
                     opened = None
 
@@ -277,9 +279,10 @@ def createListLayout(theList):
                     for contentInSection in content:
                         if type(contentInSection) is dict and content.index(contentInSection) != 0:
                             for key, value in contentInSection.items():
-                                sectionContent.append(createTask(key, value, theList, 1, sectionID))
+                                sectionContent.append(createTask(key, value, theList, 1, ID_of_section))
 
                         if type(contentInSection) is list:
+
                             sectionID += 1
 
                             subheader = None
@@ -297,7 +300,7 @@ def createListLayout(theList):
                                     for key, value in contentInSubSection.items():
                                         subsectionContent.append(createTask(key, value, theList, 2, sectionID))
 
-                            for i in createSection(subheader, subopened, subsectionContent, theList, 1, sectionID -1):
+                            for i in createSection(subheader, subopened, subsectionContent, theList, 1, ID_of_section):
                                 sectionContent.append(i)
 
                     for i in createSection(header, opened, sectionContent, theList, 0, 0):
@@ -457,7 +460,6 @@ def renameElement(oldKey, newName):
                 continue
             break
 
-    tempData['elementKeys'].clear()
     elementKeys = tempData['elementKeys']
     createNewWindow()
     for i in elementKeys:
@@ -470,8 +472,6 @@ def delElement(elementKey):
         elementName = elementKey[19:]
     else:
         elementName = elementKey[22:]
-
-    print(elementName)
 
     for i in data:
         if i[0] == programValues['List']:
@@ -505,7 +505,6 @@ def delElement(elementKey):
                 continue
             break
 
-    tempData['elementKeys'].clear()
     elementKeys = tempData['elementKeys']
     createNewWindow()
     for i in elementKeys:
@@ -536,6 +535,7 @@ window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finali
 bindRightClick()
 
 def createNewWindow():
+    tempData['elementKeys'].clear()
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
     window.Close()
@@ -627,7 +627,6 @@ while True:
             currentLoc = window.CurrentLocation()
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
-            print('inserting')
             insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex)
 
     # Opening and closing sections
@@ -668,7 +667,7 @@ while True:
 
         if elementKey is not tempData['latestElementRightClicked']:
             tempData['latestElementRightClicked'] = elementKey
-            print(f"Element right clicked was: {elementKey}")
+            #print(f"Element right clicked was: {elementKey}")
 
         event = window[elementKey].user_bind_event
         window[elementKey]._RightClickMenuCallback(event)

@@ -565,10 +565,10 @@ def createNewWindow():
   
 while True:             
     event, values = window.read()
-    #print(event)
+    print(event)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
-        #writeDataFile()
+        writeDataFile()
         break
 
     # Add a to do list
@@ -661,7 +661,7 @@ while True:
     if 'TASK' in event and 'RIGHT CLICK' not in event:
 
         if 'TEXT' in event:
-            eventName = event[16:]
+            eventName = event[19:]
             elementKey = event.split(' ')
             elementKey.remove('TEXT')
             elementKey.insert(4, 'CHECKBOX')
@@ -669,7 +669,9 @@ while True:
             checked =  window[elementKey].Get()
             window[elementKey].Update(value=not checked)
         else:
-            eventName = event[20:]
+            eventName = event[23:]
+
+        print(eventName)
 
         updateData('Task', eventName)
 

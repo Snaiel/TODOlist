@@ -5,7 +5,7 @@ Data:
 -- Daily (O)
 --- Cry (F)
 --- Protien shake (T)
--- Methods (F)
+-- Methods (T)
 -- Physics (T)
 -- Section 1 (O)
 --- Learn python (F)

@@ -1,5 +1,4 @@
 import PySimpleGUI as sg
-from PySimpleGUI.PySimpleGUI import theme_list
 
 #  __     __         _       _     _           
 #  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
@@ -13,7 +12,7 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['File', ['Appearance']], ['Add', ['Task::ADD', 'Section::ADD']], ['List', ['Delete::LIST']], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Edit', ['Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
@@ -29,7 +28,8 @@ tempData = {
             'elementKeys': [],
             'sectionsOpen': {},
             'combo': [],
-            'latestElementRightClicked': ''
+            'latestElementRightClicked': '',
+            'listSelectedToEdit': ''
             }
 
 data = []
@@ -207,10 +207,10 @@ def symbol(opened):
         return SYMBOL_RIGHT
 
 def createCombo():
+    tempData['combo'].clear()
     combo = tempData['combo']
     for i in data:
         combo.append(i[0])
-    combo.append('                           Add List')
 
 def createTask(name, checked, listName, hierarchyIndex, sectionID):
     for i in data:
@@ -312,18 +312,41 @@ def createRowOfColumns(listFocused):
     listsColumns = []
     for i in data:
         listLayout = createListLayout(i[0])
-        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,400), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
+        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,390), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
+    
+    editListsLayout = [
+        [sg.Listbox(key='LISTS LISTBOX', values=tuple(tempData['combo']), size=(32,10), pad=(15,10), enable_events=True)],
+        [sg.B('NONE', focus=True, visible=False)],
+        [sg.B('Add', k='List::ADD(BUTTON)', image_filename='white.png', image_size=(240, 30), pad=(15, 8))],
+        [sg.B('Rename', k='List::RENAME', image_filename='white.png', image_size=(110,30), pad=((15, 11), (0, 0))), sg.B('Delete', k='List::DELETE', image_filename='white.png', image_size=(110,30))],
+        [sg.B('Move up', k='List::MOVEUP', image_filename='white.png', image_size=(110, 30), pad=((15, 11), (6, 0))), sg.B('Move down', k='List::MOVEDOWN', image_filename='white.png', image_size=(110, 30), pad=((5, 0), (6, 0)))]
+    ]
+
+    if programValues['List'] == 'EDITING':
+        editingListsVisible = True
+    else:
+        editingListsVisible = False
+    
+    listsColumns.append(sg.Column(layout=editListsLayout, visible=editingListsVisible, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': editingListsVisible}))
     return(listsColumns)
 
 def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
+
+    if listFocused == 'EDITING':
+        addButtonsVisible = False
+        comboDefaultValue = 'Editing Lists...'
+    else:
+        addButtonsVisible = True
+        comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'EDITING' else tempData['combo'][0])]
+
     return [
             [sg.Menu(menus['Menu Bar'])],
-            [sg.Combo(tempData['combo'],default_value=tempData['combo'][tempData['combo'].index(programValues['List'])] , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
+            [sg.Combo(tempData['combo'],default_value=comboDefaultValue , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
-            [sg.Button('Add Task', image_size=(125,40), key='Task::ADD(BUTTON)', pad=((5,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black')), sg.Button('Add Section', image_size=(125,40), key='Section::ADD(BUTTON)', pad=((16,0),(0,10)), image_filename='white.png', border_width=0, button_color=('black', 'black'))]
-            ]
+            [sg.Col(layout=[[sg.Button('Add Task', image_size=(125,35), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), image_filename='white.png', border_width=0, button_color=('black', 'black'), visible=addButtonsVisible)]], k='COL ADD BUTTON 1'), sg.Col([[sg.Button('Add Section', image_size=(125,35), key='Section::ADD(BUTTON)', pad=((10,0),(0,0)), image_filename='white.png', border_width=0, button_color=('black', 'black'), visible=addButtonsVisible)]], k='COL ADD BUTTON 2')]
+        ]
 
 def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
 
@@ -513,15 +536,41 @@ def delElement(elementKey):
             elementKeys.remove(i)
             return
 
+def renameList(listName, newListName):
+    for i in data:
+        if i[0] == listName:
+            i[0] = newListName
+            break
+         
+    for listNameInCombo in tempData['combo']:
+        if listNameInCombo is listName:
+            listNameInCombo = newListName
+            break
+
+    createCombo()
+
+    window['-COMBO-'].update(values=tempData['combo'])
+    window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
+
+    print('donee')
+
+
 def delList():
-    theList = programValues['List']
+    if window[f'COL EDIT LISTS'].metadata['visible'] == True:
+        theList = values['LISTS LISTBOX'][0]
+    else:
+        theList = programValues['List']
+        
     for i in data:
         if i[0] == theList:
             data.remove(i)
             tempData['combo'].remove(theList)
             for listName in tempData['combo']:
                 if listName is not theList:
-                    programValues['List'] = listName
+                    if window[f'COL EDIT LISTS'].metadata['visible'] == True:
+                        programValues['List'] = 'EDITING'
+                    else:
+                        programValues['List'] = listName
                     break
             return createNewWindow()
 
@@ -547,10 +596,13 @@ startup()
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
 bindRightClick()
 
+
 def createNewWindow():
     tempData['elementKeys'].clear()
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
+    # if programValues['List'] == 'EDITING':
+    #     window1['Task::ADD(BUTTON)'].hide_row()
     window.Close()
     window = window1
     bindRightClick()
@@ -565,29 +617,38 @@ def createNewWindow():
   
 while True:             
     event, values = window.read()
-    print(event)
+    #print(event, values)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
-        writeDataFile()
+        #writeDataFile()
         break
 
     # Add a to do list
-    if values['-COMBO-'] == '                           Add List': 
-        currentLoc = window.CurrentLocation()
-        loc = (currentLoc[0] - 25, currentLoc[1] + 100)
+    if 'List::ADD' in event:
         listName = getTxt('List Name:')
 
         if listName is not None and listName not in tempData['combo']:
             data.append([listName])
-            programValues['List'] = listName
-            tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
-            tempData['combo'] = []
+
+            if 'BUTTON' in event:
+                programValues['List'] = 'EDITING'
+            else:
+                programValues['List'] = listName
+
             createCombo()
+            tempData['ListIndex'] = str(tempData['combo'].index(listName)).zfill(2)
+
             createNewWindow()
+            
+        elif listName in tempData['combo']:
+            currentLoc = window.CurrentLocation()
+            loc = (currentLoc[0] + 80, currentLoc[1] + 100)
+            sg.popup('List already exists!', location=loc)
+
         
 
     # Change which list your on
-    if event == '-COMBO-' and values['-COMBO-'] != '                           Add List':  
+    if event == '-COMBO-':  
         programValues['List'] = values['-COMBO-']
         tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
@@ -596,9 +657,17 @@ while True:
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
 
+        if window['COL EDIT LISTS'].metadata['visible'] == True:
+            window['COL EDIT LISTS'].update(visible=False)
+            window['COL EDIT LISTS'].metadata = {'visible': False}
+
+        window['Task::ADD(BUTTON)'].update(visible=True)
+        window['Section::ADD(BUTTON)'].update(visible=True)
+        window['COL ADD BUTTON 1'].unhide_row()
+
 
     # Adding an element to the end of the list or section
-    if '::ADD' in event:
+    if '::ADD' in event and 'List' not in event:
 
         sectionNameToAddTo = None
         hierarchyIndex = '00'
@@ -671,11 +740,10 @@ while True:
         else:
             eventName = event[23:]
 
-        print(eventName)
+        #print(eventName)
 
         updateData('Task', eventName)
-
-
+    
     # Checking what element the user right clicked
     if '+RIGHT CLICK+' in event:
         elementKey = event[:-14]
@@ -686,6 +754,7 @@ while True:
 
         event = window[elementKey].user_bind_event
         window[elementKey]._RightClickMenuCallback(event)
+        event = elementKey
 
     # Rename
     if event == 'Rename':
@@ -694,13 +763,76 @@ while True:
         if newName is not None:
             renameElement(elementKey, newName)
 
-    # Delete
+    # Delete Element
     if event == 'Delete':
         delElement(tempData['latestElementRightClicked'])
 
-    if event == 'Delete::LIST':
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents") == 'OK':
+    
+    # Rename List
+    if event == 'List::RENAME' and len(values['LISTS LISTBOX']) != 0:
+        listNameToRename = values['LISTS LISTBOX'][0]
+        newListName = getTxt('Rename to:')
+        renameList(listNameToRename, newListName)
+    elif event == 'List:RENAME' and len(values['LISTS LISTBOX']) == 0:
+        currentLoc = window.CurrentLocation()
+        loc = (currentLoc[0] + 80, currentLoc[1] + 100)
+        sg.popup('Please select a list first', location=loc)
+
+    # Delete List
+    if event == 'List::DELETE':
+        currentLoc = window.CurrentLocation()
+        loc = (currentLoc[0] + 4, currentLoc[1] + 100)
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=loc) == 'OK':
             delList()
 
+    # Show Edit Lists Page
+    if event == 'Lists':
+        for i in data:
+            if i[0] == programValues['List']:
+                window[f'COL{data.index(i)}'].update(visible=False)
+                break
+        window['COL EDIT LISTS'].update(visible=True)
+        isVisible = window[f'COL EDIT LISTS'].metadata['visible']
+        window['COL EDIT LISTS'].metadata = {'visible': not isVisible}
+        window['COL ADD BUTTON 1'].hide_row()
+        window['-COMBO-'].update(value='Editing Lists...')
+
+    if 'List::MOVE' in event:
+        combo = tempData['combo']
+        listName = ''
+
+        if values['LISTS LISTBOX'] != []:
+            listName = values['LISTS LISTBOX'][0]
+        elif values['LISTS LISTBOX'] == [] and tempData['listSelectedToEdit'] != '':
+            listName = tempData['listSelectedToEdit']
+        else:
+            currentLoc = window.CurrentLocation()
+            loc = (currentLoc[0] + 80, currentLoc[1] + 100)
+            sg.popup('Please select a list first', location=loc)
+
+        for i in data:
+            if i[0] is listName:
+                theList = i
+
+                index = data.index(theList)
+                data.remove(theList)
+
+                if 'UP' in event:
+                    data.insert(index - 1, theList)
+                elif 'DOWN' in event:
+                    data.insert(index + 1, theList)
+                createCombo()
+                break
+
+        tempData['listSelectedToEdit'] = listName
+
+        window['-COMBO-'].update(values=tempData['combo'])
+        window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
+
+    
+
+    
+
+    
 
 window.close()

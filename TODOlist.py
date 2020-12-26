@@ -6,8 +6,6 @@ import PySimpleGUI as sg
 #    \ V / (_| | |  | | (_| | |_) | |  __/\__ \
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
-colour = ''
-
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
@@ -21,6 +19,7 @@ menus = {
 
 programValues = {
                 'List': '',
+                'Colour': ''
                 }
 
 tempData = {
@@ -70,7 +69,7 @@ def readDataFile():
             global colour
             
             if i[0] == 'Colour1:':
-                colour = i[1]
+                programValues['Colour'] = i[1]
 
         for i in taskData:
             i = i.split()
@@ -133,7 +132,7 @@ def writeDataFile():
     with open('data.txt', 'w') as f:
 
         lines = ['Settings:' ,'Data:']
-        filesettings = [f"Colour1: {colour}"]
+        filesettings = [f"Colour1: {programValues['Colour']}"]
         filedata = []
 
         for i in data:
@@ -184,6 +183,7 @@ def writeDataFile():
         f.write('\n'.join(lines))
 
 def colours():
+    colour = programValues['Colour']
     if colour != '':
         sg.theme_background_color(colour)
         sg.theme_element_background_color(colour)
@@ -323,7 +323,7 @@ def createRowOfColumns(listFocused):
     ]
 
     settingsLayout = [
-        [sg.Text('Colour'), sg.Input(change_submits=True, key='Colour', size=(21,1)), sg.ColorChooserButton('Color...', target=(sg.ThisRow, -1))],
+        [sg.Text('Colour'), sg.Input(default_text=programValues['Colour'],key='Colour', size=(21,1)), sg.ColorChooserButton('Color...', target=(sg.ThisRow, -1))],
         [sg.B('Apply', pad=(10, 100))]
     ]
 
@@ -331,18 +331,26 @@ def createRowOfColumns(listFocused):
         editingListsVisible = True
     else:
         editingListsVisible = False
+
+    if programValues['List'] == 'SETTINGS':
+        inSettings = True
+    else:
+        inSettings = False
     
     listsColumns.append(sg.Column(layout=editListsLayout, visible=editingListsVisible, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': editingListsVisible}))
-    listsColumns.append(sg.Column(layout=settingsLayout, visible=False, size=(300,400), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': False}))
+    listsColumns.append(sg.Column(layout=settingsLayout, visible=inSettings, size=(300,400), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': inSettings}))
     return(listsColumns)
 
 def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
 
-    if listFocused == 'EDITING':
+    if listFocused == 'EDITING' or listFocused == 'SETTINGS':
         addButtonsVisible = False
-        comboDefaultValue = 'Editing Lists...'
+        if listFocused == 'EDITING':
+            comboDefaultValue = 'Editing Lists...'
+        else:
+            comboDefaultValue = 'Settings'
     else:
         addButtonsVisible = True
         comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'EDITING' else tempData['combo'][0])]
@@ -585,6 +593,10 @@ def getTxt(msg):
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
     return sg.popup_get_text(msg, location=loc)
 
+def applySettings():
+    programValues['Colour'] = values['Colour']
+    colours()
+    createNewWindow()
 
 def startup():
     readDataFile()
@@ -623,7 +635,7 @@ def createNewWindow():
   
 while True:             
     event, values = window.read()
-    #print(event, values)
+    print(event, values)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
         #writeDataFile()
@@ -853,12 +865,14 @@ while True:
             window['COL EDIT LISTS'].update(visible=False)
             window['COL EDIT LISTS'].metadata = {'visible': False}
 
+        programValues['List'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)
         window['COL SETTINGS'].metadata = {'visible': True}
         window['COL ADD BUTTON 1'].hide_row()
         window['-COMBO-'].update(value='Settings')
     
-
+    if event == 'Apply':
+        applySettings()
     
 
 window.close()

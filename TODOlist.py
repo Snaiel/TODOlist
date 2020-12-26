@@ -65,8 +65,6 @@ def readDataFile():
 
         for i in settings:
             i = i.split()
-
-            global colour
             
             if i[0] == 'Colour1:':
                 programValues['Colour'] = i[1]

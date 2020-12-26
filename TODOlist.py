@@ -322,12 +322,18 @@ def createRowOfColumns(listFocused):
         [sg.B('Move up', k='List::MOVEUP', image_filename='white.png', image_size=(110, 30), pad=((15, 11), (6, 0))), sg.B('Move down', k='List::MOVEDOWN', image_filename='white.png', image_size=(110, 30), pad=((5, 0), (6, 0)))]
     ]
 
+    settingsLayout = [
+        [sg.Text('Colour'), sg.Input(change_submits=True, key='Colour', size=(21,1)), sg.ColorChooserButton('Color...', target=(sg.ThisRow, -1))],
+        [sg.B('Apply', pad=(10, 100))]
+    ]
+
     if programValues['List'] == 'EDITING':
         editingListsVisible = True
     else:
         editingListsVisible = False
     
     listsColumns.append(sg.Column(layout=editListsLayout, visible=editingListsVisible, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': editingListsVisible}))
+    listsColumns.append(sg.Column(layout=settingsLayout, visible=False, size=(300,400), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': False}))
     return(listsColumns)
 
 def createLayout(listFocused):
@@ -657,9 +663,11 @@ while True:
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
 
-        if window['COL EDIT LISTS'].metadata['visible'] == True:
-            window['COL EDIT LISTS'].update(visible=False)
-            window['COL EDIT LISTS'].metadata = {'visible': False}
+        otherPages = ['EDIT LISTS', 'SETTINGS']
+        for i in otherPages:
+            if window[f'COL {i}'].metadata['visible'] == True:
+                window[f'COL {i}'].update(visible=False)
+                window[f'COL {i}'].metadata = {'visible': False}
 
         window['Task::ADD(BUTTON)'].update(visible=True)
         window['Section::ADD(BUTTON)'].update(visible=True)
@@ -787,10 +795,15 @@ while True:
 
     # Show Edit Lists Page
     if event == 'Lists':
-        for i in data:
-            if i[0] == programValues['List']:
-                window[f'COL{data.index(i)}'].update(visible=False)
+        for i in tempData['combo']:
+            if i == programValues['List']:
+                window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
                 break
+        
+        if window['COL SETTINGS'].metadata == {'visible': True}:
+            window['COL SETTINGS'].update(visible=False)
+            window['COL SETTINGS'].metadata = {'visible': False}
+
         window['COL EDIT LISTS'].update(visible=True)
         isVisible = window[f'COL EDIT LISTS'].metadata['visible']
         window['COL EDIT LISTS'].metadata = {'visible': not isVisible}
@@ -830,7 +843,20 @@ while True:
         window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
 
     
+    if event == 'Settings':
+        for i in tempData['combo']:
+            if i == programValues['List']:
+                window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
+                break
 
+        if window['COL EDIT LISTS'].metadata == {'visible': True}:
+            window['COL EDIT LISTS'].update(visible=False)
+            window['COL EDIT LISTS'].metadata = {'visible': False}
+
+        window['COL SETTINGS'].update(visible=True)
+        window['COL SETTINGS'].metadata = {'visible': True}
+        window['COL ADD BUTTON 1'].hide_row()
+        window['-COMBO-'].update(value='Settings')
     
 
     

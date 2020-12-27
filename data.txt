@@ -1,5 +1,8 @@
 Settings:
-Colour1: #575757
+BGColour: #575757
+BColour: #ffffff
+TColour1: #abc9cf
+TColour2: #303030
 Data:
 - Today !
 -- Daily (O)

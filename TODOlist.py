@@ -19,7 +19,10 @@ menus = {
 
 programValues = {
                 'List': '',
-                'Colour': ''
+                'BGColour': '',
+                'BColour': '',
+                'TColour1': '',
+                'TColour2': ''
                 }
 
 tempData = {
@@ -65,9 +68,19 @@ def readDataFile():
 
         for i in settings:
             i = i.split()
-            
-            if i[0] == 'Colour1:':
-                programValues['Colour'] = i[1]
+    
+            if i[0] == 'BGColour:':
+                programValues['BGColour'] = i[1]
+                continue
+            if i[0] == 'BColour:':
+                programValues['BColour'] = i[1]
+                continue
+            if i[0] == 'TColour1:':
+                programValues['TColour1'] = i[1]
+                continue
+            if i[0] == 'TColour2:':
+                programValues['TColour2'] = i[1]
+                continue
 
         for i in taskData:
             i = i.split()
@@ -130,7 +143,7 @@ def writeDataFile():
     with open('data.txt', 'w') as f:
 
         lines = ['Settings:' ,'Data:']
-        filesettings = [f"Colour1: {programValues['Colour']}"]
+        filesettings = [f"BGColour: {programValues['BGColour']}"]
         filedata = []
 
         for i in data:
@@ -181,12 +194,17 @@ def writeDataFile():
         f.write('\n'.join(lines))
 
 def colours():
-    colour = programValues['Colour']
-    if colour != '':
-        sg.theme_background_color(colour)
-        sg.theme_element_background_color(colour)
-        sg.theme_text_element_background_color(colour)
-    sg.theme_button_color((None, '#ffffff'))
+    BGColour = programValues['BGColour']
+    BColour = programValues['BColour']
+    TColour1 = programValues['TColour1']
+    TColour2 = programValues['TColour2']
+
+    sg.theme_background_color(BGColour)
+    sg.theme_element_background_color(BGColour)
+    sg.theme_text_element_background_color(BGColour)
+    sg.theme_button_color((TColour2, BColour))
+    sg.theme_text_color(TColour1)
+    sg.theme_input_text_color(TColour2)
 
 def collapse(layout, key, isVisible):
     """
@@ -320,23 +338,21 @@ def createRowOfColumns(listFocused):
         [sg.B('Move up', k='List::MOVEUP', image_filename='white.png', image_size=(110, 30), pad=((15, 11), (6, 0))), sg.B('Move down', k='List::MOVEDOWN', image_filename='white.png', image_size=(110, 30), pad=((5, 0), (6, 0)))]
     ]
 
-    settingsLayout = [
-        [sg.Text('Colour'), sg.Input(default_text=programValues['Colour'],key='Colour', size=(21,1)), sg.ColorChooserButton('Color...', target=(sg.ThisRow, -1))],
-        [sg.B('Apply', pad=(10, 100))]
+    frameLayout = [
+        [sg.CB('', pad=((10, 0),(3,3))), sg.T('Colour                                   ', pad=(0,0))],
+        [sg.T(symbol(True), pad=((10, 0),(3,3))), sg.T('Settings')], [collapse([[sg.CB('', pad=((10, 0),(3,3))), sg.T('Apply', pad=(0,0))]], None, True)]
     ]
 
-    if programValues['List'] == 'EDITING':
-        editingListsVisible = True
-    else:
-        editingListsVisible = False
+    settingsLayout = [
+        [sg.Text('Background Colour'), sg.Input(default_text=programValues['BGColour'], key='BGColour', size=(9,1)), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=programValues['BColour'], key='BColour', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=programValues['TColour1'], key='TColour1', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=programValues['TColour2'], key='TColour2', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Frame('Result', frameLayout, pad=(25,100), title_color=programValues['TColour1'])]
+    ]
 
-    if programValues['List'] == 'SETTINGS':
-        inSettings = True
-    else:
-        inSettings = False
-    
-    listsColumns.append(sg.Column(layout=editListsLayout, visible=editingListsVisible, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': editingListsVisible}))
-    listsColumns.append(sg.Column(layout=settingsLayout, visible=inSettings, size=(300,400), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': inSettings}))
+    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'EDITING' else False}))
+    listsColumns.append(sg.Column(layout=settingsLayout, visible=True if programValues['List'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'SETTINGS' else False}))
     return(listsColumns)
 
 def createLayout(listFocused):
@@ -353,11 +369,19 @@ def createLayout(listFocused):
         addButtonsVisible = True
         comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'EDITING' else tempData['combo'][0])]
 
+    addButtonsCol = [
+        [sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0, visible=addButtonsVisible), sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0, visible=addButtonsVisible)]
+    ]
+
+    applyRevertButtonsCol = [
+        [sg.B('Apply', size=(15,2), border_width=0, pad=((0,0),(0,0))), sg.B('Revert', size=(15, 2), border_width=0, pad=((18,0),(0,0)))]
+    ]
+
     return [
             [sg.Menu(menus['Menu Bar'])],
             [sg.Combo(tempData['combo'],default_value=comboDefaultValue , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
-            [sg.Col(layout=[[sg.Button('Add Task', image_size=(125,35), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), image_filename='white.png', border_width=0, button_color=('black', 'black'), visible=addButtonsVisible)]], k='COL ADD BUTTON 1'), sg.Col([[sg.Button('Add Section', image_size=(125,35), key='Section::ADD(BUTTON)', pad=((10,0),(0,0)), image_filename='white.png', border_width=0, button_color=('black', 'black'), visible=addButtonsVisible)]], k='COL ADD BUTTON 2')]
+            [sg.Col(addButtonsCol, k='COL ADD BUTTONS', visible=False if programValues['List'] == 'SETTINGS' else True), sg.Col(applyRevertButtonsCol, k='COL APPLY REVERT BUTTONS', visible=True if programValues['List'] == 'SETTINGS' else False)]
         ]
 
 def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
@@ -592,7 +616,10 @@ def getTxt(msg):
     return sg.popup_get_text(msg, location=loc)
 
 def applySettings():
-    programValues['Colour'] = values['Colour']
+    programValues['BGColour'] = values['BGColour']
+    programValues['BColour'] = values['BColour']
+    programValues['TColour1'] = values['TColour1']
+    programValues['TColour2'] = values['TColour2']
     colours()
     createNewWindow()
 
@@ -681,7 +708,7 @@ while True:
 
         window['Task::ADD(BUTTON)'].update(visible=True)
         window['Section::ADD(BUTTON)'].update(visible=True)
-        window['COL ADD BUTTON 1'].unhide_row()
+        window['COL ADD BUTTONS'].unhide_row()
 
 
     # Adding an element to the end of the list or section
@@ -817,7 +844,7 @@ while True:
         window['COL EDIT LISTS'].update(visible=True)
         isVisible = window[f'COL EDIT LISTS'].metadata['visible']
         window['COL EDIT LISTS'].metadata = {'visible': not isVisible}
-        window['COL ADD BUTTON 1'].hide_row()
+        window['COL ADD BUTTONS'].hide_row()
         window['-COMBO-'].update(value='Editing Lists...')
 
     if 'List::MOVE' in event:
@@ -866,7 +893,8 @@ while True:
         programValues['List'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)
         window['COL SETTINGS'].metadata = {'visible': True}
-        window['COL ADD BUTTON 1'].hide_row()
+        window['COL APPLY REVERT BUTTONS'].update(visible=True)
+        window['COL ADD BUTTONS'].update(visible=False)
         window['-COMBO-'].update(value='Settings')
     
     if event == 'Apply':

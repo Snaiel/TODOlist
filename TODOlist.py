@@ -636,7 +636,7 @@ def startup():
     
 startup()
 
-window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True)
+window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True, icon='icon.ico')
 bindRightClick()
 
 

@@ -1,4 +1,5 @@
 import PySimpleGUI as sg
+from datetime import datetime
 
 #  __     __         _       _     _           
 #  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
@@ -19,6 +20,7 @@ menus = {
 
 programValues = {
                 'List': '',
+                'TimeToResetDaily': '',
                 'BGColour': '',
                 'BColour': '',
                 'TColour1': '',
@@ -27,6 +29,7 @@ programValues = {
 
 tempData = {
             'ListIndex': '',
+            'LastClosed': '',
             'elementKeys': [],
             'sectionsOpen': {},
             'combo': [],
@@ -75,6 +78,8 @@ def readDataFile():
         for i in settings:
             i = i.split()
     
+            if i[0] == 'TimeToResetDaily:':
+                programValues['TimeToResetDaily'] = i[1]
             if i[0] == 'BGColour:':
                 programValues['BGColour'] = i[1]
                 continue
@@ -90,6 +95,10 @@ def readDataFile():
 
         for i in taskData:
             i = i.split()
+
+            if i[0] == 'LastClosed:':
+                tempData['LastClosed'] = ' '.join(i[1:3])
+                #print(tempData['LastClosed'])
 
             if previousLine != None and previousLine[0] == '---' and i[0] != '---':
                 if i[0] == '----':
@@ -198,6 +207,9 @@ def writeDataFile():
         lines.extend(filedata)
 
         f.write('\n'.join(lines))
+
+def resetDaily():
+    pass
 
 def colours():
     BGColour = programValues['BGColour']
@@ -651,6 +663,15 @@ def revertSettings():
 def startup():
     readDataFile()
 
+    # Check whether to reset the daily section
+    whenToReset = f"{datetime.now().strftime(r'%d/%m/%Y')} {programValues['TimeToResetDaily']}"
+    dateTimeNow = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
+
+    if tempData['LastClosed'] < whenToReset:
+        if dateTimeNow > whenToReset:
+            resetDaily()
+
+    # Sets the list index
     for i in data:
         if i[0] == programValues['List']:
             tempData['ListIndex'] = str(data.index(i)).zfill(2)

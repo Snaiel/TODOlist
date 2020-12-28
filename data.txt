@@ -1,9 +1,11 @@
 Settings:
-BGColour: #575757
-BColour: #ffffff
-TColour1: #abc9cf
-TColour2: #303030
+    TimeToResetDaily: 00:20:00
+    BGColour: #575757
+    BColour: #ffffff
+    TColour1: #abc9cf
+    TColour2: #303030
 Data:
+    LastClosed: 28/12/2020 18:00:00
 - Today !
 -- Daily (O)
 --- Cry (F)

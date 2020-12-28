@@ -31,7 +31,13 @@ tempData = {
             'sectionsOpen': {},
             'combo': [],
             'latestElementRightClicked': '',
-            'listSelectedToEdit': ''
+            'listSelectedToEdit': '',
+            'previousSettings': {
+                'BGColour': '',
+                'BColour': '',
+                'TColour1': '',
+                'TColour2': ''
+                }
             }
 
 data = []
@@ -616,10 +622,29 @@ def getTxt(msg):
     return sg.popup_get_text(msg, location=loc)
 
 def applySettings():
+    previousSettings = tempData['previousSettings']
+
+    previousSettings['BGColour'] = programValues['BGColour']
+    previousSettings['BColour'] = programValues['BColour']
+    previousSettings['TColour1'] = programValues['TColour1']
+    previousSettings['TColour2'] = programValues['TColour2']
+
     programValues['BGColour'] = values['BGColour']
     programValues['BColour'] = values['BColour']
     programValues['TColour1'] = values['TColour1']
     programValues['TColour2'] = values['TColour2']
+
+    colours()
+    createNewWindow()
+
+def revertSettings():
+    previousSettings = tempData['previousSettings']
+
+    programValues['BGColour'] = previousSettings['BGColour']
+    programValues['BColour'] = previousSettings['BColour']
+    programValues['TColour1'] = previousSettings['TColour1']
+    programValues['TColour2'] = previousSettings['TColour2']
+
     colours()
     createNewWindow()
 
@@ -643,7 +668,7 @@ bindRightClick()
 def createNewWindow():
     tempData['elementKeys'].clear()
     global window
-    window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
+    window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
     # if programValues['List'] == 'EDITING':
     #     window1['Task::ADD(BUTTON)'].hide_row()
     window.Close()
@@ -899,6 +924,8 @@ while True:
     
     if event == 'Apply':
         applySettings()
+    elif event == 'Revert':
+        revertSettings()
     
 
 window.close()

@@ -354,7 +354,7 @@ def createRowOfColumns(listFocused):
         [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=programValues['BColour'], key='BColour', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
         [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=programValues['TColour1'], key='TColour1', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
         [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=programValues['TColour2'], key='TColour2', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Frame('Result', frameLayout, pad=(25,100), title_color=programValues['TColour1'])]
+        [sg.Frame('Result', frameLayout, pad=(25,130), title_color=programValues['TColour1'])]
     ]
 
     listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'EDITING' else False}))

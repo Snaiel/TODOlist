@@ -5,10 +5,12 @@ Settings:
     TColour1: #abc9cf
     TColour2: #303030
 Data:
-    LastClosed: 28/12/2020 18:00:00
+    LastClosed: 28/12/2020 10:00:00
 - Today !
 -- Daily (O)
 --- Cry (F)
+--- Study (O)
+---- Maths (T)
 --- Protien shake (T)
 -- Methods (T)
 -- Physics (T)

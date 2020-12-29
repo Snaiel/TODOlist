@@ -209,7 +209,25 @@ def writeDataFile():
         f.write('\n'.join(lines))
 
 def resetDaily():
-    pass
+    for todolist in data:
+        for content in todolist:
+            if type(content) is list and 'Daily' in content[0]:
+                for contentInSection in content:
+                    if content.index(contentInSection) == 0:
+                        continue
+
+                    if type(contentInSection) is dict:
+                        for key in contentInSection:
+                            contentInSection[key] = False
+
+                    if type(contentInSection) is list:
+                        for subTask in contentInSection:
+                            if contentInSection.index(subTask) == 0:
+                                continue
+
+                            if type(subTask) is dict:
+                                for key in subTask:
+                                    subTask[key] = False
 
 def colours():
     BGColour = programValues['BGColour']
@@ -362,11 +380,12 @@ def createRowOfColumns(listFocused):
     ]
 
     settingsLayout = [
-        [sg.Text('Background Colour'), sg.Input(default_text=programValues['BGColour'], key='BGColour', size=(9,1)), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Reset Daily at', pad=(6, 20)), sg.Input(default_text=programValues['TimeToResetDaily'], key='TimeToResetDaily', size=(18,1), pad=((31,5),(0,0)))],
+        [sg.Text('Background Colour', pad=(6,0)), sg.Input(default_text=programValues['BGColour'], key='BGColour', size=(9,1), pad=((3,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
         [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=programValues['BColour'], key='BColour', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
         [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=programValues['TColour1'], key='TColour1', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
         [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=programValues['TColour2'], key='TColour2', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Frame('Result', frameLayout, pad=(25,130), title_color=programValues['TColour1'])]
+        [sg.Frame('Result', frameLayout, pad=(25,50), title_color=programValues['TColour1'])]
     ]
 
     listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'EDITING' else False}))
@@ -634,7 +653,27 @@ def getTxt(msg):
     return sg.popup_get_text(msg, location=loc)
 
 def applySettings():
+    import re
+
+    currentLoc = window.CurrentLocation()
+
     previousSettings = tempData['previousSettings']
+
+    if re.match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['TimeToResetDaily']):
+        previousSettings['TimeToResetDaily'] = programValues['TimeToResetDaily']
+        programValues['TimeToResetDaily'] = values['TimeToResetDaily']
+    else:
+        loc = (currentLoc[0] - 5, currentLoc[1] + 100)
+        sg.popup('Please use correct format for time (HH:MM:SS)', location=loc)
+        return
+
+    for colourString in (values['BGColour'], values['BColour'], values['TColour1'], values['TColour2']):
+        if re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', colourString):
+            pass
+        else:
+            loc = (currentLoc[0] - 30, currentLoc[1] + 100)
+            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colourString}', location=loc, line_width=100)
+            return
 
     previousSettings['BGColour'] = programValues['BGColour']
     previousSettings['BColour'] = programValues['BColour']
@@ -645,6 +684,7 @@ def applySettings():
     programValues['BColour'] = values['BColour']
     programValues['TColour1'] = values['TColour1']
     programValues['TColour2'] = values['TColour2']
+        
 
     colours()
     createNewWindow()

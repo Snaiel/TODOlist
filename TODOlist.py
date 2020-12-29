@@ -36,6 +36,7 @@ tempData = {
             'latestElementRightClicked': '',
             'listSelectedToEdit': '',
             'previousSettings': {
+                'TimeToResetDaily': '',
                 'BGColour': '',
                 'BColour': '',
                 'TColour1': '',
@@ -773,8 +774,6 @@ while True:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
             sg.popup('List already exists!', location=loc)
-
-        
 
     # Change which list your on
     if event == '-COMBO-':  

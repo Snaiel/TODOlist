@@ -1,17 +1,17 @@
 Settings:
-    TimeToResetDaily: 00:20:00
+    TimeToResetDaily: 01:15:00
     BGColour: #575757
     BColour: #ffffff
     TColour1: #abc9cf
     TColour2: #303030
 Data:
-    LastClosed: 28/12/2020 10:00:00
+    WhenLastClosed: 30/12/2020 01:15:54
 - Today !
 -- Daily (O)
 --- Cry (F)
 --- Study (O)
----- Maths (T)
---- Protien shake (T)
+---- Maths (F)
+--- Protien shake (F)
 -- Methods (T)
 -- Physics (T)
 -- Section 1 (O)

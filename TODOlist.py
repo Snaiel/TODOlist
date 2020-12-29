@@ -20,7 +20,6 @@ menus = {
 
 programValues = {
                 'List': '',
-                'LastClosed': '',
                 'TimeToResetDaily': '',
                 'BGColour': '',
                 'BColour': '',
@@ -30,12 +29,13 @@ programValues = {
 
 tempData = {
             'ListIndex': '',
-            'LastClosed': '',
+            'WhenLastClosed': '',
             'elementKeys': [],
             'sectionsOpen': {},
             'combo': [],
             'latestElementRightClicked': '',
             'listSelectedToEdit': '',
+            'lastListOn': '',
             'previousSettings': {
                 'TimeToResetDaily': '',
                 'BGColour': '',
@@ -98,9 +98,8 @@ def readDataFile():
         for i in taskData:
             i = i.split()
 
-            if i[0] == 'LastClosed:':
-                tempData['LastClosed'] = ' '.join(i[1:3])
-                #print(tempData['LastClosed'])
+            if i[0] == 'WhenLastClosed:':
+                tempData['WhenLastClosed'] = ' '.join(i[1:3])
 
             if previousLine != None and previousLine[0] == '---' and i[0] != '---':
                 if i[0] == '----':
@@ -168,7 +167,7 @@ def writeDataFile():
                             f"    TColour2: {programValues['TColour2']}"
                         ]
         filedata = [
-            f"    LastClosed: {programValues['LastClosed']}"
+            f"    WhenLastClosed: {tempData['WhenLastClosed']}"
         ]
 
         for i in data:
@@ -717,7 +716,7 @@ def startup():
     whenToReset = f"{datetime.now().strftime(r'%d/%m/%Y')} {programValues['TimeToResetDaily']}"
     dateTimeNow = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
 
-    if tempData['LastClosed'] < whenToReset:
+    if tempData['WhenLastClosed'] < whenToReset:
         if dateTimeNow > whenToReset:
             resetDaily()
 
@@ -758,11 +757,11 @@ while True:
     event, values = window.read()
     print(event, values)
 
-    if event == sg.WIN_CLOSED or event == 'Exit':
-        programValues['LastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
+    if event == sg.WIN_CLOSED:
+        tempData['WhenLastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
         if programValues['List'] in ('EDITINGS', 'SETTINGS'):
-            programValues['List'] = tempData['combo'][0]
-        #writeDataFile()
+            programValues['List'] = tempData['lastListOn']
+        writeDataFile()
         break
 
     # Add a to do list
@@ -929,6 +928,8 @@ while True:
 
     # Show Edit Lists Page
     if event == 'Lists':
+        tempData['lastListOn'] = programValues['List']
+
         for i in tempData['combo']:
             if i == programValues['List']:
                 window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
@@ -978,6 +979,8 @@ while True:
 
     
     if event == 'Settings':
+        tempData['lastListOn'] = programValues['List']
+
         for i in tempData['combo']:
             if i == programValues['List']:
                 window[f"COL{tempData['combo'].index(i)}"].update(visible=False)

@@ -20,6 +20,7 @@ menus = {
 
 programValues = {
                 'List': '',
+                'LastClosed': '',
                 'TimeToResetDaily': '',
                 'BGColour': '',
                 'BColour': '',
@@ -159,8 +160,16 @@ def writeDataFile():
     with open('data.txt', 'w') as f:
 
         lines = ['Settings:' ,'Data:']
-        filesettings = [f"BGColour: {programValues['BGColour']}"]
-        filedata = []
+        filesettings = [
+                            f"    TimeToResetDaily: {programValues['TimeToResetDaily']}", 
+                            f"    BGColour: {programValues['BGColour']}", 
+                            f"    BColour: {programValues['BColour']}",
+                            f"    TColour1: {programValues['TColour1']}",
+                            f"    TColour2: {programValues['TColour2']}"
+                        ]
+        filedata = [
+            f"    LastClosed: {programValues['LastClosed']}"
+        ]
 
         for i in data:
             todolist = i
@@ -750,6 +759,9 @@ while True:
     print(event, values)
 
     if event == sg.WIN_CLOSED or event == 'Exit':
+        programValues['LastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
+        if programValues['List'] in ('EDITINGS', 'SETTINGS'):
+            programValues['List'] = tempData['combo'][0]
         #writeDataFile()
         break
 

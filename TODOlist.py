@@ -12,6 +12,7 @@ SYMBOL_DOWN =  '▼'
 
 menus = {
         'Menu Bar': [['Edit', ['Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
+        'Disabled Menu Bar': [['Edit', ['!Add', ['Task'], ['!Delete', ['List'], 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
@@ -424,7 +425,7 @@ def createLayout(listFocused):
     ]
 
     return [
-            [sg.Menu(menus['Menu Bar'])],
+            [sg.Menu(menus['Menu Bar'], key='-MENU BAR-')],
             [sg.Combo(tempData['combo'],default_value=comboDefaultValue , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
             [sg.Col(addButtonsCol, k='COL ADD BUTTONS', visible=False if programValues['List'] == 'SETTINGS' else True), sg.Col(applyRevertButtonsCol, k='COL APPLY REVERT BUTTONS', visible=True if programValues['List'] == 'SETTINGS' else False)]
@@ -761,7 +762,7 @@ while True:
         tempData['WhenLastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
         if programValues['List'] in ('EDITINGS', 'SETTINGS'):
             programValues['List'] = tempData['lastListOn']
-        writeDataFile()
+        #writeDataFile()
         break
 
     # Add a to do list
@@ -796,11 +797,11 @@ while True:
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
 
-        otherPages = ['EDIT LISTS', 'SETTINGS']
-        for i in otherPages:
+        for i in ['EDIT LISTS', 'SETTINGS']:
             if window[f'COL {i}'].metadata['visible'] == True:
                 window[f'COL {i}'].update(visible=False)
                 window[f'COL {i}'].metadata = {'visible': False}
+                window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
 
         window['Task::ADD(BUTTON)'].update(visible=True)
         window['Section::ADD(BUTTON)'].update(visible=True)
@@ -939,6 +940,8 @@ while True:
             window['COL SETTINGS'].update(visible=False)
             window['COL SETTINGS'].metadata = {'visible': False}
 
+        window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
+
         window['COL EDIT LISTS'].update(visible=True)
         isVisible = window[f'COL EDIT LISTS'].metadata['visible']
         window['COL EDIT LISTS'].metadata = {'visible': not isVisible}
@@ -989,6 +992,8 @@ while True:
         if window['COL EDIT LISTS'].metadata == {'visible': True}:
             window['COL EDIT LISTS'].update(visible=False)
             window['COL EDIT LISTS'].metadata = {'visible': False}
+
+        window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 
         programValues['List'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)

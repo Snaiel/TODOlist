@@ -582,29 +582,31 @@ def delElement(elementKey):
     else:
         elementName = elementKey[22:]
 
+    sectionID = elementKey[6:8]
+
     for i in data:
         if i[0] == programValues['List']:
             for content in i:
-                if type(content) is dict and elementName in content:
+                if type(content) is dict and elementName in content and sectionID == '00':
                     i.remove(content)
                     break
                 elif type(content) is list:
                     for contentInSection in content:
-                        if type(contentInSection) is dict and content.index(contentInSection) == 0 and elementName in contentInSection:
+                        if type(contentInSection) is dict and content.index(contentInSection) == 0 and elementName in contentInSection and sectionID == '00':
                             i.remove(content)
                             break
                         elif type(contentInSection) is list:
                             for contentInSubSection in contentInSection:
-                                if contentInSection.index(contentInSubSection) == 0 and elementName in contentInSubSection:
+                                if contentInSection.index(contentInSubSection) == 0 and elementName in contentInSubSection and sectionID == '01':
                                     content.remove(contentInSection)
                                     break
-                                elif elementName in contentInSubSection:
+                                elif elementName in contentInSubSection  and sectionID == '02':
                                     contentInSection.remove(contentInSubSection)
                                     break
                             else:
                                 continue
                             break
-                        elif type(contentInSection) is dict and elementName in contentInSection:
+                        elif type(contentInSection) is dict and elementName in contentInSection and sectionID == '01':
                             content.remove(contentInSection)
                             break
                     else:

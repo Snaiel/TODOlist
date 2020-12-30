@@ -880,9 +880,7 @@ while True:
             window[elementKey].Update(value=not checked)
         else:
             eventName = event[23:]
-
-        #print(eventName)
-
+            
         updateData('Task', eventName)
     
     # Checking what element the user right clicked
@@ -948,6 +946,7 @@ while True:
         window['COL ADD BUTTONS'].hide_row()
         window['-COMBO-'].update(value='Editing Lists...')
 
+    # Move a list up or down
     if 'List::MOVE' in event:
         combo = tempData['combo']
         listName = ''
@@ -980,7 +979,7 @@ while True:
         window['-COMBO-'].update(values=tempData['combo'])
         window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
 
-    
+    # Settings Page
     if event == 'Settings':
         tempData['lastListOn'] = programValues['List']
 
@@ -1002,6 +1001,7 @@ while True:
         window['COL ADD BUTTONS'].update(visible=False)
         window['-COMBO-'].update(value='Settings')
     
+    # Applying or Reverting Settings
     if event == 'Apply':
         applySettings()
     elif event == 'Revert':

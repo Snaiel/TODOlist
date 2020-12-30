@@ -13,9 +13,9 @@ SYMBOL_DOWN =  '▼'
 menus = {
         'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
-        'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
+        'Task 0 & 1': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
-        'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
+        'Task 2': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT'], 'Rename', 'Delete']],
         'Section 2': ['Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO'], 'Rename', 'Delete']]
         }
 
@@ -37,6 +37,7 @@ tempData = {
             'latestElementRightClicked': '',
             'listSelectedToEdit': '',
             'lastListOn': '',
+            'elementCopied': ('', None),
             'previousSettings': {
                 'TimeToResetDaily': '',
                 'BGColour': '',
@@ -460,12 +461,12 @@ def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
                                 contentInSection.append(elementToAdd)
                                 return createNewWindow()
 
-def insertElement(elementType, name, elementNameOfInsertPos, hierarchyIndex):
+def insertElement(elementType, name, elementNameOfInsertPos, hierarchyIndex, checked=False):
 
     if name == '' or name is None:
         return 'Nevermind'
 
-    elementToInsert = {name: False}
+    elementToInsert = {name: checked}
     if elementType == 'Section':
         elementToInsert = [{name: False}]
 
@@ -840,7 +841,8 @@ while True:
 
         hierarchyIndex = tempData['latestElementRightClicked'][3:5]
         elementType = event[:-8]
-        elementName = getTxt(f'{elementType} Name:')
+        elementName = tempData['elementCopied'][0] if "Paste" in event and tempData['elementCopied'][0] is not None else getTxt(f'{elementType} Name:')
+        #elementName = getTxt(f'{elementType} Name:')
 
         if tempData['latestElementRightClicked'][6:7] == 'T':
             elementNameOfInsertPos = tempData['latestElementRightClicked'][16:]
@@ -851,7 +853,7 @@ while True:
             currentLoc = window.CurrentLocation()
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
-            insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex)
+            insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex, checked=tempData['elementCopied'][1] if tempData['elementCopied'] in (True, False) else False)
 
     # Opening and closing sections
     if 'SECTION' in event and 'RIGHT CLICK' not in event:
@@ -895,6 +897,20 @@ while True:
         event = window[elementKey].user_bind_event
         window[elementKey]._RightClickMenuCallback(event)
         event = elementKey
+
+    # Copy
+    if 'Copy' in event:
+        element = tempData['latestElementRightClicked']
+        elementKey = ''
+        
+        if 'TASK' in event:
+            elementKey = element.split(' ')
+            elementKey.remove('TEXT')
+            elementKey.insert(4, 'CHECKBOX')
+            elementKey = ' '.join(elementKey)
+
+        tempData['elementCopied'] = (element[19:], values[elementKey])
+        print(tempData['elementCopied'])
 
     # Rename
     if event == 'Rename':

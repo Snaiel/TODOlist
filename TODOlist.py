@@ -406,7 +406,7 @@ def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
 
-    if listFocused == 'EDITING' or listFocused == 'SETTINGS':
+    if listFocused in ('EDITING', 'SETTINGS'):
         addButtonsVisible = False
         if listFocused == 'EDITING':
             comboDefaultValue = 'Editing Lists...'
@@ -417,7 +417,7 @@ def createLayout(listFocused):
         comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'EDITING' else tempData['combo'][0])]
 
     addButtonsCol = [
-        [sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0, visible=addButtonsVisible), sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0, visible=addButtonsVisible)]
+        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0, visible=addButtonsVisible)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0, visible=addButtonsVisible))]
     ]
 
     applyRevertButtonsCol = [
@@ -772,11 +772,6 @@ while True:
         if listName is not None and listName not in tempData['combo']:
             data.append([listName])
 
-            if 'BUTTON' in event:
-                programValues['List'] = 'EDITING'
-            else:
-                programValues['List'] = listName
-
             createCombo()
             tempData['ListIndex'] = str(tempData['combo'].index(listName)).zfill(2)
 
@@ -942,6 +937,7 @@ while True:
 
         window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 
+        programValues['List'] = 'EDITING'
         window['COL EDIT LISTS'].update(visible=True)
         isVisible = window[f'COL EDIT LISTS'].metadata['visible']
         window['COL EDIT LISTS'].metadata = {'visible': not isVisible}

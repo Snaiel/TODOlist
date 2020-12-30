@@ -797,10 +797,13 @@ while True:
                 print(i)
                 window[f'COL {i}'].update(visible=False)
                 window[f'COL {i}'].metadata = {'visible': False}
+
+                if i == 'SETTINGS':
+                    window['COL APPLY REVERT BUTTONS'].update(visible=False)
+
                 window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
 
-        window['Task::ADD(BUTTON)'].update(visible=True)
-        window['Section::ADD(BUTTON)'].update(visible=True)
+        window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
 
 

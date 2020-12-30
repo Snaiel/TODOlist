@@ -11,8 +11,8 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Edit', ['Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
-        'Disabled Menu Bar': [['Edit', ['!Add', ['Task'], ['!Delete', ['List'], 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
+        'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Insert', ['Task::INSERT', 'Section::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Insert', ['Task::INSERT'], 'Rename', 'Delete']],
@@ -756,7 +756,7 @@ def createNewWindow():
   
 while True:             
     event, values = window.read()
-    print(event, values)
+    #print(event, values)
 
     if event == sg.WIN_CLOSED:
         tempData['WhenLastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
@@ -794,6 +794,7 @@ while True:
 
         for i in ['EDIT LISTS', 'SETTINGS']:
             if window[f'COL {i}'].metadata['visible'] == True:
+                print(i)
                 window[f'COL {i}'].update(visible=False)
                 window[f'COL {i}'].metadata = {'visible': False}
                 window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])

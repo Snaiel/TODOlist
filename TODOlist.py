@@ -377,11 +377,12 @@ def createRowOfColumns(listFocused):
         listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,390), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
     
     editListsLayout = [
-        [sg.Listbox(key='LISTS LISTBOX', values=tuple(tempData['combo']), size=(32,10), pad=(15,10), enable_events=True)],
+        [sg.Listbox(key='LISTS LISTBOX', values=tuple(tempData['combo']), size=(32,10), pad=(16,10), enable_events=True)],
         [sg.B('NONE', focus=True, visible=False)],
-        [sg.B('Add', k='List::ADD(BUTTON)', image_filename='white.png', image_size=(240, 30), pad=(15, 8))],
-        [sg.B('Rename', k='List::RENAME', image_filename='white.png', image_size=(110,30), pad=((15, 11), (0, 0))), sg.B('Delete', k='List::DELETE', image_filename='white.png', image_size=(110,30))],
-        [sg.B('Move up', k='List::MOVEUP', image_filename='white.png', image_size=(110, 30), pad=((15, 11), (6, 0))), sg.B('Move down', k='List::MOVEDOWN', image_filename='white.png', image_size=(110, 30), pad=((5, 0), (6, 0)))]
+        [sg.B('Add', k='List::ADD(BUTTON)', size=(28,2), pad=(22, 8), border_width=0)],
+        [sg.B('Rename', k='List::RENAME', size=(13, 2), pad=((22, 5), (0, 0)), border_width=0), sg.B('Delete', k='List::DELETE', size=(13, 2), border_width=0)],
+        [sg.B('Move up', k='List::MOVEUP', size=(13, 2), pad=((22, 5), (6, 0)), border_width=0), sg.B('Move down', k='List::MOVEDOWN', size=(13, 2), pad=((5, 0), (6, 0)), border_width=0)],
+        [sg.B('Undo', k='List::UNDO', size=(13, 2), pad=((22, 5), (8, 0)), border_width=0), sg.B('Redo', k='List::REDO', size=(13, 2), pad=((5, 0), (8, 0)), border_width=0)]
     ]
 
     frameLayout = [
@@ -998,6 +999,7 @@ while True:
         window['COL SETTINGS'].update(visible=True)
         window['COL SETTINGS'].metadata = {'visible': True}
         window['COL APPLY REVERT BUTTONS'].update(visible=True)
+        window['COL APPLY REVERT BUTTONS'].unhide_row()
         window['COL ADD BUTTONS'].update(visible=False)
         window['-COMBO-'].update(value='Settings')
     

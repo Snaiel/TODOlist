@@ -844,12 +844,11 @@ while True:
         hierarchyIndex = tempData['latestElementRightClicked'][3:5]
         elementType = event[:-8]
         elementName = tempData['elementCopied'][0] if "Paste" in event and tempData['elementCopied'][0] is not None else getTxt(f'{elementType} Name:')
-        #elementName = getTxt(f'{elementType} Name:')
 
-        if tempData['latestElementRightClicked'][6:7] == 'T':
+        if tempData['latestElementRightClicked'][9:10] == 'T':
             elementNameOfInsertPos = tempData['latestElementRightClicked'][16:]
         else:
-            elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
+            elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
 
         if f"{tempData['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()

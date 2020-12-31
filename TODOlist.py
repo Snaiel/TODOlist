@@ -14,7 +14,7 @@ menus = {
         'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
+        'Section 0 & 1': ['&Right', ['&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT'], 'Rename', 'Delete']],
         'Section 2': ['Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO'], 'Rename', 'Delete']]
         }
@@ -853,19 +853,30 @@ while True:
     if '::INSERT' in event:
 
         hierarchyIndex = tempData['latestElementRightClicked'][3:5]
-        elementType = event[:-8]
-        elementName = tempData['elementCopied'][0] if "Paste" in event and tempData['elementCopied'][0] is not None else getTxt(f'{elementType} Name:')
+        sectionID = tempData['latestElementRightClicked'][6:8]
+        elementType = ''
+        elementName = ''
+
+        if 'Paste' in event:
+            elementType = 'Task' if tempData['elementCopied'][1] in (True, False) else 'Section'
+            elementName = tempData['elementCopied'][0]
+        else:
+            elementType = event[:-8]
+            elementName = getTxt(f'{elementType} Name:')
 
         if tempData['latestElementRightClicked'][9:10] == 'T':
-            elementNameOfInsertPos = tempData['latestElementRightClicked'][16:]
+            elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
         else:
             elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
 
-        if f"{tempData['ListIndex']} {hierarchyIndex} {elementType.upper()} {elementName}" in tempData['elementKeys']:
+        #print(tempData['elementKeys'])
+        #print(f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}")
+
+        if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
             sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
-            insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex, checked=tempData['elementCopied'][1] if tempData['elementCopied'] in (True, False) else False)
+            insertElement(elementType, elementName, elementNameOfInsertPos, hierarchyIndex, checked=tempData['elementCopied'][1] if tempData['elementCopied'][1] in (True, False) else False)
 
     # Opening and closing sections
     if 'SECTION' in event and 'RIGHT CLICK' not in event:

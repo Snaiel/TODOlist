@@ -7,8 +7,10 @@ Settings:
 Data:
     WhenLastClosed: 30/12/2020 01:15:54
 - Today !
+-- Issues (C)
 -- Daily (O)
 --- Cry (F)
+--- Read (C)
 --- Study (O)
 ---- Maths (F)
 --- Protien shake (F)

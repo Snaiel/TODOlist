@@ -102,6 +102,7 @@ def readDataFile():
 
             if i[0] == 'WhenLastClosed:':
                 tempData['WhenLastClosed'] = ' '.join(i[1:3])
+                
 
             if previousLine != None and previousLine[0] == '---' and i[0] != '---':
                 if i[0] == '----':
@@ -119,12 +120,22 @@ def readDataFile():
                 subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
 
             if i[0] == '---':
+
+                if i[-1] not in tasks and previousLine[0] == '---' and previousLine[-1] not in tasks:
+                    section.append(subsection.copy())
+                    subsection.clear() 
+
                 if i[-1] in tasks:
                     section.append({' '.join(i[1:-1]): booleans[i[-1]]})
                 else:
                     subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
 
             if i[0] == '--':
+
+                if i[-1] not in tasks and previousLine[0] == '--' and previousLine[-1] not in tasks:
+                    listData.append(section.copy())
+                    section.clear() 
+
                 if i[-1] in tasks:
                     listData.append({' '.join(i[1:-1]): booleans[i[-1]]})
                 else:

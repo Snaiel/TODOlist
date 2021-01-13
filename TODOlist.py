@@ -1,22 +1,29 @@
 import PySimpleGUI as sg
 from datetime import datetime
 
-#  __     __         _       _     _           
-#  \ \   / /_ _ _ __(_) __ _| |__ | | ___  ___ 
-#   \ \ / / _` | '__| |/ _` | '_ \| |/ _ \/ __|
-#    \ V / (_| | |  | | (_| | |_) | |  __/\__ \
-#     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___||___/
 
+
+
+
+#  /$$    /$$                     /$$           /$$       /$$                    
+# | $$   | $$                    |__/          | $$      | $$                    
+# | $$   | $$  /$$$$$$   /$$$$$$  /$$  /$$$$$$ | $$$$$$$ | $$  /$$$$$$   /$$$$$$$
+# |  $$ / $$/ |____  $$ /$$__  $$| $$ |____  $$| $$__  $$| $$ /$$__  $$ /$$_____/
+#  \  $$ $$/   /$$$$$$$| $$  \__/| $$  /$$$$$$$| $$  \ $$| $$| $$$$$$$$|  $$$$$$ 
+#   \  $$$/   /$$__  $$| $$      | $$ /$$__  $$| $$  | $$| $$| $$_____/ \____  $$
+#    \  $/   |  $$$$$$$| $$      | $$|  $$$$$$$| $$$$$$$/| $$|  $$$$$$$ /$$$$$$$/
+#     \_/     \_______/|__/      |__/ \_______/|_______/ |__/ \_______/|_______/   
+                                                                                                                                                      
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['Copy::SECTION', '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']],
         'Task 2': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 2': ['Right', ['&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
+        'Section 2': ['Right', ['Copy::SECTION', '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
         }
 
 programValues = {
@@ -51,11 +58,31 @@ data = []
 
 
 
-#   _____                 _   _                 
-#  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___ 
-#  | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
-#  |  _|| |_| | | | | (__| |_| | (_) | | | \__ \
-#  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  /$$$$$$$$                                 /$$     /$$                              
+# | $$_____/                                | $$    |__/                              
+# | $$       /$$   /$$ /$$$$$$$   /$$$$$$$ /$$$$$$   /$$  /$$$$$$  /$$$$$$$   /$$$$$$$
+# | $$$$$   | $$  | $$| $$__  $$ /$$_____/|_  $$_/  | $$ /$$__  $$| $$__  $$ /$$_____/
+# | $$__/   | $$  | $$| $$  \ $$| $$        | $$    | $$| $$  \ $$| $$  \ $$|  $$$$$$ 
+# | $$      | $$  | $$| $$  | $$| $$        | $$ /$$| $$| $$  | $$| $$  | $$ \____  $$
+# | $$      |  $$$$$$/| $$  | $$|  $$$$$$$  |  $$$$/| $$|  $$$$$$/| $$  | $$ /$$$$$$$/
+# |__/       \______/ |__/  |__/ \_______/   \___/  |__/ \______/ |__/  |__/|_______/
 
 def readDataFile():
     tasks = ['(T)', '(F)']
@@ -484,15 +511,10 @@ def bindRightClick():
         elementKey.insert(4, 'TEXT')
         window[' '.join(elementKey)].bind('<Button-3>', ' +RIGHT CLICK+')
 
-def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
-
-    if name == '' or name is None:
-        return 'Nevermind'
-
-    elementToAdd = {name: False}
-    if elementType == 'Section':
-        elementToAdd = [{name: False}]
-
+def addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex):
+    print(elementToAdd)
+    if elementToAdd is None:
+        return
     for i in data:
         currentList = programValues['List']
         if i[0] == currentList:
@@ -509,18 +531,16 @@ def addElement(elementType, name, sectionNameToAddTo, hierarchyIndex):
                     if type(content) is list:
                         for contentInSection in content:
                             if type(contentInSection) is list and sectionNameToAddTo in contentInSection[0]:
-                                contentInSection.append(elementToAdd)
+                                if type(elementToAdd) is tuple:
+                                    for task in elementToAdd:
+                                        contentInSection.append(task)
+                                else:
+                                    contentInSection.append(elementToAdd)
                                 return createNewWindow()
 
-def insertElement(elementToInsert, name, elementNameOfInsertPos, hierarchyIndex, sectionID):
-
-    if name == '' or name is None:
-        return 'Nevermind'
-
-    elementToInsert = {name: False}
-    if elementType == 'Section':
-        elementToInsert = [{name: False}]
-
+def insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID):
+    if elementToInsert is None:
+        return
     localSectionID = 0
     
     for todolist in data:
@@ -546,8 +566,13 @@ def insertElement(elementToInsert, name, elementNameOfInsertPos, hierarchyIndex,
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
                         localSectionID += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if elementType == 'Task' and elementNameOfInsertPos in task and int(sectionID) == localSectionID:
-                                subsection.insert(subsection.index(task), elementToInsert)
+                            if elementNameOfInsertPos in task and int(sectionID) == localSectionID:
+                                if type(elementToInsert) is tuple:
+                                    for taskToInsert in elementToInsert:
+                                        print(taskToInsert)
+                                        subsection.insert(subsection.index(task), taskToInsert)
+                                else:
+                                    subsection.insert(subsection.index(task), elementToInsert)
                                 return createNewWindow()
 
 def renameElement(newName, elementType, hierarchyIndex, sectionID):
@@ -632,7 +657,6 @@ def renameList(listName, newListName):
 
     print('donee')
 
-
 def delList():
     if window[f'COL EDIT LISTS'].metadata['visible'] == True:
         theList = values['LISTS LISTBOX'][0]
@@ -652,6 +676,23 @@ def delList():
                     break
             return createNewWindow()
 
+def copySection(elementName, hierarchyIndex, sectionID):
+    localSectionID = 0
+    for todolist in data:
+        if todolist[0] == programValues['List']:
+            for section in [section for section in todolist if type(section) is list]:
+                if elementName in section[0] and hierarchyIndex == '00':
+                    hierarchyLevels = 1
+                    if len([x for x in section if type(x) is list]) != 0:
+                        hierarchyLevels = 2
+                    tempData['elementCopied'] = (section, hierarchyLevels)
+                    return
+                localSectionID += 1
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if elementName in subsection[0] and int(sectionID) == localSectionID:
+                        tempData['elementCopied'] = (subsection, 2)
+                        return
+
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
@@ -669,7 +710,7 @@ def applySettings():
         programValues['TimeToResetDaily'] = values['TimeToResetDaily']
     else:
         loc = (currentLoc[0] - 5, currentLoc[1] + 100)
-        sg.popup('Please use correct format for time (HH:MM:SS)', location=loc)
+        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=loc)
         return
 
     for colourString in (values['BGColour'], values['BColour'], values['TColour1'], values['TColour2']):
@@ -742,12 +783,34 @@ def createNewWindow():
     bindRightClick()
 
 
-#   _____                 _     _                   
-#  | ____|_   _____ _ __ | |_  | | ___   ___  _ __  
-#  |  _| \ \ / / _ \ '_ \| __| | |/ _ \ / _ \| '_ \ 
-#  | |___ \ V /  __/ | | | |_  | | (_) | (_) | |_) |
-#  |_____| \_/ \___|_| |_|\__| |_|\___/ \___/| .__/ 
-#                                            |_|     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  /$$$$$$$$                                  /$$           /$$                                    
+# | $$_____/                                 | $$          | $$                                    
+# | $$       /$$    /$$  /$$$$$$  /$$$$$$$  /$$$$$$        | $$        /$$$$$$   /$$$$$$   /$$$$$$ 
+# | $$$$$   |  $$  /$$/ /$$__  $$| $$__  $$|_  $$_/        | $$       /$$__  $$ /$$__  $$ /$$__  $$
+# | $$__/    \  $$/$$/ | $$$$$$$$| $$  \ $$  | $$          | $$      | $$  \ $$| $$  \ $$| $$  \ $$
+# | $$        \  $$$/  | $$_____/| $$  | $$  | $$ /$$      | $$      | $$  | $$| $$  | $$| $$  | $$
+# | $$$$$$$$   \  $/   |  $$$$$$$| $$  | $$  |  $$$$/      | $$$$$$$$|  $$$$$$/|  $$$$$$/| $$$$$$$/
+# |________/    \_/     \_______/|__/  |__/   \___/        |________/ \______/  \______/ | $$____/ 
+#                                                                                        | $$      
+#                                                                                        | $$      
+#                                                                                        |__/      
   
 while True:             
     event, values = window.read()
@@ -775,7 +838,7 @@ while True:
         elif listName in tempData['combo']:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('List already exists!', location=loc)
+            sg.popup('List already exists', title='Error', location=loc)
 
     # Change which list your on
     if event == '-COMBO-':  
@@ -822,16 +885,38 @@ while True:
             elementType = event[:-7]
 
         if 'Paste' in event:
-            elementType = 'Task' if tempData['elementCopied'][1] in (True, False) else 'Section'
-            elementName = tempData['elementCopied'][0]
+            elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
+            if elementType == 'Task':
+                elementName = tempData['elementCopied'][0][19:]
+            else:
+                elementName = list(tempData['elementCopied'][0][0].keys())[0]
+
+            if elementType[0] == 'T':
+                elementToAdd = {elementName: tempData['elementCopied'][1]}
+            else:
+                if int(hierarchyIndex) == 2:
+                    currentLoc = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(currentLoc[0] + 25, currentLoc[1] + 100))
+                    elementToAdd = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
+                elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
+                    elementToAdd = [x for x in tempData['elementCopied'][0] if type(x) is dict]
+                    currentLoc = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(currentLoc[0] + 30, currentLoc[1] + 100))
+                else:
+                    elementToAdd = tempData['elementCopied'][0]
         else:
             elementName = getTxt(f'{elementType} Name:')
+            if elementType[0] == 'T':
+                elementToAdd = {elementName: False}
+            else:
+                elementToAdd = [{elementName: False}]
 
         if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
-            sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+            sg.popup(f'{elementType} already exists', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
         else:
-            addElement(elementType, elementName, sectionNameToAddTo, hierarchyIndex)
+            if elementName not in ('', None):  
+                addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
 
     # Inserting elements before the element you right clicked
     if '::INSERT' in event:
@@ -847,28 +932,42 @@ while True:
             elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
 
         if 'Paste' in event:
-            if tempData['elementCopied'][1] in (True, False):
-                elementType = 'Task'
+            elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
+            if elementType == 'Task':
                 elementName = tempData['elementCopied'][0][19:]
             else:
-                elementType = 'Section'
+                elementName = list(tempData['elementCopied'][0][0].keys())[0]
+
+            if elementType[0] == 'T':
+                elementToInsert = {elementName: tempData['elementCopied'][1]}
+            else:
+                if int(hierarchyIndex) == 2:
+                    currentLoc = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections. Pasting tasks within copied section...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+                    elementToInsert = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
+                elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
+                    elementToInsert = [x for x in tempData['elementCopied'][0] if type(x) is dict]
+                    currentLoc = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections. Pasting without subsections...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+                else:
+                    elementToInsert = tempData['elementCopied'][0]
         else:
             elementType = event[:-8]
             elementName = getTxt(f'{elementType} Name:')
-
-
-        #print(tempData['elementKeys'])
-        #print(f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}")
-
+            if elementType[0] == 'T':
+                elementToInsert = {elementName: False}
+            else:
+                elementToInsert = [{elementName: False}]
 
         if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
             currentLoc = window.CurrentLocation()
-            sg.popup(f'{elementType} already exists', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+            sg.popup(f'{elementType} already exists within current area/ section', title='Error', location=(currentLoc[0] - 10, currentLoc[1] + 100))
         else:
-            insertElement(elementToInsert, elementName, elementNameOfInsertPos, hierarchyIndex, sectionID)
+            if elementName not in ('', None):
+                insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
 
     # Opening and closing sections
-    if 'SECTION' in event and 'RIGHT CLICK' not in event:
+    if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy')):
         elementIndexes = event[:8]
 
         if 'ARROW' in event:
@@ -912,18 +1011,20 @@ while True:
 
     # Copy
     if 'Copy' in event:
-        element = tempData['latestElementRightClicked']
-        elementKey = element.split(' ')
-        elementKey.remove('TEXT')    
+        elementKey = tempData['latestElementRightClicked']
 
         if 'TASK' in event:
+            elementKey = elementKey.split(' ')
+            elementKey.remove('TEXT')    
             elementKey.insert(4, 'CHECKBOX')
             elementKey = ' '.join(elementKey)
             tempData['elementCopied'] = (tempData['latestElementRightClicked'], values[elementKey])
         else:   # A Section
-            pass
+            elementName = elementKey[22:]
+            hierarchyIndex = tempData['latestElementRightClicked'][3:5]
+            sectionID = tempData['latestElementRightClicked'][6:8]
+            copySection(elementName, hierarchyIndex, sectionID)
 
-        print(tempData['elementCopied'])
 
 
 
@@ -968,7 +1069,7 @@ while True:
     elif event == 'List:RENAME' and len(values['LISTS LISTBOX']) == 0:
         currentLoc = window.CurrentLocation()
         loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-        sg.popup('Please select a list first', location=loc)
+        sg.popup('Select a list first', title='Error', location=loc)
 
     # Delete List
     if event == 'List::DELETE':
@@ -1011,7 +1112,7 @@ while True:
         else:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('Please select a list first', location=loc)
+            sg.popup('Select a list first', title='Error', location=loc)
 
         for i in data:
             if i[0] is listName:

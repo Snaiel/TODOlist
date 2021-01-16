@@ -20,10 +20,10 @@ SYMBOL_DOWN =  '▼'
 menus = {
         'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
-        'Task 0 & 1': ['Right', ['Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']],
-        'Task 2': ['Right', ['Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 2': ['Right', ['Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
+        'Task 0 & 1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'Section 0 & 1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']],
+        'Task 2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'Section 2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
         }
 
 programValues = {
@@ -45,6 +45,7 @@ tempData = {
             'listSelectedToEdit': '',
             'lastListOn': '',
             'elementCopied': ('', None),
+            'elementMoving': ('', None),
             'previousSettings': {
                 'TimeToResetDaily': '',
                 'BGColour': '',
@@ -542,7 +543,9 @@ def insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, secti
     if elementToInsert is None:
         return
     localSectionID = 0
-    
+
+    print(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
+
     for todolist in data:
         if todolist[0] == programValues['List']:
             for task in [task for task in todolist if type(task) is dict]:
@@ -685,13 +688,81 @@ def copySection(elementName, hierarchyIndex, sectionID):
                     hierarchyLevels = 1
                     if len([x for x in section if type(x) is list]) != 0:
                         hierarchyLevels = 2
-                    tempData['elementCopied'] = (section, hierarchyLevels)
-                    return
+                    return(section, hierarchyLevels)
                 localSectionID += 1
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     if elementName in subsection[0] and int(sectionID) == localSectionID:
-                        tempData['elementCopied'] = (subsection, 2)
-                        return
+                        return(subsection, 2)
+
+def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
+    localSectionID = 0
+
+    for todolist in data:
+        if todolist[0] == programValues['List']:
+            for task in [task for task in todolist if type(task) is dict]:
+                if elementToMove in task and hierarchyIndex == '00':
+                    if direction == 'Up':
+                        a, b = todolist.index(task), todolist.index(task) - 1
+                        if a == 1:
+                            return
+                    else:
+                        a, b = todolist.index(task), todolist.index(task) + 1   
+                        if len(todolist) == b:
+                            return
+                    todolist[b], todolist[a] = todolist[a], todolist[b]
+                    return createNewWindow()
+            for section in [section for section in todolist if type(section) is list]:
+                if elementToMove in section[0] and hierarchyIndex == '00':
+                    if direction == 'Up':
+                        a, b = todolist.index(section), todolist.index(section) - 1
+                        if a == 1:
+                            return
+                    else:
+                        a, b = todolist.index(section), todolist.index(section) + 1   
+                        if len(todolist) == b:
+                            return
+                    todolist[b], todolist[a] = todolist[a], todolist[b]
+                    return createNewWindow()
+                localSectionID += 1
+                for task in [task for task in section if type(task) is dict]:
+                    if elementToMove in task and int(sectionID) == localSectionID:
+                        if direction == 'Up':
+                            a, b = section.index(task), section.index(task) - 1
+                            if a == 1:
+                                return
+                        else:
+                            a, b = section.index(task), section.index(task) + 1   
+                            if len(section) == b:
+                                return
+                        section[b], section[a] = section[a], section[b]
+                        return createNewWindow()
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if elementToMove in subsection[0] and int(sectionID) == localSectionID:
+                        if direction == 'Up':
+                            a, b = section.index(subsection), section.index(subsection) - 1
+                            if a == 1:
+                                return
+                        else:
+                            a, b = section.index(subsection), section.index(subsection) + 1   
+                            if len(section) == b:
+                                return
+                        section[b], section[a] = section[a], section[b]
+                        return createNewWindow()
+                else:
+                    for subsection in [subsection for subsection in section if type(subsection) is list]:
+                        localSectionID += 1
+                        for task in [task for task in subsection if type(task) is dict]:
+                            if elementToMove in task and int(sectionID) == localSectionID:
+                                if direction == 'Up':
+                                    a, b = subsection.index(task), subsection.index(task) - 1
+                                    if a == 1:
+                                        return
+                                else:
+                                    a, b = subsection.index(task), subsection.index(task) + 1   
+                                    if len(subsection) == b:
+                                        return
+                                subsection[b], subsection[a] = subsection[a], subsection[b]
+                                return createNewWindow()
 
 def checkElementExist(listIndex, hierarchyIndex, sectionID, elementType, elementName):
     return(f"{listIndex} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys'])
@@ -882,6 +953,7 @@ while True:
                 elementType = event[:-5]
         else:
             elementType = event[:-8]
+            sectionID = tempData['latestElementRightClicked'][6:8]
 
         if 'ADDTO' in event:
             sectionNameToAddTo = tempData['latestElementRightClicked'][22:]
@@ -890,7 +962,7 @@ while True:
             sectionID = str((int(tempData['latestElementRightClicked'][6:8]) + 1)).zfill(2)
             elementType = event[:-7]
 
-        if 'Paste' in event:
+        if 'Paste' in event and tempData['elementCopied'][1] is not None:
             elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
             if elementType == 'Task':
                 elementName = tempData['elementCopied'][0][19:]
@@ -910,12 +982,15 @@ while True:
                     sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(currentLoc[0] + 30, currentLoc[1] + 100))
                 else:
                     elementToAdd = tempData['elementCopied'][0]
-        else:
+        elif 'Paste' not in event:
             elementName = getTxt(f'{elementType} Name:')
             if elementType[0] == 'T':
                 elementToAdd = {elementName: False}
             else:
                 elementToAdd = [{elementName: False}]
+        else:
+            elementName = None
+            elementToAdd = None
 
         if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False:
             if elementName not in ('', None):
@@ -975,6 +1050,20 @@ while True:
         window[elementKey]._RightClickMenuCallback(event)
         event = elementKey
 
+    # Move up or down
+    if 'MOVE' in event:
+        elementKey = tempData['latestElementRightClicked']
+        elementKey = elementKey.split(' ')
+
+        elementToMove = ' '.join(elementKey[5:])
+        hierarchyIndex = elementKey[1]
+        sectionID = elementKey[2]
+
+        direction = event[:-6]
+
+        print(direction)
+        moveElement(elementToMove, hierarchyIndex, sectionID, direction)
+
     # Copy
     if 'Copy' in event:
         elementKey = tempData['latestElementRightClicked']
@@ -989,8 +1078,9 @@ while True:
             elementName = elementKey[22:]
             hierarchyIndex = tempData['latestElementRightClicked'][3:5]
             sectionID = tempData['latestElementRightClicked'][6:8]
-            copySection(elementName, hierarchyIndex, sectionID)
+            tempData['elementCopied'] = copySection(elementName, hierarchyIndex, sectionID)
 
+    # Cut
     if 'Cut' in event:
         elementKey = tempData['latestElementRightClicked']
 
@@ -1009,7 +1099,7 @@ while True:
 
             delElement(elementName, elementType, hierarchyIndex, sectionID)
         else:   # A Section
-            copySection(elementName, hierarchyIndex, sectionID)
+            tempData['elementCopied'] = copySection(elementName, hierarchyIndex, sectionID)
             delElement(elementName, elementType, hierarchyIndex, sectionID)
 
     # Rename

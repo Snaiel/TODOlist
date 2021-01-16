@@ -20,10 +20,10 @@ SYMBOL_DOWN =  '▼'
 menus = {
         'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
         'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
-        'Task 0 & 1': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['Copy::SECTION', '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']],
-        'Task 2': ['Right', ['Copy::TASK', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 2': ['Right', ['Copy::SECTION', '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
+        'Task 0 & 1': ['Right', ['Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'Section 0 & 1': ['&Right', ['Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']],
+        'Task 2': ['Right', ['Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'Section 2': ['Right', ['Copy::SECTION', 'Cut::SECTION', '---', '&Insert', ['Task::INSERT', 'Section::INSERT'], 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete']]
         }
 
 programValues = {
@@ -932,56 +932,8 @@ while True:
             currentLoc = window.CurrentLocation()
             sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
 
-
-    # Inserting elements before the element you right clicked
-    # if '::INSERT' in event:
-
-    #     elementToInsert = None
-    #     elementName = ''
-    #     hierarchyIndex = tempData['latestElementRightClicked'][3:5]
-    #     sectionID = tempData['latestElementRightClicked'][6:8]
-
-    #     if tempData['latestElementRightClicked'][9:10] == 'T':
-    #         elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
-    #     else:
-    #         elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
-
-    #     if 'Paste' in event:
-    #         elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
-    #         if elementType == 'Task':
-    #             elementName = tempData['elementCopied'][0][19:]
-    #         else:
-    #             elementName = list(tempData['elementCopied'][0][0].keys())[0]
-
-    #         if elementType[0] == 'T':
-    #             elementToInsert = {elementName: tempData['elementCopied'][1]}
-    #         else:
-    #             if int(hierarchyIndex) == 2:
-    #                 currentLoc = window.CurrentLocation()
-    #                 sg.popup('Cannot support more subsections. Pasting tasks within copied section...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-    #                 elementToInsert = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
-    #             elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
-    #                 elementToInsert = [x for x in tempData['elementCopied'][0] if type(x) is dict]
-    #                 currentLoc = window.CurrentLocation()
-    #                 sg.popup('Cannot support more subsections. Pasting without subsections...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-    #             else:
-    #                 elementToInsert = tempData['elementCopied'][0]
-    #     else:
-    #         elementType = event[:-8]
-    #         elementName = getTxt(f'{elementType} Name:')
-    #         if elementType[0] == 'T':
-    #             elementToInsert = {elementName: False}
-    #         else:
-    #             elementToInsert = [{elementName: False}]
-
-    #     if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
-    #         insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
-    #     else:
-    #         currentLoc = window.CurrentLocation()
-    #         sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
-
     # Opening and closing sections
-    if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy')):
+    if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy', 'Cut')):
         elementIndexes = event[:8]
 
         if 'ARROW' in event:
@@ -1039,6 +991,26 @@ while True:
             sectionID = tempData['latestElementRightClicked'][6:8]
             copySection(elementName, hierarchyIndex, sectionID)
 
+    if 'Cut' in event:
+        elementKey = tempData['latestElementRightClicked']
+
+        elementKey = elementKey.split(' ')
+
+        elementName = ' '.join(elementKey[5:])
+        elementType = elementKey[3].title()
+        hierarchyIndex = elementKey[1]
+        sectionID = elementKey[2]
+
+        if 'TASK' in event:
+            elementKey.remove('TEXT')
+            elementKey.insert(4, 'CHECKBOX')
+            elementKey = ' '.join(elementKey)
+            tempData['elementCopied'] = (tempData['latestElementRightClicked'], values[elementKey])
+
+            delElement(elementName, elementType, hierarchyIndex, sectionID)
+        else:   # A Section
+            copySection(elementName, hierarchyIndex, sectionID)
+            delElement(elementName, elementType, hierarchyIndex, sectionID)
 
     # Rename
     if event == 'Rename':

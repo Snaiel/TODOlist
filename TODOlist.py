@@ -868,17 +868,20 @@ while True:
         window['COL ADD BUTTONS'].unhide_row()
 
 
-    # Adding an element to the end of the list or section
-    if '::ADD' in event and 'List' not in event:
+    # Appending or Inserting an element
+    if any(x in event for x in ('ADD', 'INSERT')) and 'List' not in event:
 
         sectionNameToAddTo = None
         hierarchyIndex = '00'
         sectionID = '00'
 
-        if 'BUTTON' in event:
-            elementType = event[:-13]
+        if 'ADD' in event:
+            if 'BUTTON' in event:
+                elementType = event[:-13]
+            else:
+                elementType = event[:-5]
         else:
-            elementType = event[:-5]
+            elementType = event[:-8]
 
         if 'ADDTO' in event:
             sectionNameToAddTo = tempData['latestElementRightClicked'][22:]
@@ -914,59 +917,68 @@ while True:
             else:
                 elementToAdd = [{elementName: False}]
 
-        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
-            addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
+        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False:
+            if elementName not in ('', None):
+                if 'ADD' in event:
+                    addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
+                else:
+                    if tempData['latestElementRightClicked'][9:10] == 'T':
+                        elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
+                    else:
+                        elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
+                    
+                    insertElement(elementToAdd, elementNameOfInsertPos, hierarchyIndex, sectionID)
         else:
             currentLoc = window.CurrentLocation()
             sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
 
 
     # Inserting elements before the element you right clicked
-    if '::INSERT' in event:
+    # if '::INSERT' in event:
 
-        elementToInsert = None
-        elementName = ''
-        hierarchyIndex = tempData['latestElementRightClicked'][3:5]
-        sectionID = tempData['latestElementRightClicked'][6:8]
+    #     elementToInsert = None
+    #     elementName = ''
+    #     hierarchyIndex = tempData['latestElementRightClicked'][3:5]
+    #     sectionID = tempData['latestElementRightClicked'][6:8]
 
-        if tempData['latestElementRightClicked'][9:10] == 'T':
-            elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
-        else:
-            elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
+    #     if tempData['latestElementRightClicked'][9:10] == 'T':
+    #         elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
+    #     else:
+    #         elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
 
-        if 'Paste' in event:
-            elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
-            if elementType == 'Task':
-                elementName = tempData['elementCopied'][0][19:]
-            else:
-                elementName = list(tempData['elementCopied'][0][0].keys())[0]
+    #     if 'Paste' in event:
+    #         elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
+    #         if elementType == 'Task':
+    #             elementName = tempData['elementCopied'][0][19:]
+    #         else:
+    #             elementName = list(tempData['elementCopied'][0][0].keys())[0]
 
-            if elementType[0] == 'T':
-                elementToInsert = {elementName: tempData['elementCopied'][1]}
-            else:
-                if int(hierarchyIndex) == 2:
-                    currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections. Pasting tasks within copied section...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-                    elementToInsert = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
-                elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
-                    elementToInsert = [x for x in tempData['elementCopied'][0] if type(x) is dict]
-                    currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections. Pasting without subsections...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
-                else:
-                    elementToInsert = tempData['elementCopied'][0]
-        else:
-            elementType = event[:-8]
-            elementName = getTxt(f'{elementType} Name:')
-            if elementType[0] == 'T':
-                elementToInsert = {elementName: False}
-            else:
-                elementToInsert = [{elementName: False}]
+    #         if elementType[0] == 'T':
+    #             elementToInsert = {elementName: tempData['elementCopied'][1]}
+    #         else:
+    #             if int(hierarchyIndex) == 2:
+    #                 currentLoc = window.CurrentLocation()
+    #                 sg.popup('Cannot support more subsections. Pasting tasks within copied section...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+    #                 elementToInsert = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
+    #             elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
+    #                 elementToInsert = [x for x in tempData['elementCopied'][0] if type(x) is dict]
+    #                 currentLoc = window.CurrentLocation()
+    #                 sg.popup('Cannot support more subsections. Pasting without subsections...', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+    #             else:
+    #                 elementToInsert = tempData['elementCopied'][0]
+    #     else:
+    #         elementType = event[:-8]
+    #         elementName = getTxt(f'{elementType} Name:')
+    #         if elementType[0] == 'T':
+    #             elementToInsert = {elementName: False}
+    #         else:
+    #             elementToInsert = [{elementName: False}]
 
-        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
-            insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
-        else:
-            currentLoc = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
+    #     if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
+    #         insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
+    #     else:
+    #         currentLoc = window.CurrentLocation()
+    #         sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
 
     # Opening and closing sections
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy')):
@@ -1043,8 +1055,9 @@ while True:
             elementType = 'Section'
             oldName = element[22:]
 
-        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, newName) == False and newName not in ('', None):
-            renameElement(newName, elementType, hierarchyIndex, sectionID)
+        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, newName) == False:
+            if newName not in ('', None):
+                renameElement(newName, elementType, hierarchyIndex, sectionID)
         else:
             currentLoc = window.CurrentLocation()
             sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))

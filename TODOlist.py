@@ -693,6 +693,9 @@ def copySection(elementName, hierarchyIndex, sectionID):
                         tempData['elementCopied'] = (subsection, 2)
                         return
 
+def checkElementExist(listIndex, hierarchyIndex, sectionID, elementType, elementName):
+    return(f"{listIndex} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys'])
+
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
@@ -911,12 +914,12 @@ while True:
             else:
                 elementToAdd = [{elementName: False}]
 
-        if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
-            currentLoc = window.CurrentLocation()
-            sg.popup(f'{elementType} already exists', title='Error', location=(currentLoc[0] + 70, currentLoc[1] + 100))
+        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
+            addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
         else:
-            if elementName not in ('', None):  
-                addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
+            currentLoc = window.CurrentLocation()
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
+
 
     # Inserting elements before the element you right clicked
     if '::INSERT' in event:
@@ -959,12 +962,11 @@ while True:
             else:
                 elementToInsert = [{elementName: False}]
 
-        if f"{tempData['ListIndex']} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys']:
-            currentLoc = window.CurrentLocation()
-            sg.popup(f'{elementType} already exists within current area/ section', title='Error', location=(currentLoc[0] - 10, currentLoc[1] + 100))
+        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False and elementName not in ('', None):
+            insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
         else:
-            if elementName not in ('', None):
-                insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
+            currentLoc = window.CurrentLocation()
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
 
     # Opening and closing sections
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy')):
@@ -1026,24 +1028,26 @@ while True:
             copySection(elementName, hierarchyIndex, sectionID)
 
 
-
-
     # Rename
     if event == 'Rename':
         element = tempData['latestElementRightClicked']
         newName = getTxt('Rename to:')
-        if newName is not None:
-            if 'TASK' in element:
-                oldName = element[19:]
-                elementType = 'Task'
-            else:
-                oldName = element[22:]
-                elementType = 'Section'
 
-            hierarchyIndex = element[3:5]
-            sectionID = element[6:8]
+        hierarchyIndex = element[3:5]
+        sectionID = element[6:8]
 
+        if 'TASK' in element:
+            elementType = 'Task'
+            oldName = element[19:]
+        else:
+            elementType = 'Section'
+            oldName = element[22:]
+
+        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, newName) == False and newName not in ('', None):
             renameElement(newName, elementType, hierarchyIndex, sectionID)
+        else:
+            currentLoc = window.CurrentLocation()
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
 
     # Delete Element
     if event == 'Delete':

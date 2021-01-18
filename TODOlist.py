@@ -329,8 +329,13 @@ def createTask(name, checked, listName, hierarchyIndex, sectionID):
             if hierarchyIndex == '02':
                 rightClickMenu = menus['Task 2']
 
+            if len(name) > 30:
+                tooltip = name
+            else:
+                tooltip = None
+
             tempData['elementKeys'].append(f"{elementIndexes} TASK {name}")
-            return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=rightClickMenu, pad=(0,0), key=checkBoxTextKey, enable_events=True)]
+            return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=rightClickMenu, pad=(0,0), key=checkBoxTextKey, enable_events=True, tooltip=tooltip)]
 
 def createSection(header, opened, content, listName, hierarchyIndex, sectionID):
     tempData['sectionsOpen'][f'{header}'] = opened
@@ -349,8 +354,13 @@ def createSection(header, opened, content, listName, hierarchyIndex, sectionID):
             if hierarchyIndex == '01':
                 rightClickMenu = menus['Section 2']
 
+            if len(header) > 30:
+                tooltip = header
+            else:
+                tooltip = None
+
             tempData['elementKeys'].append(f"{elementIndexes} SECTION {header}")
-            return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=rightClickMenu)], [collapse(content, sectionContentKey, opened)]]
+            return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=rightClickMenu, tooltip=tooltip)], [collapse(content, sectionContentKey, opened)]]
 
 def createListLayout(theList):
     createdListLayout = []

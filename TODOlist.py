@@ -857,7 +857,8 @@ def createNewWindow():
     tempData['elementKeys'].clear()
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
-    window1[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.canvas.yview_moveto(tempData['lastScrollBarPos'][0])
+    if programValues['List'] not in ('LIST EDITOR', "SETTINGS"):
+        window1[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.canvas.yview_moveto(tempData['lastScrollBarPos'][0])
     window.Close()
     window = window1
     bindings()

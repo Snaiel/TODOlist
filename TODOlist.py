@@ -18,8 +18,8 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', 'Refresh']]], ['Help', ['About', 'Wiki']]],
-        'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings']]], ['Help', ['About', 'Wiki']]],
+        'Menu Bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh']]], ['Help', ['About', 'Wiki']]],
+        'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh']]], ['Help', ['About', 'Wiki']]],
         'Task 0 & 1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'Section 0 & 1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
         'Task 2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
@@ -777,7 +777,7 @@ def checkElementExist(listIndex, hierarchyIndex, sectionID, elementType, element
 def getTxt(msg):
     currentLoc = window.CurrentLocation()
     loc = (currentLoc[0] - 25, currentLoc[1] + 100)
-    return sg.popup_get_text(msg, location=loc)
+    return sg.popup_get_text(msg, location=loc, icon='icon.ico')
 
 def applySettings():
     import re
@@ -791,7 +791,7 @@ def applySettings():
         programValues['TimeToResetDaily'] = values['TimeToResetDaily']
     else:
         loc = (currentLoc[0] - 5, currentLoc[1] + 100)
-        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=loc)
+        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=loc, icon='icon.ico')
         return
 
     for colourString in (values['BGColour'], values['BColour'], values['TColour1'], values['TColour2']):
@@ -799,7 +799,7 @@ def applySettings():
             pass
         else:
             loc = (currentLoc[0] - 30, currentLoc[1] + 100)
-            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colourString}', location=loc, line_width=100)
+            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colourString}', location=loc, line_width=100, icon='icon.ico')
             return
 
     previousSettings['BGColour'] = programValues['BGColour']
@@ -917,7 +917,7 @@ while True:
         elif listName in tempData['combo']:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('List already exists', title='Error', location=loc)
+            sg.popup('List already exists', title='Error', location=loc, icon='icon.ico')
 
     # Change which list your on
     if event == '-COMBO-':
@@ -976,12 +976,12 @@ while True:
             else:
                 if int(hierarchyIndex) == 2:
                     currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(currentLoc[0] + 25, currentLoc[1] + 100))
+                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(currentLoc[0] + 25, currentLoc[1] + 100), icon='icon.ico')
                     elementToAdd = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
                 elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
                     elementToAdd = [x for x in tempData['elementCopied'][0] if type(x) is dict]
                     currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(currentLoc[0] + 30, currentLoc[1] + 100))
+                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(currentLoc[0] + 30, currentLoc[1] + 100), icon='icon.ico')
                 else:
                     elementToAdd = tempData['elementCopied'][0]
         elif 'Paste' not in event:
@@ -1008,7 +1008,7 @@ while True:
                     insertElement(elementToAdd, elementNameOfInsertPos, hierarchyIndex, sectionID)
         else:
             currentLoc = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100), icon='icon.ico')
 
     # Opening and closing sections
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy', 'Cut')):
@@ -1125,7 +1125,7 @@ while True:
                 renameElement(newName, elementType, hierarchyIndex, sectionID)
         else:
             currentLoc = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100))
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100), icon='icon.ico')
 
     # Delete Element
     if event == 'Delete':
@@ -1151,13 +1151,13 @@ while True:
     elif event == 'List:RENAME' and len(values['LISTS LISTBOX']) == 0:
         currentLoc = window.CurrentLocation()
         loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-        sg.popup('Select a list first', title='Error', location=loc)
+        sg.popup('Select a list first', title='Error', location=loc, icon='icon.ico')
 
     # Delete List
     if event == 'List::DELETE':
         currentLoc = window.CurrentLocation()
         loc = (currentLoc[0] + 4, currentLoc[1] + 100)
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=loc) == 'OK':
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=loc, icon='icon.ico') == 'OK':
             delList()
 
     # Show LIST EDITOR Page
@@ -1206,7 +1206,7 @@ while True:
         else:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('Select a list first', title='Error', location=loc)
+            sg.popup('Select a list first', title='Error', location=loc, icon='icon.ico')
 
         for i in data:
             if i[0] is listName:

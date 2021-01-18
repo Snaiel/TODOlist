@@ -439,26 +439,26 @@ def createRowOfColumns(listFocused):
         [sg.Frame('Result', frameLayout, pad=(25,50), title_color=programValues['TColour1'])]
     ]
 
-    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'EDITING' else False}))
-    listsColumns.append(sg.Column(layout=settingsLayout, visible=True if programValues['List'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10)), metadata={'visible': True if programValues['List'] == 'SETTINGS' else False}))
+    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10))))
+    listsColumns.append(sg.Column(layout=settingsLayout, visible=True if programValues['List'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10))))
     return(listsColumns)
 
 def createLayout(listFocused):
     if listFocused is None:
         listFocused = programValues['List']
 
-    if listFocused in ('EDITING', 'SETTINGS'):
+    if listFocused in ('LIST EDITOR', 'SETTINGS'):
         addButtonsVisible = False
-        if listFocused == 'EDITING':
-            comboDefaultValue = 'Editing Lists...'
+        if listFocused == 'LIST EDITOR':
+            comboDefaultValue = 'List Editor'
         else:
             comboDefaultValue = 'Settings'
     else:
         addButtonsVisible = True
-        comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'EDITING' else tempData['combo'][0])]
+        comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'LIST EDITOR' else tempData['combo'][0])]
 
     addButtonsCol = [
-        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0, visible=addButtonsVisible)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0, visible=addButtonsVisible))]
+        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0))]
     ]
 
     applyRevertButtonsCol = [
@@ -469,7 +469,7 @@ def createLayout(listFocused):
             [sg.Menu(menus['Menu Bar'], key='-MENU BAR-')],
             [sg.Combo(tempData['combo'],default_value=comboDefaultValue , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             createRowOfColumns(listFocused),
-            [sg.Col(addButtonsCol, k='COL ADD BUTTONS', visible=False if programValues['List'] == 'SETTINGS' else True), sg.Col(applyRevertButtonsCol, k='COL APPLY REVERT BUTTONS', visible=True if programValues['List'] == 'SETTINGS' else False)]
+            [sg.Col(addButtonsCol, k='COL ADD BUTTONS', visible=addButtonsVisible), sg.Col(applyRevertButtonsCol, k='COL APPLY REVERT BUTTONS', visible=True if programValues['List'] == 'SETTINGS' else False)]
         ]
         
 def updateData(elementType, name):
@@ -661,7 +661,7 @@ def renameList(listName, newListName):
     print('donee')
 
 def delList():
-    if window[f'COL EDIT LISTS'].metadata['visible'] == True:
+    if window[f'COL EDIT LISTS'].visible == True:
         theList = values['LISTS LISTBOX'][0]
     else:
         theList = programValues['List']
@@ -672,8 +672,8 @@ def delList():
             tempData['combo'].remove(theList)
             for listName in tempData['combo']:
                 if listName is not theList:
-                    if window[f'COL EDIT LISTS'].metadata['visible'] == True:
-                        programValues['List'] = 'EDITING'
+                    if window[f'COL EDIT LISTS'].visible == True:
+                        programValues['List'] = 'LIST EDITOR'
                     else:
                         programValues['List'] = listName
                     break
@@ -850,8 +850,6 @@ def createNewWindow():
     tempData['elementKeys'].clear()
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
-    # if programValues['List'] == 'EDITING':
-    #     window1['Task::ADD(BUTTON)'].hide_row()
     window.Close()
     window = window1
     bindRightClick()
@@ -892,7 +890,7 @@ while True:
 
     if event == sg.WIN_CLOSED:
         tempData['WhenLastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
-        if programValues['List'] in ('EDITINGS', 'SETTINGS'):
+        if programValues['List'] in ('LIST EDITOR', 'SETTINGS'):
             programValues['List'] = tempData['lastListOn']
         #writeDataFile()
         break
@@ -916,6 +914,9 @@ while True:
 
     # Change which list your on
     if event == '-COMBO-':  
+        window['COL ADD BUTTONS'].update(visible=True)
+        window['COL ADD BUTTONS'].unhide_row()
+        print(window['Task::ADD(BUTTON)'].visible)
         programValues['List'] = values['-COMBO-']
         tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
@@ -925,18 +926,17 @@ while True:
                 window[f'COL{data.index(i)}'].update(visible=False)
 
         for i in ['EDIT LISTS', 'SETTINGS']:
-            if window[f'COL {i}'].metadata['visible'] == True:
+            if window[f'COL {i}'].visible == True:
                 print(i)
                 window[f'COL {i}'].update(visible=False)
-                window[f'COL {i}'].metadata = {'visible': False}
 
-                if i == 'SETTINGS':
-                    window['COL APPLY REVERT BUTTONS'].update(visible=False)
+                window['COL APPLY REVERT BUTTONS'].update(visible=False)
 
                 window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
 
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
+        #print(window['COL ADD BUTTONS'].visible)
 
 
     # Appending or Inserting an element
@@ -1166,18 +1166,15 @@ while True:
                 window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
                 break
         
-        if window['COL SETTINGS'].metadata == {'visible': True}:
+        if window['COL SETTINGS'].visible == True:
             window['COL SETTINGS'].update(visible=False)
-            window['COL SETTINGS'].metadata = {'visible': False}
 
         window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 
-        programValues['List'] = 'EDITING'
+        programValues['List'] = 'LIST EDITOR'
         window['COL EDIT LISTS'].update(visible=True)
-        isVisible = window[f'COL EDIT LISTS'].metadata['visible']
-        window['COL EDIT LISTS'].metadata = {'visible': not isVisible}
         window['COL ADD BUTTONS'].hide_row()
-        window['-COMBO-'].update(value='Editing Lists...')
+        window['-COMBO-'].update(value='List Editor')
 
     # Move a list up or down
     if 'List::MOVE' in event:
@@ -1221,15 +1218,13 @@ while True:
                 window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
                 break
 
-        if window['COL EDIT LISTS'].metadata == {'visible': True}:
+        if window['COL EDIT LISTS'].visible == True:
             window['COL EDIT LISTS'].update(visible=False)
-            window['COL EDIT LISTS'].metadata = {'visible': False}
 
         window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 
         programValues['List'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)
-        window['COL SETTINGS'].metadata = {'visible': True}
         window['COL APPLY REVERT BUTTONS'].update(visible=True)
         window['COL APPLY REVERT BUTTONS'].unhide_row()
         window['COL ADD BUTTONS'].update(visible=False)

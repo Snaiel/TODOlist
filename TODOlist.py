@@ -46,6 +46,7 @@ tempData = {
             'lastListOn': '',
             'elementCopied': ('', None),
             'elementMoving': ('', None),
+            'lastScrollBarPos': (0.0, 1.0),
             'previousSettings': {
                 'TimeToResetDaily': '',
                 'BGColour': '',
@@ -526,7 +527,6 @@ def bindings():
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
 
 def addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex):
-    print(elementToAdd)
     if elementToAdd is None:
         return
     for i in data:
@@ -557,8 +557,6 @@ def insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, secti
         return
     localSectionID = 0
 
-    print(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID)
-
     for todolist in data:
         if todolist[0] == programValues['List']:
             for task in [task for task in todolist if type(task) is dict]:
@@ -585,7 +583,6 @@ def insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, secti
                             if elementNameOfInsertPos in task and int(sectionID) == localSectionID:
                                 if type(elementToInsert) is tuple:
                                     for taskToInsert in elementToInsert:
-                                        print(taskToInsert)
                                         subsection.insert(subsection.index(task), taskToInsert)
                                 else:
                                     subsection.insert(subsection.index(task), elementToInsert)
@@ -625,7 +622,6 @@ def renameElement(newName, elementType, hierarchyIndex, sectionID):
 def delElement(elementName, elementType, hierarchyIndex, sectionID):
     
     localSectionID = 0
-    print(elementName, elementType, hierarchyIndex, sectionID)
 
     for todolist in data:
         if todolist[0] == programValues['List']:
@@ -670,8 +666,6 @@ def renameList(listName, newListName):
 
     window['-COMBO-'].update(values=tempData['combo'])
     window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
-
-    print('donee')
 
 def delList():
     if window[f'COL LIST EDITOR'].visible == True:
@@ -863,6 +857,7 @@ def createNewWindow():
     tempData['elementKeys'].clear()
     global window
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
+    window1[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.canvas.yview_moveto(tempData['lastScrollBarPos'][0])
     window.Close()
     window = window1
     bindings()
@@ -936,7 +931,6 @@ while True:
 
         for i in ['LIST EDITOR', 'SETTINGS']:
             if window[f'COL {i}'].visible == True:
-                print(i)
                 window[f'COL {i}'].update(visible=False)
 
                 window['COL APPLY REVERT BUTTONS'].update(visible=False)
@@ -1002,6 +996,7 @@ while True:
 
         if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False:
             if elementName not in ('', None):
+                tempData['lastScrollBarPos'] = window[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.vscrollbar.get()
                 if 'ADD' in event:
                     addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
                 else:

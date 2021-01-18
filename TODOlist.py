@@ -439,7 +439,7 @@ def createRowOfColumns(listFocused):
         [sg.Frame('Result', frameLayout, pad=(25,50), title_color=programValues['TColour1'])]
     ]
 
-    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'EDITING' else False, size=(300,400), key=f'COL EDIT LISTS', scrollable=False, pad=((0,5),(10,10))))
+    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'LIST EDITOR' else False, size=(300,400), key=f'COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
     listsColumns.append(sg.Column(layout=settingsLayout, visible=True if programValues['List'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10))))
     return(listsColumns)
 
@@ -458,11 +458,11 @@ def createLayout(listFocused):
         comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'LIST EDITOR' else tempData['combo'][0])]
 
     addButtonsCol = [
-        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(0,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(0,0)), border_width=0))]
+        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(2,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(2,0)), border_width=0))]
     ]
 
     applyRevertButtonsCol = [
-        [sg.B('Apply', size=(15,2), border_width=0, pad=((0,0),(0,0))), sg.B('Revert', size=(15, 2), border_width=0, pad=((18,0),(0,0)))]
+        [sg.B('Apply', size=(15,2), border_width=0, pad=((0,0),(2,0))), sg.B('Revert', size=(15, 2), border_width=0, pad=((18,0),(2,0)))]
     ]
 
     return [
@@ -506,11 +506,14 @@ def updateData(elementType, name):
                                             contentInSubSection[name] = not contentInSubSection[name]
                                             return
 
-def bindRightClick():
+def bindings():
     for i in tempData['elementKeys']:
         elementKey = i.split(' ')
         elementKey.insert(4, 'TEXT')
         window[' '.join(elementKey)].bind('<Button-3>', ' +RIGHT CLICK+')
+
+    
+    window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
 
 def addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex):
     print(elementToAdd)
@@ -661,7 +664,7 @@ def renameList(listName, newListName):
     print('donee')
 
 def delList():
-    if window[f'COL EDIT LISTS'].visible == True:
+    if window[f'COL LIST EDITOR'].visible == True:
         theList = values['LISTS LISTBOX'][0]
     else:
         theList = programValues['List']
@@ -672,7 +675,7 @@ def delList():
             tempData['combo'].remove(theList)
             for listName in tempData['combo']:
                 if listName is not theList:
-                    if window[f'COL EDIT LISTS'].visible == True:
+                    if window[f'COL LIST EDITOR'].visible == True:
                         programValues['List'] = 'LIST EDITOR'
                     else:
                         programValues['List'] = listName
@@ -843,7 +846,7 @@ def startup():
 startup()
 
 window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True, icon='icon.ico')
-bindRightClick()
+bindings()
 
 
 def createNewWindow():
@@ -852,7 +855,7 @@ def createNewWindow():
     window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
     window.Close()
     window = window1
-    bindRightClick()
+    bindings()
 
 
 
@@ -901,22 +904,18 @@ while True:
 
         if listName is not None and listName not in tempData['combo']:
             data.append([listName])
-
+            if 'MENU' in event:
+                programValues['List'] = listName
             createCombo()
             tempData['ListIndex'] = str(tempData['combo'].index(listName)).zfill(2)
-
             createNewWindow()
-            
         elif listName in tempData['combo']:
             currentLoc = window.CurrentLocation()
             loc = (currentLoc[0] + 80, currentLoc[1] + 100)
             sg.popup('List already exists', title='Error', location=loc)
 
     # Change which list your on
-    if event == '-COMBO-':  
-        window['COL ADD BUTTONS'].update(visible=True)
-        window['COL ADD BUTTONS'].unhide_row()
-        print(window['Task::ADD(BUTTON)'].visible)
+    if event == '-COMBO-':
         programValues['List'] = values['-COMBO-']
         tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
@@ -925,7 +924,7 @@ while True:
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
 
-        for i in ['EDIT LISTS', 'SETTINGS']:
+        for i in ['LIST EDITOR', 'SETTINGS']:
             if window[f'COL {i}'].visible == True:
                 print(i)
                 window[f'COL {i}'].update(visible=False)
@@ -936,7 +935,6 @@ while True:
 
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
-        #print(window['COL ADD BUTTONS'].visible)
 
 
     # Appending or Inserting an element
@@ -1157,7 +1155,7 @@ while True:
         if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=loc) == 'OK':
             delList()
 
-    # Show Edit Lists Page
+    # Show LIST EDITOR Page
     if event == 'Lists':
         tempData['lastListOn'] = programValues['List']
 
@@ -1172,9 +1170,24 @@ while True:
         window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 
         programValues['List'] = 'LIST EDITOR'
-        window['COL EDIT LISTS'].update(visible=True)
+        window['COL LIST EDITOR'].update(visible=True)
         window['COL ADD BUTTONS'].hide_row()
         window['-COMBO-'].update(value='List Editor')
+
+    if event == 'LISTS LISTBOX +DOUBLE CLICK+':
+        programValues['List'] = values['LISTS LISTBOX'][0]
+        tempData['ListIndex'] = str(tempData['combo'].index(programValues['List'])).zfill(2)
+        for i in data:
+            if i[0] == programValues['List']:
+                window[f'COL{data.index(i)}'].update(visible=True)
+            else:
+                window[f'COL{data.index(i)}'].update(visible=False)
+
+        window['COL LIST EDITOR'].update(visible=False)
+        window['COL ADD BUTTONS'].update(visible=True)
+        window['COL ADD BUTTONS'].unhide_row()
+        window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
+        window['-COMBO-'].update(value=programValues['List'])
 
     # Move a list up or down
     if 'List::MOVE' in event:
@@ -1218,8 +1231,8 @@ while True:
                 window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
                 break
 
-        if window['COL EDIT LISTS'].visible == True:
-            window['COL EDIT LISTS'].update(visible=False)
+        if window['COL LIST EDITOR'].visible == True:
+            window['COL LIST EDITOR'].update(visible=False)
 
         window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
 

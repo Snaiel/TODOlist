@@ -1,11 +1,11 @@
 Settings:
-    TimeToResetDaily: 01:15:00
-    BGColour: #575757
-    BColour: #ffffff
-    TColour1: #abc9cf
-    TColour2: #303030
+    time_to_reset_daily_sections: 01:15:00
+    background_colour: #575757
+    button_colour: #ffffff
+    text_colour_1: #abc9cf
+    text_colour_2: #303030
 Data:
-    WhenLastClosed: 30/12/2020 01:15:54
+    last_time_closed: 30/12/2020 01:15:54
 - Today !
 -- Issues (C)
 -- Daily (O)

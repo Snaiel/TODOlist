@@ -18,41 +18,41 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 menus = {
-        'Menu Bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh']]], ['Help', ['About', 'Wiki']]],
-        'Disabled Menu Bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh']]], ['Help', ['About', 'Wiki']]],
-        'Task 0 & 1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 0 & 1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
-        'Task 2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'Section 2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
+        'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh']]], ['Help', ['About', 'Wiki']]],
+        'disabled_menu_bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh']]], ['Help', ['About', 'Wiki']]],
+        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
+        'task_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'section_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
         }
 
-programValues = {
-                'List': '',
-                'TimeToResetDaily': '',
-                'BGColour': '',
-                'BColour': '',
-                'TColour1': '',
-                'TColour2': ''
+program_values = {
+                'current_list': '',
+                'time_to_reset_daily_sections': '',
+                'background_colour': '',
+                'button_colour': '',
+                'text_colour_1': '',
+                'text_colour_2': ''
                 }
 
-tempData = {
-            'ListIndex': '',
-            'WhenLastClosed': '',
-            'elementKeys': [],
-            'sectionsOpen': {},
+temp_data = {
+            'list_index': '',
+            'last_time_closed': '',
+            'element_keys': [],
+            'sections_open': {},
             'combo': [],
-            'latestElementRightClicked': '',
-            'listSelectedToEdit': '',
-            'lastListOn': '',
-            'elementCopied': ('', None),
-            'elementMoving': ('', None),
-            'lastScrollBarPos': (0.0, 1.0),
-            'previousSettings': {
-                'TimeToResetDaily': '',
-                'BGColour': '',
-                'BColour': '',
-                'TColour1': '',
-                'TColour2': ''
+            'last_element_right_clicked': '',
+            'list_selected_to_edit': '',
+            'last_list_on': '',
+            'element_copied': ('', None),
+            'element_to_move': ('', None),
+            'last_scrollbar_position': (0.0, 1.0),
+            'previous_settings': {
+                'time_to_reset_daily_sections': '',
+                'background_colour': '',
+                'button_colour': '',
+                'text_colour_1': '',
+                'text_colour_2': ''
                 }
             }
 
@@ -86,7 +86,7 @@ data = []
 # | $$      |  $$$$$$/| $$  | $$|  $$$$$$$  |  $$$$/| $$|  $$$$$$/| $$  | $$ /$$$$$$$/
 # |__/       \______/ |__/  |__/ \_______/   \___/  |__/ \______/ |__/  |__/|_______/
 
-def readDataFile():
+def read_data_file():
     tasks = ['(T)', '(F)']
     booleans = {
         '(T)': True,
@@ -99,58 +99,58 @@ def readDataFile():
         file = f.read().splitlines()
 
         settings = file[(file.index('Settings:') + 1):file.index('Data:')]
-        taskData = file[(file.index('Data:') + 1):]
+        task_data = file[(file.index('Data:') + 1):]
 
-        previousLine = None
+        previous_line = None
 
-        todolistData = []
-        listData = []
+        todolist_data = []
+        list_data = []
         section = []
         subsection = []
 
         for i in settings:
             i = i.split()
     
-            if i[0] == 'TimeToResetDaily:':
-                programValues['TimeToResetDaily'] = i[1]
-            if i[0] == 'BGColour:':
-                programValues['BGColour'] = i[1]
+            if i[0] == 'time_to_reset_daily_sections:':
+                program_values['time_to_reset_daily_sections'] = i[1]
+            if i[0] == 'background_colour:':
+                program_values['background_colour'] = i[1]
                 continue
-            if i[0] == 'BColour:':
-                programValues['BColour'] = i[1]
+            if i[0] == 'button_colour:':
+                program_values['button_colour'] = i[1]
                 continue
-            if i[0] == 'TColour1:':
-                programValues['TColour1'] = i[1]
+            if i[0] == 'text_colour_1:':
+                program_values['text_colour_1'] = i[1]
                 continue
-            if i[0] == 'TColour2:':
-                programValues['TColour2'] = i[1]
+            if i[0] == 'text_colour_2:':
+                program_values['text_colour_2'] = i[1]
                 continue
 
-        for i in taskData:
+        for i in task_data:
             i = i.split()
 
-            if i[0] == 'WhenLastClosed:':
-                tempData['WhenLastClosed'] = ' '.join(i[1:3])
+            if i[0] == 'last_time_closed:':
+                temp_data['last_time_closed'] = ' '.join(i[1:3])
                 
 
-            if previousLine != None and previousLine[0] == '---' and i[0] != '---':
+            if previous_line != None and previous_line[0] == '---' and i[0] != '---':
                 if i[0] == '----':
                     subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
                 elif len(section) != 0:
-                    listData.append(section.copy())
+                    list_data.append(section.copy())
                     section.clear() 
 
-            if previousLine != None and previousLine[0] == '----' and i[0] != '----':
+            if previous_line != None and previous_line[0] == '----' and i[0] != '----':
                 if len(subsection) != 0:
                     section.append(subsection.copy())
                     subsection.clear() 
 
-            if i[0] == '----' and previousLine[0] == '----':
+            if i[0] == '----' and previous_line[0] == '----':
                 subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
 
             if i[0] == '---':
 
-                if i[-1] not in tasks and previousLine[0] == '---' and previousLine[-1] not in tasks:
+                if i[-1] not in tasks and previous_line[0] == '---' and previous_line[-1] not in tasks:
                     section.append(subsection.copy())
                     subsection.clear() 
 
@@ -161,66 +161,65 @@ def readDataFile():
 
             if i[0] == '--':
 
-                if i[-1] not in tasks and previousLine[0] == '--' and previousLine[-1] not in tasks:
-                    listData.append(section.copy())
+                if i[-1] not in tasks and previous_line[0] == '--' and previous_line[-1] not in tasks:
+                    list_data.append(section.copy())
                     section.clear() 
 
                 if i[-1] in tasks:
-                    listData.append({' '.join(i[1:-1]): booleans[i[-1]]})
+                    list_data.append({' '.join(i[1:-1]): booleans[i[-1]]})
                 else:
                     section.append({' '.join(i[1:-1]): booleans[i[-1]]})
 
             if i[0] == '-':
-                if len(listData) != 0:
-                    todolistData.append(listData.copy())
-                    listData.clear()
+                if len(list_data) != 0:
+                    todolist_data.append(list_data.copy())
+                    list_data.clear()
 
                 if i[-1] == '!':
-                    listData.append(' '.join(i[1:-1]))
-                    programValues['List'] = ' '.join(i[1:-1])
+                    list_data.append(' '.join(i[1:-1]))
+                    program_values['current_list'] = ' '.join(i[1:-1])
                 else:
-                    listData.append(' '.join(i[1:]))
+                    list_data.append(' '.join(i[1:]))
 
-            previousLine = i
+            previous_line = i
 
 
         if len(subsection) != 0:
             section.append(subsection.copy())
             subsection.clear()
         if len(section) != 0:
-            listData.append(section.copy())
+            list_data.append(section.copy())
             section.clear()
-        if len(listData) != 0:
-            todolistData.append(listData.copy())
-            listData.clear()
+        if len(list_data) != 0:
+            todolist_data.append(list_data.copy())
+            list_data.clear()
 
         global data
-        data = todolistData
+        data = todolist_data
 
-def writeDataFile():
+def write_data_file():
     with open('data.txt', 'w') as f:
 
         lines = ['Settings:' ,'Data:']
-        filesettings = [
-                            f"    TimeToResetDaily: {programValues['TimeToResetDaily']}", 
-                            f"    BGColour: {programValues['BGColour']}", 
-                            f"    BColour: {programValues['BColour']}",
-                            f"    TColour1: {programValues['TColour1']}",
-                            f"    TColour2: {programValues['TColour2']}"
+        file_settings = [
+                            f"    time_to_reset_daily_sections: {program_values['time_to_reset_daily_sections']}", 
+                            f"    background_colour: {program_values['background_colour']}", 
+                            f"    button_colour: {program_values['button_colour']}",
+                            f"    text_colour_1: {program_values['text_colour_1']}",
+                            f"    text_colour_2: {program_values['text_colour_2']}"
                         ]
-        filedata = [
-            f"    WhenLastClosed: {tempData['WhenLastClosed']}"
+        file_data = [
+            f"    last_time_closed: {temp_data['last_time_closed']}"
         ]
 
-        for i in data:
-            todolist = i
+        for todolist in data:
             for content in todolist:
                 if todolist.index(content) == 0:
-                    filedata.append(f"- {content}{' !' if programValues['List'] == content else ''}")
+                    file_data.append(f"- {content}{' !' if program_values['current_list'] == content else ''}")
 
                 if type(content) is dict:
                     for key, value in content.items():
-                        filedata.append(f"-- {key} {'(T)' if value == True else '(F)'}")
+                        file_data.append(f"-- {key} {'(T)' if value == True else '(F)'}")
 
                 if type(content) is list:
 
@@ -231,69 +230,69 @@ def writeDataFile():
                         header = key
                         opened = value
 
-                    filedata.append(f"-- {header} {'(O)' if opened == True else '(C)'}")
+                    file_data.append(f"-- {header} {'(O)' if opened == True else '(C)'}")
 
-                    for contentInSection in content:
-                        if type(contentInSection) is dict and content.index(contentInSection) != 0:
-                            for key, value in contentInSection.items():
-                                filedata.append(f"--- {key} {'(T)' if value == True else '(F)'}")
+                    for content_in_section in content:
+                        if type(content_in_section) is dict and content.index(content_in_section) != 0:
+                            for key, value in content_in_section.items():
+                                file_data.append(f"--- {key} {'(T)' if value == True else '(F)'}")
 
-                        if type(contentInSection) is list:
+                        if type(content_in_section) is list:
 
                             subheader = None
-                            subopened = None
+                            subheader_opened = None
 
-                            for key, value in contentInSection[0].items():
+                            for key, value in content_in_section[0].items():
                                 subheader = key
-                                subopened = value
+                                subheader_opened = value
 
-                            filedata.append(f"--- {subheader} {'(O)' if subopened == True else '(C)'}")
+                            file_data.append(f"--- {subheader} {'(O)' if subheader_opened == True else '(C)'}")
 
-                            for contentInSubSection in contentInSection:
-                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) != 0:
-                                    for key, value in contentInSubSection.items():
-                                        filedata.append(f"---- {key} {'(T)' if value == True else '(F)'}")
+                            for content_in_subsection in content_in_section:
+                                if type(content_in_subsection) is dict and content_in_section.index(content_in_subsection) != 0:
+                                    for key, value in content_in_subsection.items():
+                                        file_data.append(f"---- {key} {'(T)' if value == True else '(F)'}")
 
-        lines[1:1] = filesettings
-        lines.extend(filedata)
+        lines[1:1] = file_settings
+        lines.extend(file_data)
 
         f.write('\n'.join(lines))
 
-def resetDaily():
+def reset_tasks_in_daily_section():
     for todolist in data:
         for content in todolist:
             if type(content) is list and 'Daily' in content[0]:
-                for contentInSection in content:
-                    if content.index(contentInSection) == 0:
+                for content_in_section in content:
+                    if content.index(content_in_section) == 0:
                         continue
 
-                    if type(contentInSection) is dict:
-                        for key in contentInSection:
-                            contentInSection[key] = False
+                    if type(content_in_section) is dict:
+                        for key in content_in_section:
+                            content_in_section[key] = False
 
-                    if type(contentInSection) is list:
-                        for subTask in contentInSection:
-                            if contentInSection.index(subTask) == 0:
+                    if type(content_in_section) is list:
+                        for sub_task in content_in_section:
+                            if content_in_section.index(sub_task) == 0:
                                 continue
 
-                            if type(subTask) is dict:
-                                for key in subTask:
-                                    subTask[key] = False
+                            if type(sub_task) is dict:
+                                for key in sub_task:
+                                    sub_task[key] = False
 
 def colours():
-    BGColour = programValues['BGColour']
-    BColour = programValues['BColour']
-    TColour1 = programValues['TColour1']
-    TColour2 = programValues['TColour2']
+    background_colour = program_values['background_colour']
+    button_colour = program_values['button_colour']
+    text_colour_1 = program_values['text_colour_1']
+    text_colour_2 = program_values['text_colour_2']
 
-    sg.theme_background_color(BGColour)
-    sg.theme_element_background_color(BGColour)
-    sg.theme_text_element_background_color(BGColour)
-    sg.theme_button_color((TColour2, BColour))
-    sg.theme_text_color(TColour1)
-    sg.theme_input_text_color(TColour2)
+    sg.theme_background_color(background_colour)
+    sg.theme_element_background_color(background_colour)
+    sg.theme_text_element_background_color(background_colour)
+    sg.theme_button_color((text_colour_2, button_colour))
+    sg.theme_text_color(text_colour_1)
+    sg.theme_input_text_color(text_colour_2)
 
-def collapse(layout, key, isVisible):
+def collapse(layout, key, is_visible):
     """
     Helper function that creates a Column that can be later made hidden, thus appearing "collapsed"
     :param layout: The layout for the section
@@ -301,7 +300,7 @@ def collapse(layout, key, isVisible):
     :return: A pinned column that can be placed directly into your layout
     :rtype: sg.pin
     """
-    return sg.pin(sg.Column(layout, key=key, visible=isVisible, pad=(15,0)))
+    return sg.pin(sg.Column(layout, key=key, visible=is_visible, pad=(15,0)))
 
 def symbol(opened):
     if opened is True:
@@ -309,77 +308,77 @@ def symbol(opened):
     else:
         return SYMBOL_RIGHT
 
-def createCombo():
-    tempData['combo'].clear()
-    combo = tempData['combo']
+def create_combo():
+    temp_data['combo'].clear()
+    combo = temp_data['combo']
     for i in data:
         combo.append(i[0])
 
-def createTask(name, checked, listName, hierarchyIndex, sectionID):
+def create_task(name, checked, list_name, hierarchy_index, section_id):
     for i in data:
-        if i[0] == listName:
-            ListIndex = str(data.index(i)).zfill(2)
-            hierarchyIndex = str(hierarchyIndex).zfill(2)
-            sectionID = str(sectionID).zfill(2)
-            elementIndexes = f"{ListIndex} {hierarchyIndex} {sectionID}"
+        if i[0] == list_name:
+            list_index = str(data.index(i)).zfill(2)
+            hierarchy_index = str(hierarchy_index).zfill(2)
+            section_id = str(section_id).zfill(2)
+            element_indexes = f"{list_index} {hierarchy_index} {section_id}"
 
-            checkBoxKey = f"{elementIndexes} TASK CHECKBOX {name}"
-            checkBoxTextKey = f"{elementIndexes} TASK TEXT {name}"
+            checkbox_key = f"{element_indexes} TASK CHECKBOX {name}"
+            checkbox_text_key = f"{element_indexes} TASK TEXT {name}"
 
-            rightClickMenu = menus['Task 0 & 1']
-            if hierarchyIndex == '02':
-                rightClickMenu = menus['Task 2']
+            right_click_menu = menus['task_level_0_and_1']
+            if hierarchy_index == '02':
+                right_click_menu = menus['task_level_2']
 
             if len(name) > 30:
                 tooltip = name
             else:
                 tooltip = None
 
-            tempData['elementKeys'].append(f"{elementIndexes} TASK {name}")
-            return [sg.Checkbox('', default=checked, enable_events=True, key=checkBoxKey, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=rightClickMenu, pad=(0,0), key=checkBoxTextKey, enable_events=True, tooltip=tooltip)]
+            temp_data['element_keys'].append(f"{element_indexes} TASK {name}")
+            return [sg.Checkbox('', default=checked, enable_events=True, key=checkbox_key, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=right_click_menu, pad=(0,0), key=checkbox_text_key, enable_events=True, tooltip=tooltip)]
 
-def createSection(header, opened, content, listName, hierarchyIndex, sectionID):
-    tempData['sectionsOpen'][f'{header}'] = opened
+def create_section(header, opened, content, list_name, hierarchy_index, section_id):
+    temp_data['sections_open'][f'{header}'] = opened
     for i in data:
-        if i[0] == listName:
-            ListIndex = str(data.index(i)).zfill(2)
-            hierarchyIndex = str(hierarchyIndex).zfill(2)
-            sectionID = str(sectionID).zfill(2)
-            elementIndexes = f"{ListIndex} {hierarchyIndex} {sectionID}"
+        if i[0] == list_name:
+            list_index = str(data.index(i)).zfill(2)
+            hierarchy_index = str(hierarchy_index).zfill(2)
+            section_id = str(section_id).zfill(2)
+            element_indexes = f"{list_index} {hierarchy_index} {section_id}"
 
-            sectionArrowKey = f'{elementIndexes} SECTION ARROW {header}'
-            sectionTextKey = f'{elementIndexes} SECTION TEXT {header}'
-            sectionContentKey = f'{elementIndexes} SECTION CONTENT {header}'
+            sectionArrowKey = f'{element_indexes} SECTION ARROW {header}'
+            sectionTextKey = f'{element_indexes} SECTION TEXT {header}'
+            section_contentKey = f'{element_indexes} SECTION CONTENT {header}'
 
-            rightClickMenu = menus['Section 0 & 1']
-            if hierarchyIndex == '01':
-                rightClickMenu = menus['Section 2']
+            right_click_menu = menus['section_level_0_and_1']
+            if hierarchy_index == '01':
+                right_click_menu = menus['section_level_2']
 
             if len(header) > 30:
                 tooltip = header
             else:
                 tooltip = None
 
-            tempData['elementKeys'].append(f"{elementIndexes} SECTION {header}")
-            return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=rightClickMenu, tooltip=tooltip)], [collapse(content, sectionContentKey, opened)]]
+            temp_data['element_keys'].append(f"{element_indexes} SECTION {header}")
+            return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=right_click_menu, tooltip=tooltip)], [collapse(content, section_contentKey, opened)]]
 
-def createListLayout(theList):
-    createdListLayout = []
+def create_list_layout(list_to_create):
+    created_list_layout = []
 
-    sectionID = 0
+    section_id = 0
 
     for i in data:
-        if i[0] is theList:
+        if i[0] is list_to_create:
             contents = i
             for content in contents:
                 if type(content) is dict:
                     for key, value in content.items():
-                        createdListLayout.append(createTask(key, value, theList, 0, 0))
+                        created_list_layout.append(create_task(key, value, list_to_create, 0, 0))
 
                 if type(content) is list:
-                    sectionID += 1
+                    section_id += 1
 
-                    ID_of_section = sectionID
+                    id_of_section = section_id
 
                     header = None
                     opened = None
@@ -388,47 +387,47 @@ def createListLayout(theList):
                             header = key
                             opened = value
 
-                    sectionContent = []
+                    section_content = []
 
-                    for contentInSection in content:
-                        if type(contentInSection) is dict and content.index(contentInSection) != 0:
-                            for key, value in contentInSection.items():
-                                sectionContent.append(createTask(key, value, theList, 1, ID_of_section))
+                    for content_in_section in content:
+                        if type(content_in_section) is dict and content.index(content_in_section) != 0:
+                            for key, value in content_in_section.items():
+                                section_content.append(create_task(key, value, list_to_create, 1, id_of_section))
 
-                        if type(contentInSection) is list:
+                        if type(content_in_section) is list:
 
-                            sectionID += 1
+                            section_id += 1
 
                             subheader = None
-                            subopened = None
+                            subheader_opened = None
                             
-                            for key, value in contentInSection[0].items():
+                            for key, value in content_in_section[0].items():
                                     subheader = key
-                                    subopened = value
+                                    subheader_opened = value
 
-                            subsectionContent = []
+                            subsection_content = []
 
-                            for contentInSubSection in contentInSection:
+                            for content_in_subsection in content_in_section:
 
-                                if type(contentInSubSection) is dict and contentInSection.index(contentInSubSection) != 0:
-                                    for key, value in contentInSubSection.items():
-                                        subsectionContent.append(createTask(key, value, theList, 2, sectionID))
+                                if type(content_in_subsection) is dict and content_in_section.index(content_in_subsection) != 0:
+                                    for key, value in content_in_subsection.items():
+                                        subsection_content.append(create_task(key, value, list_to_create, 2, section_id))
 
-                            for i in createSection(subheader, subopened, subsectionContent, theList, 1, ID_of_section):
-                                sectionContent.append(i)
+                            for i in create_section(subheader, subheader_opened, subsection_content, list_to_create, 1, id_of_section):
+                                section_content.append(i)
 
-                    for i in createSection(header, opened, sectionContent, theList, 0, 0):
-                        createdListLayout.append(i)    
-    return createdListLayout
+                    for i in create_section(header, opened, section_content, list_to_create, 0, 0):
+                        created_list_layout.append(i)    
+    return created_list_layout
 
-def createRowOfColumns(listFocused):
-    listsColumns = []
+def create_row_of_columns(list_to_create):
+    list_of_columns = []
     for i in data:
-        listLayout = createListLayout(i[0])
-        listsColumns.append(sg.Column(layout=listLayout, visible=i[0] == listFocused, size=(300,390), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
+        list_layout = create_list_layout(i[0])
+        list_of_columns.append(sg.Column(layout=list_layout, visible=i[0] == list_to_create, size=(300,390), key=f'COL{data.index(i)}', scrollable=True, vertical_scroll_only=True, pad=((0,5),(10,10))))
     
-    editListsLayout = [
-        [sg.Listbox(key='LISTS LISTBOX', values=tuple(tempData['combo']), size=(32,10), pad=(16,10), enable_events=True)],
+    list_editor_layout = [
+        [sg.Listbox(key='LISTS LISTBOX', values=tuple(temp_data['combo']), size=(32,10), pad=(16,10), enable_events=True)],
         [sg.B('NONE', focus=True, visible=False)],
         [sg.B('Add', k='List::ADD(BUTTON)', size=(28,2), pad=(22, 8), border_width=0)],
         [sg.B('Rename', k='List::RENAME', size=(13, 2), pad=((22, 5), (0, 0)), border_width=0), sg.B('Delete', k='List::DELETE', size=(13, 2), border_width=0)],
@@ -436,278 +435,276 @@ def createRowOfColumns(listFocused):
         [sg.B('Undo', k='List::UNDO', size=(13, 2), pad=((22, 5), (8, 0)), border_width=0), sg.B('Redo', k='List::REDO', size=(13, 2), pad=((5, 0), (8, 0)), border_width=0)]
     ]
 
-    frameLayout = [
+    frame_layout = [
         [sg.CB('', pad=((10, 0),(3,3))), sg.T('Colour                                   ', pad=(0,0))],
         [sg.T(symbol(True), pad=((10, 0),(3,3))), sg.T('Settings')], [collapse([[sg.CB('', pad=((10, 0),(3,3))), sg.T('Apply', pad=(0,0))]], None, True)]
     ]
 
-    settingsLayout = [
-        [sg.Text('Reset Daily at', pad=(6, 20)), sg.Input(default_text=programValues['TimeToResetDaily'], key='TimeToResetDaily', size=(18,1), pad=((31,5),(0,0)))],
-        [sg.Text('Background Colour', pad=(6,0)), sg.Input(default_text=programValues['BGColour'], key='BGColour', size=(9,1), pad=((3,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=programValues['BColour'], key='BColour', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=programValues['TColour1'], key='TColour1', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=programValues['TColour2'], key='TColour2', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Frame('Result', frameLayout, pad=(25,50), title_color=programValues['TColour1'])]
+    settings_layout = [
+        [sg.Text('Reset Daily at', pad=(6, 20)), sg.Input(default_text=program_values['time_to_reset_daily_sections'], key='-TIME_TO_RESET_DAILY_SECTIONS-', size=(18,1), pad=((31,5),(0,0)))],
+        [sg.Text('Background Colour', pad=(6,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(9,1), pad=((3,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Frame('Result', frame_layout, pad=(25,50), title_color=program_values['text_colour_1'])]
     ]
 
-    listsColumns.append(sg.Column(layout=editListsLayout, visible=True if programValues['List'] == 'LIST EDITOR' else False, size=(300,400), key=f'COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
-    listsColumns.append(sg.Column(layout=settingsLayout, visible=True if programValues['List'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10))))
-    return(listsColumns)
+    list_of_columns.append(sg.Column(layout=list_editor_layout, visible=True if program_values['current_list'] == 'LIST EDITOR' else False, size=(300,400), key=f'COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
+    list_of_columns.append(sg.Column(layout=settings_layout, visible=True if program_values['current_list'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10))))
+    return(list_of_columns)
 
-def createLayout(listFocused):
-    if listFocused is None:
-        listFocused = programValues['List']
+def create_layout(list_to_create):
+    if list_to_create is None:
+        list_to_create = program_values['current_list']
 
-    if listFocused in ('LIST EDITOR', 'SETTINGS'):
-        addButtonsVisible = False
-        if listFocused == 'LIST EDITOR':
-            comboDefaultValue = 'List Editor'
+    if list_to_create in ('LIST EDITOR', 'SETTINGS'):
+        add_buttons_visible = False
+        if list_to_create == 'LIST EDITOR':
+            default_value_of_combo_box = 'List Editor'
         else:
-            comboDefaultValue = 'Settings'
+            default_value_of_combo_box = 'Settings'
     else:
-        addButtonsVisible = True
-        comboDefaultValue = tempData['combo'][tempData['combo'].index(programValues['List'] if programValues['List'] != 'LIST EDITOR' else tempData['combo'][0])]
+        add_buttons_visible = True
+        default_value_of_combo_box = temp_data['combo'][temp_data['combo'].index(program_values['current_list'] if program_values['current_list'] != 'LIST EDITOR' else temp_data['combo'][0])]
 
-    addButtonsCol = [
+    add_buttons_column = [
         [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(2,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(2,0)), border_width=0))]
     ]
 
-    applyRevertButtonsCol = [
+    apply_revert_buttons_columns = [
         [sg.B('Apply', size=(15,2), border_width=0, pad=((0,0),(2,0))), sg.B('Revert', size=(15, 2), border_width=0, pad=((18,0),(2,0)))]
     ]
 
     return [
-            [sg.Menu(menus['Menu Bar'], key='-MENU BAR-')],
-            [sg.Combo(tempData['combo'],default_value=comboDefaultValue , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
-            createRowOfColumns(listFocused),
-            [sg.Col(addButtonsCol, k='COL ADD BUTTONS', visible=addButtonsVisible), sg.Col(applyRevertButtonsCol, k='COL APPLY REVERT BUTTONS', visible=True if programValues['List'] == 'SETTINGS' else False)]
+            [sg.Menu(menus['menu_bar'], key='-MENU BAR-')],
+            [sg.Combo(temp_data['combo'],default_value=default_value_of_combo_box , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
+            create_row_of_columns(list_to_create),
+            [sg.Col(add_buttons_column, k='COL ADD BUTTONS', visible=add_buttons_visible), sg.Col(apply_revert_buttons_columns, k='COL APPLY REVERT BUTTONS', visible=True if program_values['current_list'] == 'SETTINGS' else False)]
         ]
         
-def updateData(elementType, name):
-    for todoList in data:
-            if todoList[0] == programValues['List']:
-                for content in todoList:
-                    if elementType == 'Section':
+def update_data(element_type, name):
+    for todolist in data:
+            if todolist[0] == program_values['current_list']:
+                for content in todolist:
+                    if element_type == 'Section':
                         if type(content) is list:
                             if name in content[0]:
-                                content[0][name] = tempData['sectionsOpen'][name]
+                                content[0][name] = temp_data['sections_open'][name]
                                 return
 
-                            for contentInSection in content:
-                                if type(contentInSection) is list:
-                                    if name in contentInSection[0]:
-                                        contentInSection[0][name] = tempData['sectionsOpen'][name]
+                            for content_in_section in content:
+                                if type(content_in_section) is list:
+                                    if name in content_in_section[0]:
+                                        content_in_section[0][name] = temp_data['sections_open'][name]
                                         return
 
-                    if elementType == 'Task':
+                    if element_type == 'Task':
                         if type(content) is dict:
                             if name in content:
                                 content[name] = not content[name]
                                 return
                             
                         if type(content) is list:
-                            for contentInSection in content:
-                                if type(contentInSection) is dict:
-                                    if name in contentInSection:
-                                        contentInSection[name] = not contentInSection[name]
+                            for content_in_section in content:
+                                if type(content_in_section) is dict:
+                                    if name in content_in_section:
+                                        content_in_section[name] = not content_in_section[name]
                                         return
-                                if type(contentInSection) is list:
-                                    for contentInSubSection in contentInSection:
-                                        if name in contentInSubSection:
-                                            contentInSubSection[name] = not contentInSubSection[name]
+                                if type(content_in_section) is list:
+                                    for content_in_subsection in content_in_section:
+                                        if name in content_in_subsection:
+                                            content_in_subsection[name] = not content_in_subsection[name]
                                             return
 
 def bindings():
-    for i in tempData['elementKeys']:
-        elementKey = i.split(' ')
-        elementKey.insert(4, 'TEXT')
-        window[' '.join(elementKey)].bind('<Button-3>', ' +RIGHT CLICK+')
-
-    
+    for i in temp_data['element_keys']:
+        element_key = i.split(' ')
+        element_key.insert(4, 'TEXT')
+        window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
 
-def addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex):
-    if elementToAdd is None:
+def add_element(element_to_add, section_name_to_add_to, hierarchy_index):
+    if element_to_add is None:
         return
-    for i in data:
-        currentList = programValues['List']
-        if i[0] == currentList:
-            if hierarchyIndex == '00':
-                i.append(elementToAdd)
-                return createNewWindow()
-            elif hierarchyIndex == '01':
-                for content in i:
-                    if type(content) is list and sectionNameToAddTo in content[0]:
-                        content.append(elementToAdd)
-                        return createNewWindow()
-            elif hierarchyIndex == '02':
-                for content in i:
+    for todolist in data:
+        current_list = program_values['current_list']
+        if todolist[0] == current_list:
+            if hierarchy_index == '00':
+                todolist.append(element_to_add)
+                return create_new_window()
+            elif hierarchy_index == '01':
+                for content in todolist:
+                    if type(content) is list and section_name_to_add_to in content[0]:
+                        content.append(element_to_add)
+                        return create_new_window()
+            elif hierarchy_index == '02':
+                for content in todolist:
                     if type(content) is list:
-                        for contentInSection in content:
-                            if type(contentInSection) is list and sectionNameToAddTo in contentInSection[0]:
-                                if type(elementToAdd) is tuple:
-                                    for task in elementToAdd:
-                                        contentInSection.append(task)
+                        for content_in_section in content:
+                            if type(content_in_section) is list and section_name_to_add_to in content_in_section[0]:
+                                if type(element_to_add) is tuple:
+                                    for task in element_to_add:
+                                        content_in_section.append(task)
                                 else:
-                                    contentInSection.append(elementToAdd)
-                                return createNewWindow()
+                                    content_in_section.append(element_to_add)
+                                return create_new_window()
 
-def insertElement(elementToInsert, elementNameOfInsertPos, hierarchyIndex, sectionID):
-    if elementToInsert is None:
+def insert_element(element_to_insert, element_name_of_insert_position, hierarchy_index, section_id):
+    if element_to_insert is None:
         return
-    localSectionID = 0
+    local_section_id = 0
 
     for todolist in data:
-        if todolist[0] == programValues['List']:
+        if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
-                if elementNameOfInsertPos in task and hierarchyIndex == '00':
-                    todolist.insert(todolist.index(task), elementToInsert)
-                    return createNewWindow()
+                if element_name_of_insert_position in task and hierarchy_index == '00':
+                    todolist.insert(todolist.index(task), element_to_insert)
+                    return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                if elementNameOfInsertPos in section[0] and hierarchyIndex == '00':
-                    todolist.insert(todolist.index(section), elementToInsert)
-                    return createNewWindow()
-                localSectionID += 1
+                if element_name_of_insert_position in section[0] and hierarchy_index == '00':
+                    todolist.insert(todolist.index(section), element_to_insert)
+                    return create_new_window()
+                local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
-                    if elementNameOfInsertPos in task and int(sectionID) == localSectionID:
-                        section.insert(section.index(task), elementToInsert)
-                        return createNewWindow()
+                    if element_name_of_insert_position in task and int(section_id) == local_section_id:
+                        section.insert(section.index(task), element_to_insert)
+                        return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if elementNameOfInsertPos in subsection[0] and int(sectionID) == localSectionID:
-                        section.insert(section.index(subsection), elementToInsert)
-                        return createNewWindow()
+                    if element_name_of_insert_position in subsection[0] and int(section_id) == local_section_id:
+                        section.insert(section.index(subsection), element_to_insert)
+                        return create_new_window()
                 else:
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        localSectionID += 1
+                        local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if elementNameOfInsertPos in task and int(sectionID) == localSectionID:
-                                if type(elementToInsert) is tuple:
-                                    for taskToInsert in elementToInsert:
+                            if element_name_of_insert_position in task and int(section_id) == local_section_id:
+                                if type(element_to_insert) is tuple:
+                                    for taskToInsert in element_to_insert:
                                         subsection.insert(subsection.index(task), taskToInsert)
                                 else:
-                                    subsection.insert(subsection.index(task), elementToInsert)
-                                return createNewWindow()
+                                    subsection.insert(subsection.index(task), element_to_insert)
+                                return create_new_window()
 
-def renameElement(newName, elementType, hierarchyIndex, sectionID):
+def rename_element(new_name, element_type, hierarchy_index, section_id):
     
-    localSectionID = 0
+    local_section_id = 0
 
     for todolist in data:
-        if todolist[0] == programValues['List']:
+        if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
-                if elementType == 'Task' and  oldName in task and hierarchyIndex == '00':
-                    task[newName] = task.pop(oldName)
-                    return createNewWindow()
+                if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
+                    task[new_name] = task.pop(old_name)
+                    return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                if elementType == 'Section' and oldName in section[0] and hierarchyIndex == '00':
-                    section[0][newName] = section[0].pop(oldName)
-                    return createNewWindow()
-                localSectionID += 1
+                if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
+                    section[0][new_name] = section[0].pop(old_name)
+                    return create_new_window()
+                local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
-                    if elementType == 'Task' and  oldName in task and int(sectionID) == localSectionID:
-                        task[newName] = task.pop(oldName)
-                        return createNewWindow()
+                    if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
+                        task[new_name] = task.pop(old_name)
+                        return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if elementType == 'Section' and oldName in subsection[0] and int(sectionID) == localSectionID:
-                        subsection[0][newName] = subsection[0].pop(oldName)
-                        return createNewWindow()
+                    if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
+                        subsection[0][new_name] = subsection[0].pop(old_name)
+                        return create_new_window()
                 else:
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        localSectionID += 1
+                        local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if elementType == 'Task' and oldName in task and int(sectionID) == localSectionID:
-                                task[newName] = task.pop(oldName)
-                                return createNewWindow()
+                            if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
+                                task[new_name] = task.pop(old_name)
+                                return create_new_window()
 
-def delElement(elementName, elementType, hierarchyIndex, sectionID):
+def delete_element(element_name, element_type, hierarchy_index, section_id):
     
-    localSectionID = 0
+    local_section_id = 0
 
     for todolist in data:
-        if todolist[0] == programValues['List']:
+        if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
-                if elementType == 'Task' and  elementName in task and hierarchyIndex == '00':
+                if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
                     todolist.remove(task)
-                    return createNewWindow()
+                    return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                if elementType == 'Section' and elementName in section[0] and hierarchyIndex == '00':
+                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
                     todolist.remove(section)
-                    return createNewWindow()
-                localSectionID += 1
+                    return create_new_window()
+                local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
-                    if elementType == 'Task' and  elementName in task and int(sectionID) == localSectionID:
+                    if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
                         section.remove(task)
-                        return createNewWindow()
+                        return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if elementType == 'Section' and elementName in subsection[0] and int(sectionID) == localSectionID:
+                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
                         section.remove(subsection)
-                        return createNewWindow()
+                        return create_new_window()
                 else:
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        localSectionID += 1
+                        local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if elementType == 'Task' and elementName in task and int(sectionID) == localSectionID:
+                            if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
                                 subsection.remove(task)
-                                return createNewWindow()
+                                return create_new_window()
                 
 
-def renameList(listName, newListName):
+def rename_list(list_name, new_list_name):
     for i in data:
-        if i[0] == listName:
-            i[0] = newListName
+        if i[0] == list_name:
+            i[0] = new_list_name
             break
          
-    for listNameInCombo in tempData['combo']:
-        if listNameInCombo is listName:
-            listNameInCombo = newListName
+    for list_name_in_combo in temp_data['combo']:
+        if list_name_in_combo is list_name:
+            list_name_in_combo = new_list_name
             break
 
-    createCombo()
+    create_combo()
 
-    window['-COMBO-'].update(values=tempData['combo'])
-    window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
+    window['-COMBO-'].update(values=temp_data['combo'])
+    window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
 
-def delList():
+def delete_list():
     if window[f'COL LIST EDITOR'].visible == True:
-        theList = values['LISTS LISTBOX'][0]
+        list_to_delete = values['LISTS LISTBOX'][0]
     else:
-        theList = programValues['List']
+        list_to_delete = program_values['current_list']
         
     for i in data:
-        if i[0] == theList:
+        if i[0] == list_to_delete:
             data.remove(i)
-            tempData['combo'].remove(theList)
-            for listName in tempData['combo']:
-                if listName is not theList:
+            temp_data['combo'].remove(list_to_delete)
+            for list_name in temp_data['combo']:
+                if list_name is not list_to_delete:
                     if window[f'COL LIST EDITOR'].visible == True:
-                        programValues['List'] = 'LIST EDITOR'
+                        program_values['current_list'] = 'LIST EDITOR'
                     else:
-                        programValues['List'] = listName
+                        program_values['current_list'] = list_name
                     break
-            return createNewWindow()
+            return create_new_window()
 
-def copySection(elementName, hierarchyIndex, sectionID):
-    localSectionID = 0
+def copy_section(element_name, hierarchy_index, section_id):
+    local_section_id = 0
     for todolist in data:
-        if todolist[0] == programValues['List']:
+        if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
-                if elementName in section[0] and hierarchyIndex == '00':
-                    hierarchyLevels = 1
+                if element_name in section[0] and hierarchy_index == '00':
+                    hierarchy_levels = 1
                     if len([x for x in section if type(x) is list]) != 0:
-                        hierarchyLevels = 2
-                    return(section, hierarchyLevels)
-                localSectionID += 1
+                        hierarchy_levels = 2
+                    return(section, hierarchy_levels)
+                local_section_id += 1
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if elementName in subsection[0] and int(sectionID) == localSectionID:
+                    if element_name in subsection[0] and int(section_id) == local_section_id:
                         return(subsection, 2)
 
-def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
-    localSectionID = 0
+def move_element(element_to_move, hierarchy_index, section_id, direction):
+    local_section_id = 0
 
     for todolist in data:
-        if todolist[0] == programValues['List']:
+        if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
-                if elementToMove in task and hierarchyIndex == '00':
+                if element_to_move in task and hierarchy_index == '00':
                     if direction == 'Up':
                         a, b = todolist.index(task), todolist.index(task) - 1
                         if a == 1:
@@ -717,9 +714,9 @@ def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
                         if len(todolist) == b:
                             return
                     todolist[b], todolist[a] = todolist[a], todolist[b]
-                    return createNewWindow()
+                    return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                if elementToMove in section[0] and hierarchyIndex == '00':
+                if element_to_move in section[0] and hierarchy_index == '00':
                     if direction == 'Up':
                         a, b = todolist.index(section), todolist.index(section) - 1
                         if a == 1:
@@ -729,10 +726,10 @@ def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
                         if len(todolist) == b:
                             return
                     todolist[b], todolist[a] = todolist[a], todolist[b]
-                    return createNewWindow()
-                localSectionID += 1
+                    return create_new_window()
+                local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
-                    if elementToMove in task and int(sectionID) == localSectionID:
+                    if element_to_move in task and int(section_id) == local_section_id:
                         if direction == 'Up':
                             a, b = section.index(task), section.index(task) - 1
                             if a == 1:
@@ -742,9 +739,9 @@ def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
                             if len(section) == b:
                                 return
                         section[b], section[a] = section[a], section[b]
-                        return createNewWindow()
+                        return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if elementToMove in subsection[0] and int(sectionID) == localSectionID:
+                    if element_to_move in subsection[0] and int(section_id) == local_section_id:
                         if direction == 'Up':
                             a, b = section.index(subsection), section.index(subsection) - 1
                             if a == 1:
@@ -754,12 +751,12 @@ def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
                             if len(section) == b:
                                 return
                         section[b], section[a] = section[a], section[b]
-                        return createNewWindow()
+                        return create_new_window()
                 else:
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        localSectionID += 1
+                        local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if elementToMove in task and int(sectionID) == localSectionID:
+                            if element_to_move in task and int(section_id) == local_section_id:
                                 if direction == 'Up':
                                     a, b = subsection.index(task), subsection.index(task) - 1
                                     if a == 1:
@@ -769,96 +766,96 @@ def moveElement(elementToMove, hierarchyIndex, sectionID, direction):
                                     if len(subsection) == b:
                                         return
                                 subsection[b], subsection[a] = subsection[a], subsection[b]
-                                return createNewWindow()
+                                return create_new_window()
 
-def checkElementExist(listIndex, hierarchyIndex, sectionID, elementType, elementName):
-    return(f"{listIndex} {hierarchyIndex} {sectionID} {elementType.upper()} {elementName}" in tempData['elementKeys'])
+def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
+    return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
 
-def getTxt(msg):
-    currentLoc = window.CurrentLocation()
-    loc = (currentLoc[0] - 25, currentLoc[1] + 100)
-    return sg.popup_get_text(msg, location=loc, icon='icon.ico')
+def getTxt(message):
+    current_location = window.CurrentLocation()
+    location = (current_location[0] - 25, current_location[1] + 100)
+    return sg.popup_get_text(message, location=location, icon='icon.ico')
 
-def applySettings():
+def apply_settings():
     import re
 
-    currentLoc = window.CurrentLocation()
+    current_location = window.CurrentLocation()
 
-    previousSettings = tempData['previousSettings']
+    previous_settings = temp_data['previous_settings']
 
-    if re.match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['TimeToResetDaily']):
-        previousSettings['TimeToResetDaily'] = programValues['TimeToResetDaily']
-        programValues['TimeToResetDaily'] = values['TimeToResetDaily']
+    if re.match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['-TIME_TO_RESET_DAILY_SECTIONS-']):
+        previous_settings['time_to_reset_daily_sections'] = program_values['time_to_reset_daily_sections']
+        program_values['time_to_reset_daily_sections'] = values['-TIME_TO_RESET_DAILY_SECTIONS-']
     else:
-        loc = (currentLoc[0] - 5, currentLoc[1] + 100)
-        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=loc, icon='icon.ico')
+        location = (current_location[0] - 5, current_location[1] + 100)
+        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=location, icon='icon.ico')
         return
 
-    for colourString in (values['BGColour'], values['BColour'], values['TColour1'], values['TColour2']):
-        if re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', colourString):
+    for colour in (values['-BACKGROUND_COLOUR-'], values['-BUTTON_COLOUR-'], values['-TEXT_COLOUR_1-'], values['-TEXT_COLOUR_2-']):
+        if re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour):
             pass
         else:
-            loc = (currentLoc[0] - 30, currentLoc[1] + 100)
-            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colourString}', location=loc, line_width=100, icon='icon.ico')
+            location = (current_location[0] - 30, current_location[1] + 100)
+            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colour}', location=location, line_width=100, icon='icon.ico')
             return
 
-    previousSettings['BGColour'] = programValues['BGColour']
-    previousSettings['BColour'] = programValues['BColour']
-    previousSettings['TColour1'] = programValues['TColour1']
-    previousSettings['TColour2'] = programValues['TColour2']
+    previous_settings['background_colour'] = program_values['background_colour']
+    previous_settings['button_colour'] = program_values['button_colour']
+    previous_settings['text_colour_1'] = program_values['text_colour_1']
+    previous_settings['text_colour_2'] = program_values['text_colour_2']
 
-    programValues['BGColour'] = values['BGColour']
-    programValues['BColour'] = values['BColour']
-    programValues['TColour1'] = values['TColour1']
-    programValues['TColour2'] = values['TColour2']
+    program_values['background_colour'] = values['-BACKGROUND_COLOUR-']
+    program_values['button_colour'] = values['-BUTTON_COLOUR-']
+    program_values['text_colour_1'] = values['-TEXT_COLOUR_1-']
+    program_values['text_colour_2'] = values['-TEXT_COLOUR_2-']
         
 
     colours()
-    createNewWindow()
+    create_new_window()
 
-def revertSettings():
-    previousSettings = tempData['previousSettings']
+def revert_settings():
+    previous_settings = temp_data['previous_settings']
 
-    programValues['BGColour'] = previousSettings['BGColour']
-    programValues['BColour'] = previousSettings['BColour']
-    programValues['TColour1'] = previousSettings['TColour1']
-    programValues['TColour2'] = previousSettings['TColour2']
+    program_values['background_colour'] = previous_settings['background_colour']
+    program_values['button_colour'] = previous_settings['button_colour']
+    program_values['text_colour_1'] = previous_settings['text_colour_1']
+    program_values['text_colour_2'] = previous_settings['text_colour_2']
 
     colours()
-    createNewWindow()
+    create_new_window()
 
 def startup():
-    readDataFile()
+    read_data_file()
 
     # Check whether to reset the daily section
-    whenToReset = f"{datetime.now().strftime(r'%d/%m/%Y')} {programValues['TimeToResetDaily']}"
-    dateTimeNow = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
+    when_to_reset = f"{datetime.now().strftime(r'%d/%m/%Y')} {program_values['time_to_reset_daily_sections']}"
+    date_and_time_now = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
 
-    if tempData['WhenLastClosed'] < whenToReset:
-        if dateTimeNow > whenToReset:
-            resetDaily()
+    if temp_data['last_time_closed'] < when_to_reset:
+        if date_and_time_now > when_to_reset:
+            reset_tasks_in_daily_section()
 
     # Sets the list index
-    for i in data:
-        if i[0] == programValues['List']:
-            tempData['ListIndex'] = str(data.index(i)).zfill(2)
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            temp_data['list_index'] = str(data.index(todolist)).zfill(2)
             break
 
     colours()
-    createCombo()
+    create_combo()
     
 startup()
 
-window = sg.Window('TODOlist', layout=createLayout(None), size=(300,500), finalize=True, icon='icon.ico')
+window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True, icon='icon.ico')
 bindings()
 
 
-def createNewWindow():
-    tempData['elementKeys'].clear()
+def create_new_window():
+    temp_data['element_keys'].clear()
     global window
-    window1 = sg.Window('TODOlist', layout=createLayout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
-    if programValues['List'] not in ('LIST EDITOR', "SETTINGS"):
-        window1[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.canvas.yview_moveto(tempData['lastScrollBarPos'][0])
+    window1 = sg.Window('TODOlist', layout=create_layout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
+    if program_values['current_list'] not in ('LIST EDITOR', "SETTINGS"):
+        window1[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.canvas.yview_moveto(temp_data['last_scrollbar_position'][0])
     window.Close()
     window = window1
     bindings()
@@ -898,34 +895,34 @@ while True:
     print(event)
 
     if event == sg.WIN_CLOSED:
-        tempData['WhenLastClosed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
-        if programValues['List'] in ('LIST EDITOR', 'SETTINGS'):
-            programValues['List'] = tempData['lastListOn']
-        #writeDataFile()
+        temp_data['last_time_closed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
+        if program_values['current_list'] in ('LIST EDITOR', 'SETTINGS'):
+            program_values['current_list'] = temp_data['last_list_on']
+        #write_data_file()
         break
 
     # Add a to do list
     if 'List::ADD' in event:
-        listName = getTxt('List Name:')
+        list_name = getTxt('List Name:')
 
-        if listName is not None and listName not in tempData['combo']:
-            data.append([listName])
+        if list_name is not None and list_name not in temp_data['combo']:
+            data.append([list_name])
             if 'MENU' in event:
-                programValues['List'] = listName
-            createCombo()
-            tempData['ListIndex'] = str(tempData['combo'].index(listName)).zfill(2)
-            createNewWindow()
-        elif listName in tempData['combo']:
-            currentLoc = window.CurrentLocation()
-            loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('List already exists', title='Error', location=loc, icon='icon.ico')
+                program_values['current_list'] = list_name
+            create_combo()
+            temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
+            create_new_window()
+        elif list_name in temp_data['combo']:
+            current_location = window.CurrentLocation()
+            location = (current_location[0] + 80, current_location[1] + 100)
+            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
 
     # Change which list your on
     if event == '-COMBO-':
-        programValues['List'] = values['-COMBO-']
-        tempData['ListIndex'] = str(tempData['combo'].index(values['-COMBO-'])).zfill(2)
+        program_values['current_list'] = values['-COMBO-']
+        temp_data['list_index'] = str(temp_data['combo'].index(values['-COMBO-'])).zfill(2)
         for i in data:
-            if i[0] == programValues['List']:
+            if i[0] == program_values['current_list']:
                 window[f'COL{data.index(i)}'].update(visible=True)
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
@@ -936,7 +933,7 @@ while True:
 
                 window['COL APPLY REVERT BUTTONS'].update(visible=False)
 
-                window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
+                window['-MENU BAR-'].update(menu_definition=menus['menu_bar'])
 
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
@@ -945,85 +942,85 @@ while True:
     # Appending or Inserting an element
     if any(x in event for x in ('ADD', 'INSERT')) and 'List' not in event:
 
-        sectionNameToAddTo = None
-        hierarchyIndex = '00'
-        sectionID = '00'
+        section_name_to_add_to = None
+        hierarchy_index = '00'
+        section_id = '00'
 
         if 'ADD' in event:
             if 'BUTTON' in event:
-                elementType = event[:-13]
+                element_type = event[:-13]
             else:
-                elementType = event[:-5]
+                element_type = event[:-5]
         else:
-            elementType = event[:-8]
-            sectionID = tempData['latestElementRightClicked'][6:8]
+            element_type = event[:-8]
+            section_id = temp_data['last_element_right_clicked'][6:8]
 
         if 'ADDTO' in event:
-            sectionNameToAddTo = tempData['latestElementRightClicked'][22:]
-            hierarchyIndex = tempData['latestElementRightClicked'][3:5]
-            hierarchyIndex = str((int(hierarchyIndex) + 1)).zfill(2)
-            sectionID = str((int(tempData['latestElementRightClicked'][6:8]) + 1)).zfill(2)
-            elementType = event[:-7]
+            section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
+            hierarchy_index = temp_data['last_element_right_clicked'][3:5]
+            hierarchy_index = str((int(hierarchy_index) + 1)).zfill(2)
+            section_id = str((int(temp_data['last_element_right_clicked'][6:8]) + 1)).zfill(2)
+            element_type = event[:-7]
 
-        if 'Paste' in event and tempData['elementCopied'][1] is not None:
-            elementType = 'Task' if type(tempData['elementCopied'][1]) is bool else 'Section'
-            if elementType == 'Task':
-                elementName = tempData['elementCopied'][0][19:]
+        if 'Paste' in event and temp_data['element_copied'][1] is not None:
+            element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
+            if element_type == 'Task':
+                element_name = temp_data['element_copied'][0][19:]
             else:
-                elementName = list(tempData['elementCopied'][0][0].keys())[0]
+                element_name = list(temp_data['element_copied'][0][0].keys())[0]
 
-            if elementType[0] == 'T':
-                elementToAdd = {elementName: tempData['elementCopied'][1]}
+            if element_type[0] == 'T':
+                element_to_add = {element_name: temp_data['element_copied'][1]}
             else:
-                if int(hierarchyIndex) == 2:
-                    currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(currentLoc[0] + 25, currentLoc[1] + 100), icon='icon.ico')
-                    elementToAdd = tuple(x for x in tempData['elementCopied'][0][1:] if type(x) is dict)
-                elif int(hierarchyIndex) > 0 and tempData['elementCopied'][1] == 2:
-                    elementToAdd = [x for x in tempData['elementCopied'][0] if type(x) is dict]
-                    currentLoc = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(currentLoc[0] + 30, currentLoc[1] + 100), icon='icon.ico')
+                if int(hierarchy_index) == 2:
+                    current_location = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100), icon='icon.ico')
+                    element_to_add = tuple(x for x in temp_data['element_copied'][0][1:] if type(x) is dict)
+                elif int(hierarchy_index) > 0 and temp_data['element_copied'][1] == 2:
+                    element_to_add = [x for x in temp_data['element_copied'][0] if type(x) is dict]
+                    current_location = window.CurrentLocation()
+                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100), icon='icon.ico')
                 else:
-                    elementToAdd = tempData['elementCopied'][0]
+                    element_to_add = temp_data['element_copied'][0]
         elif 'Paste' not in event:
-            elementName = getTxt(f'{elementType} Name:')
-            if elementType[0] == 'T':
-                elementToAdd = {elementName: False}
+            element_name = getTxt(f'{element_type} Name:')
+            if element_type[0] == 'T':
+                element_to_add = {element_name: False}
             else:
-                elementToAdd = [{elementName: False}]
+                element_to_add = [{element_name: False}]
         else:
-            elementName = None
-            elementToAdd = None
+            element_name = None
+            element_to_add = None
 
-        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, elementName) == False:
-            if elementName not in ('', None):
-                tempData['lastScrollBarPos'] = window[f"COL{tempData['combo'].index(programValues['List'])}"].Widget.vscrollbar.get()
+        if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, element_name) == False:
+            if element_name not in ('', None):
+                temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
                 if 'ADD' in event:
-                    addElement(elementToAdd, sectionNameToAddTo, hierarchyIndex)
+                    add_element(element_to_add, section_name_to_add_to, hierarchy_index)
                 else:
-                    if tempData['latestElementRightClicked'][9:10] == 'T':
-                        elementNameOfInsertPos = tempData['latestElementRightClicked'][19:]
+                    if temp_data['last_element_right_clicked'][9:10] == 'T':
+                        element_name_of_insert_position = temp_data['last_element_right_clicked'][19:]
                     else:
-                        elementNameOfInsertPos = tempData['latestElementRightClicked'][22:]
+                        element_name_of_insert_position = temp_data['last_element_right_clicked'][22:]
                     
-                    insertElement(elementToAdd, elementNameOfInsertPos, hierarchyIndex, sectionID)
+                    insert_element(element_to_add, element_name_of_insert_position, hierarchy_index, section_id)
         else:
-            currentLoc = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100), icon='icon.ico')
+            current_location = window.CurrentLocation()
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
     # Opening and closing sections
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy', 'Cut')):
-        elementIndexes = event[:8]
+        element_indexes = event[:8]
 
         if 'ARROW' in event:
             eventName = event[23:]
         else:
             eventName = event[22:]
 
-        tempData['sectionsOpen'][eventName] = not tempData['sectionsOpen'][eventName]
-        window[f"{elementIndexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if tempData['sectionsOpen'][eventName] else SYMBOL_RIGHT)
-        window[f"{elementIndexes} SECTION CONTENT {eventName}"].update(visible=tempData['sectionsOpen'][eventName]) 
-        updateData('Section', eventName)
+        temp_data['sections_open'][eventName] = not temp_data['sections_open'][eventName]
+        window[f"{element_indexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if temp_data['sections_open'][eventName] else SYMBOL_RIGHT)
+        window[f"{element_indexes} SECTION CONTENT {eventName}"].update(visible=temp_data['sections_open'][eventName]) 
+        update_data('Section', eventName)
 
 
     # Updating the checkbox
@@ -1031,160 +1028,160 @@ while True:
 
         if 'TEXT' in event:
             eventName = event[19:]
-            elementKey = event.split(' ')
-            elementKey.remove('TEXT')
-            elementKey.insert(4, 'CHECKBOX')
-            elementKey = ' '.join(elementKey)
-            checked =  window[elementKey].Get()
-            window[elementKey].Update(value=not checked)
+            element_key = event.split(' ')
+            element_key.remove('TEXT')
+            element_key.insert(4, 'CHECKBOX')
+            element_key = ' '.join(element_key)
+            checked =  window[element_key].Get()
+            window[element_key].Update(value=not checked)
         else:
             eventName = event[23:]
             
-        updateData('Task', eventName)
+        update_data('Task', eventName)
     
     # Checking what element the user right clicked
     if '+RIGHT CLICK+' in event:
-        elementKey = event[:-14]
+        element_key = event[:-14]
 
-        if elementKey is not tempData['latestElementRightClicked']:
-            tempData['latestElementRightClicked'] = elementKey
-            #print(f"Element right clicked was: {elementKey}")
+        if element_key is not temp_data['last_element_right_clicked']:
+            temp_data['last_element_right_clicked'] = element_key
+            #print(f"Element right clicked was: {element_key}")
 
-        event = window[elementKey].user_bind_event
-        window[elementKey]._RightClickMenuCallback(event)
-        event = elementKey
+        event = window[element_key].user_bind_event
+        window[element_key]._RightClickMenuCallback(event)
+        event = element_key
 
     # Move up or down
     if 'MOVE' in event:
-        elementKey = tempData['latestElementRightClicked']
-        elementKey = elementKey.split(' ')
+        element_key = temp_data['last_element_right_clicked']
+        element_key = element_key.split(' ')
 
-        elementToMove = ' '.join(elementKey[5:])
-        hierarchyIndex = elementKey[1]
-        sectionID = elementKey[2]
+        element_to_move = ' '.join(element_key[5:])
+        hierarchy_index = element_key[1]
+        section_id = element_key[2]
 
         direction = event[:-6]
 
         print(direction)
-        moveElement(elementToMove, hierarchyIndex, sectionID, direction)
+        move_element(element_to_move, hierarchy_index, section_id, direction)
 
     # Copy
     if 'Copy' in event:
-        elementKey = tempData['latestElementRightClicked']
+        element_key = temp_data['last_element_right_clicked']
 
         if 'TASK' in event:
-            elementKey = elementKey.split(' ')
-            elementKey.remove('TEXT')    
-            elementKey.insert(4, 'CHECKBOX')
-            elementKey = ' '.join(elementKey)
-            tempData['elementCopied'] = (tempData['latestElementRightClicked'], values[elementKey])
+            element_key = element_key.split(' ')
+            element_key.remove('TEXT')    
+            element_key.insert(4, 'CHECKBOX')
+            element_key = ' '.join(element_key)
+            temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
         else:   # A Section
-            elementName = elementKey[22:]
-            hierarchyIndex = tempData['latestElementRightClicked'][3:5]
-            sectionID = tempData['latestElementRightClicked'][6:8]
-            tempData['elementCopied'] = copySection(elementName, hierarchyIndex, sectionID)
+            element_name = element_key[22:]
+            hierarchy_index = temp_data['last_element_right_clicked'][3:5]
+            section_id = temp_data['last_element_right_clicked'][6:8]
+            temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
 
     # Cut
     if 'Cut' in event:
-        elementKey = tempData['latestElementRightClicked']
+        element_key = temp_data['last_element_right_clicked']
 
-        elementKey = elementKey.split(' ')
+        element_key = element_key.split(' ')
 
-        elementName = ' '.join(elementKey[5:])
-        elementType = elementKey[3].title()
-        hierarchyIndex = elementKey[1]
-        sectionID = elementKey[2]
+        element_name = ' '.join(element_key[5:])
+        element_type = element_key[3].title()
+        hierarchy_index = element_key[1]
+        section_id = element_key[2]
 
         if 'TASK' in event:
-            elementKey.remove('TEXT')
-            elementKey.insert(4, 'CHECKBOX')
-            elementKey = ' '.join(elementKey)
-            tempData['elementCopied'] = (tempData['latestElementRightClicked'], values[elementKey])
+            element_key.remove('TEXT')
+            element_key.insert(4, 'CHECKBOX')
+            element_key = ' '.join(element_key)
+            temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
 
-            delElement(elementName, elementType, hierarchyIndex, sectionID)
+            delete_element(element_name, element_type, hierarchy_index, section_id)
         else:   # A Section
-            tempData['elementCopied'] = copySection(elementName, hierarchyIndex, sectionID)
-            delElement(elementName, elementType, hierarchyIndex, sectionID)
+            temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
+            delete_element(element_name, element_type, hierarchy_index, section_id)
 
     # Rename
     if event == 'Rename':
-        element = tempData['latestElementRightClicked']
-        newName = getTxt('Rename to:')
+        element = temp_data['last_element_right_clicked']
+        new_name = getTxt('Rename to:')
 
-        hierarchyIndex = element[3:5]
-        sectionID = element[6:8]
+        hierarchy_index = element[3:5]
+        section_id = element[6:8]
 
         if 'TASK' in element:
-            elementType = 'Task'
-            oldName = element[19:]
+            element_type = 'Task'
+            old_name = element[19:]
         else:
-            elementType = 'Section'
-            oldName = element[22:]
+            element_type = 'Section'
+            old_name = element[22:]
 
-        if checkElementExist(tempData['ListIndex'], hierarchyIndex, sectionID, elementType, newName) == False:
-            if newName not in ('', None):
-                renameElement(newName, elementType, hierarchyIndex, sectionID)
+        if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, new_name) == False:
+            if new_name not in ('', None):
+                rename_element(new_name, element_type, hierarchy_index, section_id)
         else:
-            currentLoc = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(currentLoc[0] - 14, currentLoc[1] + 100), icon='icon.ico')
+            current_location = window.CurrentLocation()
+            sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
     # Delete Element
     if event == 'Delete':
-        element = tempData['latestElementRightClicked']
+        element = temp_data['last_element_right_clicked']
         if 'TASK' in element:
-            elementName = element[19:]
-            elementType = 'Task'
+            element_name = element[19:]
+            element_type = 'Task'
         else:
-            elementName = element[22:]
-            elementType = 'Section'
+            element_name = element[22:]
+            element_type = 'Section'
 
-        hierarchyIndex = element[3:5]
-        sectionID = element[6:8]
+        hierarchy_index = element[3:5]
+        section_id = element[6:8]
 
-        delElement(elementName, elementType, hierarchyIndex, sectionID)
+        delete_element(element_name, element_type, hierarchy_index, section_id)
 
     
     # Rename List
     if event == 'List::RENAME' and len(values['LISTS LISTBOX']) != 0:
-        listNameToRename = values['LISTS LISTBOX'][0]
-        newListName = getTxt('Rename to:')
-        renameList(listNameToRename, newListName)
+        list_nameToRename = values['LISTS LISTBOX'][0]
+        new_list_name = getTxt('Rename to:')
+        rename_list(list_nameToRename, new_list_name)
     elif event == 'List:RENAME' and len(values['LISTS LISTBOX']) == 0:
-        currentLoc = window.CurrentLocation()
-        loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-        sg.popup('Select a list first', title='Error', location=loc, icon='icon.ico')
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
 
     # Delete List
     if event == 'List::DELETE':
-        currentLoc = window.CurrentLocation()
-        loc = (currentLoc[0] + 4, currentLoc[1] + 100)
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=loc, icon='icon.ico') == 'OK':
-            delList()
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 4, current_location[1] + 100)
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
+            delete_list()
 
     # Show LIST EDITOR Page
     if event == 'Lists':
-        tempData['lastListOn'] = programValues['List']
+        temp_data['last_list_on'] = program_values['current_list']
 
-        for i in tempData['combo']:
-            if i == programValues['List']:
-                window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
+        for i in temp_data['combo']:
+            if i == program_values['current_list']:
+                window[f"COL{temp_data['combo'].index(i)}"].update(visible=False)
                 break
         
         if window['COL SETTINGS'].visible == True:
             window['COL SETTINGS'].update(visible=False)
 
-        window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
+        window['-MENU BAR-'].Update(menu_definition=menus['disabled_menu_bar'])
 
-        programValues['List'] = 'LIST EDITOR'
+        program_values['current_list'] = 'LIST EDITOR'
         window['COL LIST EDITOR'].update(visible=True)
         window['COL ADD BUTTONS'].hide_row()
         window['-COMBO-'].update(value='List Editor')
 
     if event == 'LISTS LISTBOX +DOUBLE CLICK+':
-        programValues['List'] = values['LISTS LISTBOX'][0]
-        tempData['ListIndex'] = str(tempData['combo'].index(programValues['List'])).zfill(2)
+        program_values['current_list'] = values['LISTS LISTBOX'][0]
+        temp_data['list_index'] = str(temp_data['combo'].index(program_values['current_list'])).zfill(2)
         for i in data:
-            if i[0] == programValues['List']:
+            if i[0] == program_values['current_list']:
                 window[f'COL{data.index(i)}'].update(visible=True)
             else:
                 window[f'COL{data.index(i)}'].update(visible=False)
@@ -1192,57 +1189,57 @@ while True:
         window['COL LIST EDITOR'].update(visible=False)
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
-        window['-MENU BAR-'].update(menu_definition=menus['Menu Bar'])
-        window['-COMBO-'].update(value=programValues['List'])
+        window['-MENU BAR-'].update(menu_definition=menus['menu_bar'])
+        window['-COMBO-'].update(value=program_values['current_list'])
 
     # Move a list up or down
     if 'List::MOVE' in event:
-        combo = tempData['combo']
-        listName = ''
+        combo = temp_data['combo']
+        list_name = ''
 
         if values['LISTS LISTBOX'] != []:
-            listName = values['LISTS LISTBOX'][0]
-        elif values['LISTS LISTBOX'] == [] and tempData['listSelectedToEdit'] != '':
-            listName = tempData['listSelectedToEdit']
+            list_name = values['LISTS LISTBOX'][0]
+        elif values['LISTS LISTBOX'] == [] and temp_data['list_selected_to_edit'] != '':
+            list_name = temp_data['list_selected_to_edit']
         else:
-            currentLoc = window.CurrentLocation()
-            loc = (currentLoc[0] + 80, currentLoc[1] + 100)
-            sg.popup('Select a list first', title='Error', location=loc, icon='icon.ico')
+            current_location = window.CurrentLocation()
+            location = (current_location[0] + 80, current_location[1] + 100)
+            sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
 
         for i in data:
-            if i[0] is listName:
-                theList = i
+            if i[0] is list_name:
+                list_to_delete = i
 
-                index = data.index(theList)
-                data.remove(theList)
+                index = data.index(list_to_delete)
+                data.remove(list_to_delete)
 
                 if 'UP' in event:
-                    data.insert(index - 1, theList)
+                    data.insert(index - 1, list_to_delete)
                 elif 'DOWN' in event:
-                    data.insert(index + 1, theList)
-                createCombo()
+                    data.insert(index + 1, list_to_delete)
+                create_combo()
                 break
 
-        tempData['listSelectedToEdit'] = listName
+        temp_data['list_selected_to_edit'] = list_name
 
-        window['-COMBO-'].update(values=tempData['combo'])
-        window['LISTS LISTBOX'].update(values=tuple(tempData['combo']))
+        window['-COMBO-'].update(values=temp_data['combo'])
+        window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
 
     # Settings Page
     if event == 'Settings':
-        tempData['lastListOn'] = programValues['List']
+        temp_data['last_list_on'] = program_values['current_list']
 
-        for i in tempData['combo']:
-            if i == programValues['List']:
-                window[f"COL{tempData['combo'].index(i)}"].update(visible=False)
+        for i in temp_data['combo']:
+            if i == program_values['current_list']:
+                window[f"COL{temp_data['combo'].index(i)}"].update(visible=False)
                 break
 
         if window['COL LIST EDITOR'].visible == True:
             window['COL LIST EDITOR'].update(visible=False)
 
-        window['-MENU BAR-'].Update(menu_definition=menus['Disabled Menu Bar'])
+        window['-MENU BAR-'].Update(menu_definition=menus['disabled_menu_bar'])
 
-        programValues['List'] = 'SETTINGS'
+        program_values['current_list'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)
         window['COL APPLY REVERT BUTTONS'].update(visible=True)
         window['COL APPLY REVERT BUTTONS'].unhide_row()
@@ -1251,12 +1248,12 @@ while True:
     
     # Applying or Reverting Settings
     if event == 'Apply':
-        applySettings()
+        apply_settings()
     elif event == 'Revert':
-        revertSettings()
+        revert_settings()
 
     if event == 'Refresh':
-        createNewWindow()
+        create_new_window()
     
 
 window.close()

@@ -1,7 +1,24 @@
 import PySimpleGUI as sg
 from datetime import datetime
+from re import match
 
-
+#     TODOlist is a todo list application that features sections which can be used to organise tasks
+#     Copyright (C) 2021  Snaiel
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#     contact: snaiel.email@gmail.com
 
 
 
@@ -57,23 +74,6 @@ temp_data = {
             }
 
 data = []
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -646,7 +646,6 @@ def delete_element(element_name, element_type, hierarchy_index, section_id):
                             if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
                                 subsection.remove(task)
                                 return create_new_window()
-                
 
 def rename_list(list_name, new_list_name):
     for i in data:
@@ -777,13 +776,11 @@ def getTxt(message):
     return sg.popup_get_text(message, location=location, icon='icon.ico')
 
 def apply_settings():
-    import re
-
     current_location = window.CurrentLocation()
 
     previous_settings = temp_data['previous_settings']
 
-    if re.match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['-TIME_TO_RESET_DAILY_SECTIONS-']):
+    if match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['-TIME_TO_RESET_DAILY_SECTIONS-']):
         previous_settings['time_to_reset_daily_sections'] = program_values['time_to_reset_daily_sections']
         program_values['time_to_reset_daily_sections'] = values['-TIME_TO_RESET_DAILY_SECTIONS-']
     else:
@@ -792,7 +789,7 @@ def apply_settings():
         return
 
     for colour in (values['-BACKGROUND_COLOUR-'], values['-BUTTON_COLOUR-'], values['-TEXT_COLOUR_1-'], values['-TEXT_COLOUR_2-']):
-        if re.match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour):
+        if match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour):
             pass
         else:
             location = (current_location[0] - 30, current_location[1] + 100)
@@ -849,7 +846,6 @@ startup()
 window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True, icon='icon.ico')
 bindings()
 
-
 def create_new_window():
     temp_data['element_keys'].clear()
     global window
@@ -859,22 +855,6 @@ def create_new_window():
     window.Close()
     window = window1
     bindings()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

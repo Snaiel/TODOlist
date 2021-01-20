@@ -34,7 +34,7 @@ from re import match
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
-menus = {
+MENUS = {
         'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],

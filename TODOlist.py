@@ -481,6 +481,97 @@ def create_layout(list_to_create):
             create_row_of_columns(list_to_create),
             [sg.Col(add_buttons_column, k='COL ADD BUTTONS', visible=add_buttons_visible), sg.Col(apply_revert_buttons_columns, k='COL APPLY REVERT BUTTONS', visible=True if program_values['current_list'] == 'SETTINGS' else False)]
         ]
+
+
+def add_todolist():
+    list_name = get_text('List Name:')
+    if list_name is not None and list_name not in temp_data['combo']:
+        data.append([list_name])
+        if 'MENU' in event:
+            program_values['current_list'] = list_name
+        create_combo()
+        temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
+        create_new_window()
+    elif list_name in temp_data['combo']:
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+
+def rename_todolist():
+    print(len(values['LISTS LISTBOX']))
+    if len(values['LISTS LISTBOX']) != 0:
+        new_list_name = get_text('Rename to:')
+        if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
+            list_to_rename = values['LISTS LISTBOX'][0]
+            for i in data:
+                if i[0] is list_to_rename:
+                    i[0] = new_list_name
+                    break
+            for list_name_in_combo in temp_data['combo']:
+                if list_name_in_combo is list_to_rename:
+                    list_name_in_combo = new_list_name
+                    break
+        elif new_list_name in temp_data['combo']:
+            current_location = window.CurrentLocation()
+            location = (current_location[0] + 80, current_location[1] + 100)
+            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+    elif len(values['LISTS LISTBOX']) == 0:
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
+
+    create_combo()
+    window['-COMBO-'].update(values=temp_data['combo'])
+    window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
+
+def delete_todolist():
+    if window[f'COL LIST EDITOR'].visible == True:
+        list_to_delete = values['LISTS LISTBOX'][0]
+    else:
+        list_to_delete = program_values['current_list']
+        
+    for i in data:
+        if i[0] == list_to_delete:
+            data.remove(i)
+            temp_data['combo'].remove(list_to_delete)
+            for list_name in temp_data['combo']:
+                if list_name is not list_to_delete:
+                    if window[f'COL LIST EDITOR'].visible == True:
+                        program_values['current_list'] = 'LIST EDITOR'
+                    else:
+                        program_values['current_list'] = list_name
+                    break
+            return create_new_window()
+
+def move_todolist():
+    list_name = ''
+
+    if values['LISTS LISTBOX'] != []:
+        list_name = values['LISTS LISTBOX'][0]
+    elif values['LISTS LISTBOX'] == [] and temp_data['list_selected_to_edit'] != '':
+        list_name = temp_data['list_selected_to_edit']
+    else:
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
+        return
+
+    for todolist in data:
+        if todolist[0] is list_name:
+            if 'UP' in event:
+                a, b = data.index(todolist), data.index(todolist) - 1
+                if a == 0:
+                    return
+            else:
+                a, b = data.index(todolist), data.index(todolist) + 1   
+                if len(data) == b:
+                    return
+            data[b], data[a] = data[a], data[b]
+            break
+
+    create_combo()
+    create_new_window()
+                                                                                                                                      
         
 def update_data(element_type, event):
     if element_type == 'Task':
@@ -511,7 +602,6 @@ def update_data(element_type, event):
                             if name in content[0]:
                                 content[0][name] = temp_data['sections_open'][name]
                                 return
-
                             for content_in_section in content:
                                 if type(content_in_section) is list:
                                     if name in content_in_section[0]:
@@ -523,7 +613,6 @@ def update_data(element_type, event):
                             if name in content:
                                 content[name] = not content[name]
                                 return
-                            
                         if type(content) is list:
                             for content_in_section in content:
                                 if type(content_in_section) is dict:
@@ -535,13 +624,6 @@ def update_data(element_type, event):
                                         if name in content_in_subsection:
                                             content_in_subsection[name] = not content_in_subsection[name]
                                             return
-
-def bindings():
-    for i in temp_data['element_keys']:
-        element_key = i.split(' ')
-        element_key.insert(4, 'TEXT')
-        window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
-    window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
 
 def add_or_insert_element_calculations():
     section_name_to_add_to = None
@@ -762,82 +844,6 @@ def delete_element():
                                 subsection.remove(task)
                                 return create_new_window()
 
-def rename_list():
-    print(len(values['LISTS LISTBOX']))
-    if len(values['LISTS LISTBOX']) != 0:
-        new_list_name = get_text('Rename to:')
-        if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
-            list_to_rename = values['LISTS LISTBOX'][0]
-            for i in data:
-                if i[0] is list_to_rename:
-                    i[0] = new_list_name
-                    break
-            for list_name_in_combo in temp_data['combo']:
-                if list_name_in_combo is list_to_rename:
-                    list_name_in_combo = new_list_name
-                    break
-        elif new_list_name in temp_data['combo']:
-            current_location = window.CurrentLocation()
-            location = (current_location[0] + 80, current_location[1] + 100)
-            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
-    elif len(values['LISTS LISTBOX']) == 0:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
-
-    create_combo()
-    window['-COMBO-'].update(values=temp_data['combo'])
-    window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
-
-def delete_list():
-    if window[f'COL LIST EDITOR'].visible == True:
-        list_to_delete = values['LISTS LISTBOX'][0]
-    else:
-        list_to_delete = program_values['current_list']
-        
-    for i in data:
-        if i[0] == list_to_delete:
-            data.remove(i)
-            temp_data['combo'].remove(list_to_delete)
-            for list_name in temp_data['combo']:
-                if list_name is not list_to_delete:
-                    if window[f'COL LIST EDITOR'].visible == True:
-                        program_values['current_list'] = 'LIST EDITOR'
-                    else:
-                        program_values['current_list'] = list_name
-                    break
-            return create_new_window()
-
-def move_list():
-    combo = temp_data['combo']
-    list_name = ''
-
-    if values['LISTS LISTBOX'] != []:
-        list_name = values['LISTS LISTBOX'][0]
-    elif values['LISTS LISTBOX'] == [] and temp_data['list_selected_to_edit'] != '':
-        list_name = temp_data['list_selected_to_edit']
-    else:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
-        return
-
-    for todolist in data:
-        if todolist[0] is list_name:
-            if 'UP' in event:
-                a, b = data.index(todolist), data.index(todolist) - 1
-                if a == 0:
-                    return
-            else:
-                a, b = data.index(todolist), data.index(todolist) + 1   
-                if len(data) == b:
-                    return
-            data[b], data[a] = data[a], data[b]
-            break
-
-    create_combo()
-    create_new_window()
-
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
     for todolist in data:
@@ -966,14 +972,6 @@ def move_element():
                                 subsection[b], subsection[a] = subsection[a], subsection[b]
                                 return create_new_window()
 
-def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
-    return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
-
-def get_text(message):
-    current_location = window.CurrentLocation()
-    location = (current_location[0] - 25, current_location[1] + 100)
-    return sg.popup_get_text(message, location=location, icon='icon.ico')
-
 def apply_settings():
     current_location = window.CurrentLocation()
 
@@ -1018,6 +1016,31 @@ def revert_settings():
 
     colours()
     create_new_window()
+
+def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
+    return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
+
+def get_text(message):
+    current_location = window.CurrentLocation()
+    location = (current_location[0] - 25, current_location[1] + 100)
+    return sg.popup_get_text(message, location=location, icon='icon.ico')
+
+def element_right_clicked(event):
+    element_key = event[:-14]
+
+    if element_key is not temp_data['last_element_right_clicked']:
+        temp_data['last_element_right_clicked'] = element_key
+
+    event = window[element_key].user_bind_event
+    window[element_key]._RightClickMenuCallback(event)
+    event = element_key
+
+def bindings():
+    for i in temp_data['element_keys']:
+        element_key = i.split(' ')
+        element_key.insert(4, 'TEXT')
+        window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
+    window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
 
 def startup():
     read_data_file()
@@ -1081,31 +1104,11 @@ while True:
 
     # Checking what element the user right clicked
     if '+RIGHT CLICK+' in event:
-        element_key = event[:-14]
-
-        if element_key is not temp_data['last_element_right_clicked']:
-            temp_data['last_element_right_clicked'] = element_key
-            #print(f"Element right clicked was: {element_key}")
-
-        event = window[element_key].user_bind_event
-        window[element_key]._RightClickMenuCallback(event)
-        event = element_key
+        element_right_clicked(event)
 
     # Add a to do list
     if 'List::ADD' in event:
-        list_name = get_text('List Name:')
-
-        if list_name is not None and list_name not in temp_data['combo']:
-            data.append([list_name])
-            if 'MENU' in event:
-                program_values['current_list'] = list_name
-            create_combo()
-            temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
-            create_new_window()
-        elif list_name in temp_data['combo']:
-            current_location = window.CurrentLocation()
-            location = (current_location[0] + 80, current_location[1] + 100)
-            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+        add_todolist()
 
     # Change which list your on
     if event == '-COMBO-':
@@ -1199,18 +1202,18 @@ while True:
     
     # Rename List
     if event == 'List::RENAME':
-        rename_list()
+        rename_todolist()
 
     # Delete List
     if event == 'List::DELETE':
         current_location = window.CurrentLocation()
         location = (current_location[0] + 4, current_location[1] + 100)
         if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
-            delete_list()
+            delete_todolist()
 
     # Move a list up or down
     if 'List::MOVE' in event:
-        move_list()
+        move_todolist()
 
     # Settings Page
     if event == 'Settings':

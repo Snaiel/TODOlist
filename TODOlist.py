@@ -525,23 +525,26 @@ def rename_todolist():
     window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
 
 def delete_todolist():
-    if window[f'COL LIST EDITOR'].visible == True:
-        list_to_delete = values['LISTS LISTBOX'][0]
-    else:
-        list_to_delete = program_values['current_list']
-        
-    for i in data:
-        if i[0] == list_to_delete:
-            data.remove(i)
-            temp_data['combo'].remove(list_to_delete)
-            for list_name in temp_data['combo']:
-                if list_name is not list_to_delete:
-                    if window[f'COL LIST EDITOR'].visible == True:
-                        program_values['current_list'] = 'LIST EDITOR'
-                    else:
-                        program_values['current_list'] = list_name
-                    break
-            return create_new_window()
+    current_location = window.CurrentLocation()
+    location = (current_location[0] + 4, current_location[1] + 100)
+    if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
+        if window[f'COL LIST EDITOR'].visible == True:
+            list_to_delete = values['LISTS LISTBOX'][0]
+        else:
+            list_to_delete = program_values['current_list']
+            
+        for i in data:
+            if i[0] == list_to_delete:
+                data.remove(i)
+                temp_data['combo'].remove(list_to_delete)
+                for list_name in temp_data['combo']:
+                    if list_name is not list_to_delete:
+                        if window[f'COL LIST EDITOR'].visible == True:
+                            program_values['current_list'] = 'LIST EDITOR'
+                        else:
+                            program_values['current_list'] = list_name
+                        break
+                return create_new_window()
 
 def move_todolist():
     list_name = ''
@@ -571,7 +574,7 @@ def move_todolist():
 
     create_combo()
     create_new_window()
-                                                                                                                                      
+
         
 def update_data(element_type, event):
     if element_type == 'Task':
@@ -1206,10 +1209,7 @@ while True:
 
     # Delete List
     if event == 'List::DELETE':
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 4, current_location[1] + 100)
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
-            delete_todolist()
+        delete_todolist()
 
     # Move a list up or down
     if 'List::MOVE' in event:

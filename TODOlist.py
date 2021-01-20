@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 from datetime import datetime
 from re import match
 
-#     TODOlist is a todo list application that features sections which can be used to organise tasks
+#     TODOlist is a todo list application that features sections that enable the organisation of tasks
 #     Copyright (C) 2021  Snaiel
 #
 #     This program is free software: you can redistribute it and/or modify

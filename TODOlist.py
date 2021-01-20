@@ -482,7 +482,27 @@ def create_layout(list_to_create):
             [sg.Col(add_buttons_column, k='COL ADD BUTTONS', visible=add_buttons_visible), sg.Col(apply_revert_buttons_columns, k='COL APPLY REVERT BUTTONS', visible=True if program_values['current_list'] == 'SETTINGS' else False)]
         ]
         
-def update_data(element_type, name):
+def update_data(element_type, event):
+    if element_type == 'Task':
+        if 'TEXT' in event:
+                name = event[19:]
+                element_indexes = event[:8]
+                checked =  window[f"{element_indexes} TASK CHECKBOX {name}"].Get()
+                window[f"{element_indexes} TASK CHECKBOX {name}"].update(value=not checked)
+        else:
+            name = event[23:]
+    else:
+        element_indexes = event[:8]
+
+        if 'ARROW' in event:
+            name = event[23:]
+        else:
+            name = event[22:]
+
+        temp_data['sections_open'][name] = not temp_data['sections_open'][name]
+        window[f"{element_indexes} SECTION ARROW {name}"].update(SYMBOL_DOWN if temp_data['sections_open'][name] else SYMBOL_RIGHT)
+        window[f"{element_indexes} SECTION CONTENT {name}"].update(visible=temp_data['sections_open'][name]) 
+
     for todolist in data:
             if todolist[0] == program_values['current_list']:
                 for content in todolist:
@@ -522,6 +542,73 @@ def bindings():
         element_key.insert(4, 'TEXT')
         window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
+
+def add_or_insert_element_calculations():
+    section_name_to_add_to = None
+    hierarchy_index = '00'
+    section_id = '00'
+
+    if 'ADD' in event:
+        if 'BUTTON' in event:
+            element_type = event[:-13]
+        else:
+            element_type = event[:-5]
+    else:
+        element_type = event[:-8]
+        section_id = temp_data['last_element_right_clicked'][6:8]
+
+    if 'ADDTO' in event:
+        section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
+        hierarchy_index = temp_data['last_element_right_clicked'][3:5]
+        hierarchy_index = str((int(hierarchy_index) + 1)).zfill(2)
+        section_id = str((int(temp_data['last_element_right_clicked'][6:8]) + 1)).zfill(2)
+        element_type = event[:-7]
+
+    if 'Paste' in event and temp_data['element_copied'][1] is not None:
+        element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
+        if element_type == 'Task':
+            element_name = temp_data['element_copied'][0][19:]
+        else:
+            element_name = list(temp_data['element_copied'][0][0].keys())[0]
+
+        if element_type[0] == 'T':
+            element_to_add = {element_name: temp_data['element_copied'][1]}
+        else:
+            if int(hierarchy_index) == 2:
+                current_location = window.CurrentLocation()
+                sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100), icon='icon.ico')
+                element_to_add = tuple(x for x in temp_data['element_copied'][0][1:] if type(x) is dict)
+            elif int(hierarchy_index) > 0 and temp_data['element_copied'][1] == 2:
+                element_to_add = [x for x in temp_data['element_copied'][0] if type(x) is dict]
+                current_location = window.CurrentLocation()
+                sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100), icon='icon.ico')
+            else:
+                element_to_add = temp_data['element_copied'][0]
+    elif 'Paste' not in event:
+        element_name = get_text(f'{element_type} Name:')
+        if element_type[0] == 'T':
+            element_to_add = {element_name: False}
+        else:
+            element_to_add = [{element_name: False}]
+    else:
+        element_name = None
+        element_to_add = None
+
+    if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, element_name) == False:
+        if element_name not in ('', None):
+            temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
+            if 'ADD' in event:
+                add_element(element_to_add, section_name_to_add_to, hierarchy_index)
+            else:
+                if temp_data['last_element_right_clicked'][9:10] == 'T':
+                    element_name_of_insert_position = temp_data['last_element_right_clicked'][19:]
+                else:
+                    element_name_of_insert_position = temp_data['last_element_right_clicked'][22:]
+                
+                insert_element(element_to_add, element_name_of_insert_position, hierarchy_index, section_id)
+    else:
+        current_location = window.CurrentLocation()
+        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
 def add_element(element_to_add, section_name_to_add_to, hierarchy_index):
     if element_to_add is None:
@@ -585,38 +672,66 @@ def insert_element(element_to_insert, element_name_of_insert_position, hierarchy
                                     subsection.insert(subsection.index(task), element_to_insert)
                                 return create_new_window()
 
-def rename_element(new_name, element_type, hierarchy_index, section_id):
-    
-    local_section_id = 0
+def rename_element():
+    element = temp_data['last_element_right_clicked']
+    new_name = get_text('Rename to:')
 
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            for task in [task for task in todolist if type(task) is dict]:
-                if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
-                    task[new_name] = task.pop(old_name)
-                    return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
-                    section[0][new_name] = section[0].pop(old_name)
-                    return create_new_window()
-                local_section_id += 1
-                for task in [task for task in section if type(task) is dict]:
-                    if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
-                        task[new_name] = task.pop(old_name)
-                        return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
-                        subsection[0][new_name] = subsection[0].pop(old_name)
-                        return create_new_window()
-                else:
-                    for subsection in [subsection for subsection in section if type(subsection) is list]:
+    hierarchy_index = element[3:5]
+    section_id = element[6:8]
+
+    if 'TASK' in element:
+        element_type = 'Task'
+        old_name = element[19:]
+    else:
+        element_type = 'Section'
+        old_name = element[22:]
+
+    if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, new_name) == False:
+        if new_name not in ('', None):
+            local_section_id = 0
+
+            for todolist in data:
+                if todolist[0] == program_values['current_list']:
+                    for task in [task for task in todolist if type(task) is dict]:
+                        if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
+                            task[new_name] = task.pop(old_name)
+                            return create_new_window()
+                    for section in [section for section in todolist if type(section) is list]:
+                        if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
+                            section[0][new_name] = section[0].pop(old_name)
+                            return create_new_window()
                         local_section_id += 1
-                        for task in [task for task in subsection if type(task) is dict]:
-                            if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
+                        for task in [task for task in section if type(task) is dict]:
+                            if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
                                 task[new_name] = task.pop(old_name)
                                 return create_new_window()
+                        for subsection in [subsection for subsection in section if type(subsection) is list]:
+                            if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
+                                subsection[0][new_name] = subsection[0].pop(old_name)
+                                return create_new_window()
+                        else:
+                            for subsection in [subsection for subsection in section if type(subsection) is list]:
+                                local_section_id += 1
+                                for task in [task for task in subsection if type(task) is dict]:
+                                    if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
+                                        task[new_name] = task.pop(old_name)
+                                        return create_new_window()
+    else:
+        current_location = window.CurrentLocation()
+        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
-def delete_element(element_name, element_type, hierarchy_index, section_id):
+def delete_element():
+
+    element = temp_data['last_element_right_clicked']
+    if 'TASK' in element:
+        element_name = element[19:]
+        element_type = 'Task'
+    else:
+        element_name = element[22:]
+        element_type = 'Section'
+
+    hierarchy_index = element[3:5]
+    section_id = element[6:8]
     
     local_section_id = 0
 
@@ -647,19 +762,30 @@ def delete_element(element_name, element_type, hierarchy_index, section_id):
                                 subsection.remove(task)
                                 return create_new_window()
 
-def rename_list(list_name, new_list_name):
-    for i in data:
-        if i[0] == list_name:
-            i[0] = new_list_name
-            break
-         
-    for list_name_in_combo in temp_data['combo']:
-        if list_name_in_combo is list_name:
-            list_name_in_combo = new_list_name
-            break
+def rename_list():
+    print(len(values['LISTS LISTBOX']))
+    if len(values['LISTS LISTBOX']) != 0:
+        new_list_name = get_text('Rename to:')
+        if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
+            list_to_rename = values['LISTS LISTBOX'][0]
+            for i in data:
+                if i[0] is list_to_rename:
+                    i[0] = new_list_name
+                    break
+            for list_name_in_combo in temp_data['combo']:
+                if list_name_in_combo is list_to_rename:
+                    list_name_in_combo = new_list_name
+                    break
+        elif new_list_name in temp_data['combo']:
+            current_location = window.CurrentLocation()
+            location = (current_location[0] + 80, current_location[1] + 100)
+            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+    elif len(values['LISTS LISTBOX']) == 0:
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
 
     create_combo()
-
     window['-COMBO-'].update(values=temp_data['combo'])
     window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
 
@@ -682,6 +808,36 @@ def delete_list():
                     break
             return create_new_window()
 
+def move_list():
+    combo = temp_data['combo']
+    list_name = ''
+
+    if values['LISTS LISTBOX'] != []:
+        list_name = values['LISTS LISTBOX'][0]
+    elif values['LISTS LISTBOX'] == [] and temp_data['list_selected_to_edit'] != '':
+        list_name = temp_data['list_selected_to_edit']
+    else:
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 80, current_location[1] + 100)
+        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
+        return
+
+    for todolist in data:
+        if todolist[0] is list_name:
+            if 'UP' in event:
+                a, b = data.index(todolist), data.index(todolist) - 1
+                if a == 0:
+                    return
+            else:
+                a, b = data.index(todolist), data.index(todolist) + 1   
+                if len(data) == b:
+                    return
+            data[b], data[a] = data[a], data[b]
+            break
+
+    create_combo()
+    create_new_window()
+
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
     for todolist in data:
@@ -697,7 +853,50 @@ def copy_section(element_name, hierarchy_index, section_id):
                     if element_name in subsection[0] and int(section_id) == local_section_id:
                         return(subsection, 2)
 
-def move_element(element_to_move, hierarchy_index, section_id, direction):
+def copy_element():
+    element_key = temp_data['last_element_right_clicked']
+
+    if 'TASK' in event:
+        element_key = element_key.split(' ')
+        element_key.remove('TEXT')    
+        element_key.insert(4, 'CHECKBOX')
+        element_key = ' '.join(element_key)
+        temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
+    else:   # A Section
+        element_name = element_key[22:]
+        hierarchy_index = temp_data['last_element_right_clicked'][3:5]
+        section_id = temp_data['last_element_right_clicked'][6:8]
+        temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
+
+def cut_element():
+    element_key = temp_data['last_element_right_clicked']
+    element_key = element_key.split(' ')
+    element_name = ' '.join(element_key[5:])
+    element_type = element_key[3].title()
+    hierarchy_index = element_key[1]
+    section_id = element_key[2]
+
+    if 'TASK' in event:
+        element_key.remove('TEXT')
+        element_key.insert(4, 'CHECKBOX')
+        element_key = ' '.join(element_key)
+        temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
+
+        delete_element(element_name, element_type, hierarchy_index, section_id)
+    else:   # A Section
+        temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
+        delete_element(element_name, element_type, hierarchy_index, section_id)
+
+def move_element():
+    element_key = temp_data['last_element_right_clicked']
+    element_key = element_key.split(' ')
+
+    element_to_move = ' '.join(element_key[5:])
+    hierarchy_index = element_key[1]
+    section_id = element_key[2]
+
+    direction = event[:-6]
+
     local_section_id = 0
 
     for todolist in data:
@@ -770,7 +969,7 @@ def move_element(element_to_move, hierarchy_index, section_id, direction):
 def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
     return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
 
-def getTxt(message):
+def get_text(message):
     current_location = window.CurrentLocation()
     location = (current_location[0] - 25, current_location[1] + 100)
     return sg.popup_get_text(message, location=location, icon='icon.ico')
@@ -806,7 +1005,6 @@ def apply_settings():
     program_values['text_colour_1'] = values['-TEXT_COLOUR_1-']
     program_values['text_colour_2'] = values['-TEXT_COLOUR_2-']
         
-
     colours()
     create_new_window()
 
@@ -881,9 +1079,21 @@ while True:
         #write_data_file()
         break
 
+    # Checking what element the user right clicked
+    if '+RIGHT CLICK+' in event:
+        element_key = event[:-14]
+
+        if element_key is not temp_data['last_element_right_clicked']:
+            temp_data['last_element_right_clicked'] = element_key
+            #print(f"Element right clicked was: {element_key}")
+
+        event = window[element_key].user_bind_event
+        window[element_key]._RightClickMenuCallback(event)
+        event = element_key
+
     # Add a to do list
     if 'List::ADD' in event:
-        list_name = getTxt('List Name:')
+        list_name = get_text('List Name:')
 
         if list_name is not None and list_name not in temp_data['combo']:
             data.append([list_name])
@@ -921,222 +1131,37 @@ while True:
 
     # Appending or Inserting an element
     if any(x in event for x in ('ADD', 'INSERT')) and 'List' not in event:
-
-        section_name_to_add_to = None
-        hierarchy_index = '00'
-        section_id = '00'
-
-        if 'ADD' in event:
-            if 'BUTTON' in event:
-                element_type = event[:-13]
-            else:
-                element_type = event[:-5]
-        else:
-            element_type = event[:-8]
-            section_id = temp_data['last_element_right_clicked'][6:8]
-
-        if 'ADDTO' in event:
-            section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
-            hierarchy_index = temp_data['last_element_right_clicked'][3:5]
-            hierarchy_index = str((int(hierarchy_index) + 1)).zfill(2)
-            section_id = str((int(temp_data['last_element_right_clicked'][6:8]) + 1)).zfill(2)
-            element_type = event[:-7]
-
-        if 'Paste' in event and temp_data['element_copied'][1] is not None:
-            element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
-            if element_type == 'Task':
-                element_name = temp_data['element_copied'][0][19:]
-            else:
-                element_name = list(temp_data['element_copied'][0][0].keys())[0]
-
-            if element_type[0] == 'T':
-                element_to_add = {element_name: temp_data['element_copied'][1]}
-            else:
-                if int(hierarchy_index) == 2:
-                    current_location = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100), icon='icon.ico')
-                    element_to_add = tuple(x for x in temp_data['element_copied'][0][1:] if type(x) is dict)
-                elif int(hierarchy_index) > 0 and temp_data['element_copied'][1] == 2:
-                    element_to_add = [x for x in temp_data['element_copied'][0] if type(x) is dict]
-                    current_location = window.CurrentLocation()
-                    sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100), icon='icon.ico')
-                else:
-                    element_to_add = temp_data['element_copied'][0]
-        elif 'Paste' not in event:
-            element_name = getTxt(f'{element_type} Name:')
-            if element_type[0] == 'T':
-                element_to_add = {element_name: False}
-            else:
-                element_to_add = [{element_name: False}]
-        else:
-            element_name = None
-            element_to_add = None
-
-        if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, element_name) == False:
-            if element_name not in ('', None):
-                temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
-                if 'ADD' in event:
-                    add_element(element_to_add, section_name_to_add_to, hierarchy_index)
-                else:
-                    if temp_data['last_element_right_clicked'][9:10] == 'T':
-                        element_name_of_insert_position = temp_data['last_element_right_clicked'][19:]
-                    else:
-                        element_name_of_insert_position = temp_data['last_element_right_clicked'][22:]
-                    
-                    insert_element(element_to_add, element_name_of_insert_position, hierarchy_index, section_id)
-        else:
-            current_location = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
+        add_or_insert_element_calculations()
 
     # Opening and closing sections
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy', 'Cut')):
-        element_indexes = event[:8]
-
-        if 'ARROW' in event:
-            eventName = event[23:]
-        else:
-            eventName = event[22:]
-
-        temp_data['sections_open'][eventName] = not temp_data['sections_open'][eventName]
-        window[f"{element_indexes} SECTION ARROW {eventName}"].update(SYMBOL_DOWN if temp_data['sections_open'][eventName] else SYMBOL_RIGHT)
-        window[f"{element_indexes} SECTION CONTENT {eventName}"].update(visible=temp_data['sections_open'][eventName]) 
-        update_data('Section', eventName)
+        update_data('Section', event)
 
 
     # Updating the checkbox
     if 'TASK' in event and 'RIGHT CLICK' not in event:
+        update_data('Task', event)
 
-        if 'TEXT' in event:
-            eventName = event[19:]
-            element_key = event.split(' ')
-            element_key.remove('TEXT')
-            element_key.insert(4, 'CHECKBOX')
-            element_key = ' '.join(element_key)
-            checked =  window[element_key].Get()
-            window[element_key].Update(value=not checked)
-        else:
-            eventName = event[23:]
-            
-        update_data('Task', eventName)
-    
-    # Checking what element the user right clicked
-    if '+RIGHT CLICK+' in event:
-        element_key = event[:-14]
-
-        if element_key is not temp_data['last_element_right_clicked']:
-            temp_data['last_element_right_clicked'] = element_key
-            #print(f"Element right clicked was: {element_key}")
-
-        event = window[element_key].user_bind_event
-        window[element_key]._RightClickMenuCallback(event)
-        event = element_key
-
-    # Move up or down
-    if 'MOVE' in event:
-        element_key = temp_data['last_element_right_clicked']
-        element_key = element_key.split(' ')
-
-        element_to_move = ' '.join(element_key[5:])
-        hierarchy_index = element_key[1]
-        section_id = element_key[2]
-
-        direction = event[:-6]
-
-        print(direction)
-        move_element(element_to_move, hierarchy_index, section_id, direction)
+    # Move element up or down
+    if 'MOVE' in event and 'List' not in event:
+        move_element()
 
     # Copy
     if 'Copy' in event:
-        element_key = temp_data['last_element_right_clicked']
-
-        if 'TASK' in event:
-            element_key = element_key.split(' ')
-            element_key.remove('TEXT')    
-            element_key.insert(4, 'CHECKBOX')
-            element_key = ' '.join(element_key)
-            temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
-        else:   # A Section
-            element_name = element_key[22:]
-            hierarchy_index = temp_data['last_element_right_clicked'][3:5]
-            section_id = temp_data['last_element_right_clicked'][6:8]
-            temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
+        copy_element()
 
     # Cut
     if 'Cut' in event:
-        element_key = temp_data['last_element_right_clicked']
-
-        element_key = element_key.split(' ')
-
-        element_name = ' '.join(element_key[5:])
-        element_type = element_key[3].title()
-        hierarchy_index = element_key[1]
-        section_id = element_key[2]
-
-        if 'TASK' in event:
-            element_key.remove('TEXT')
-            element_key.insert(4, 'CHECKBOX')
-            element_key = ' '.join(element_key)
-            temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
-
-            delete_element(element_name, element_type, hierarchy_index, section_id)
-        else:   # A Section
-            temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
-            delete_element(element_name, element_type, hierarchy_index, section_id)
+        cut_element()
 
     # Rename
     if event == 'Rename':
-        element = temp_data['last_element_right_clicked']
-        new_name = getTxt('Rename to:')
-
-        hierarchy_index = element[3:5]
-        section_id = element[6:8]
-
-        if 'TASK' in element:
-            element_type = 'Task'
-            old_name = element[19:]
-        else:
-            element_type = 'Section'
-            old_name = element[22:]
-
-        if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, new_name) == False:
-            if new_name not in ('', None):
-                rename_element(new_name, element_type, hierarchy_index, section_id)
-        else:
-            current_location = window.CurrentLocation()
-            sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
+        rename_element()
 
     # Delete Element
     if event == 'Delete':
-        element = temp_data['last_element_right_clicked']
-        if 'TASK' in element:
-            element_name = element[19:]
-            element_type = 'Task'
-        else:
-            element_name = element[22:]
-            element_type = 'Section'
+        delete_element()
 
-        hierarchy_index = element[3:5]
-        section_id = element[6:8]
-
-        delete_element(element_name, element_type, hierarchy_index, section_id)
-
-    
-    # Rename List
-    if event == 'List::RENAME' and len(values['LISTS LISTBOX']) != 0:
-        list_nameToRename = values['LISTS LISTBOX'][0]
-        new_list_name = getTxt('Rename to:')
-        rename_list(list_nameToRename, new_list_name)
-    elif event == 'List:RENAME' and len(values['LISTS LISTBOX']) == 0:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
-
-    # Delete List
-    if event == 'List::DELETE':
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 4, current_location[1] + 100)
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
-            delete_list()
 
     # Show LIST EDITOR Page
     if event == 'Lists':
@@ -1150,7 +1175,7 @@ while True:
         if window['COL SETTINGS'].visible == True:
             window['COL SETTINGS'].update(visible=False)
 
-        window['-MENU BAR-'].Update(menu_definition=menus['disabled_menu_bar'])
+        window['-MENU BAR-'].update(menu_definition=menus['disabled_menu_bar'])
 
         program_values['current_list'] = 'LIST EDITOR'
         window['COL LIST EDITOR'].update(visible=True)
@@ -1171,39 +1196,21 @@ while True:
         window['COL ADD BUTTONS'].unhide_row()
         window['-MENU BAR-'].update(menu_definition=menus['menu_bar'])
         window['-COMBO-'].update(value=program_values['current_list'])
+    
+    # Rename List
+    if event == 'List::RENAME':
+        rename_list()
+
+    # Delete List
+    if event == 'List::DELETE':
+        current_location = window.CurrentLocation()
+        location = (current_location[0] + 4, current_location[1] + 100)
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
+            delete_list()
 
     # Move a list up or down
     if 'List::MOVE' in event:
-        combo = temp_data['combo']
-        list_name = ''
-
-        if values['LISTS LISTBOX'] != []:
-            list_name = values['LISTS LISTBOX'][0]
-        elif values['LISTS LISTBOX'] == [] and temp_data['list_selected_to_edit'] != '':
-            list_name = temp_data['list_selected_to_edit']
-        else:
-            current_location = window.CurrentLocation()
-            location = (current_location[0] + 80, current_location[1] + 100)
-            sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
-
-        for i in data:
-            if i[0] is list_name:
-                list_to_delete = i
-
-                index = data.index(list_to_delete)
-                data.remove(list_to_delete)
-
-                if 'UP' in event:
-                    data.insert(index - 1, list_to_delete)
-                elif 'DOWN' in event:
-                    data.insert(index + 1, list_to_delete)
-                create_combo()
-                break
-
-        temp_data['list_selected_to_edit'] = list_name
-
-        window['-COMBO-'].update(values=temp_data['combo'])
-        window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
+        move_list()
 
     # Settings Page
     if event == 'Settings':
@@ -1217,7 +1224,7 @@ while True:
         if window['COL LIST EDITOR'].visible == True:
             window['COL LIST EDITOR'].update(visible=False)
 
-        window['-MENU BAR-'].Update(menu_definition=menus['disabled_menu_bar'])
+        window['-MENU BAR-'].update(menu_definition=menus['disabled_menu_bar'])
 
         program_values['current_list'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)

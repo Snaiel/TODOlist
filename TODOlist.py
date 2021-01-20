@@ -325,9 +325,9 @@ def create_task(name, checked, list_name, hierarchy_index, section_id):
             checkbox_key = f"{element_indexes} TASK CHECKBOX {name}"
             checkbox_text_key = f"{element_indexes} TASK TEXT {name}"
 
-            right_click_menu = menus['task_level_0_and_1']
+            right_click_menu = MENUS['task_level_0_and_1']
             if hierarchy_index == '02':
-                right_click_menu = menus['task_level_2']
+                right_click_menu = MENUS['task_level_2']
 
             if len(name) > 30:
                 tooltip = name
@@ -350,9 +350,9 @@ def create_section(header, opened, content, list_name, hierarchy_index, section_
             sectionTextKey = f'{element_indexes} SECTION TEXT {header}'
             section_contentKey = f'{element_indexes} SECTION CONTENT {header}'
 
-            right_click_menu = menus['section_level_0_and_1']
+            right_click_menu = MENUS['section_level_0_and_1']
             if hierarchy_index == '01':
-                right_click_menu = menus['section_level_2']
+                right_click_menu = MENUS['section_level_2']
 
             if len(header) > 30:
                 tooltip = header
@@ -476,7 +476,7 @@ def create_layout(list_to_create):
     ]
 
     return [
-            [sg.Menu(menus['menu_bar'], key='-MENU BAR-')],
+            [sg.Menu(MENUS['menu_bar'], key='-MENU BAR-')],
             [sg.Combo(temp_data['combo'],default_value=default_value_of_combo_box , size=(100, 1), key='-COMBO-', readonly=True, enable_events=True)],
             create_row_of_columns(list_to_create),
             [sg.Col(add_buttons_column, k='COL ADD BUTTONS', visible=add_buttons_visible), sg.Col(apply_revert_buttons_columns, k='COL APPLY REVERT BUTTONS', visible=True if program_values['current_list'] == 'SETTINGS' else False)]
@@ -1129,7 +1129,7 @@ while True:
 
                 window['COL APPLY REVERT BUTTONS'].update(visible=False)
 
-                window['-MENU BAR-'].update(menu_definition=menus['menu_bar'])
+                window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
 
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
@@ -1181,7 +1181,7 @@ while True:
         if window['COL SETTINGS'].visible == True:
             window['COL SETTINGS'].update(visible=False)
 
-        window['-MENU BAR-'].update(menu_definition=menus['disabled_menu_bar'])
+        window['-MENU BAR-'].update(menu_definition=MENUS['disabled_menu_bar'])
 
         program_values['current_list'] = 'LIST EDITOR'
         window['COL LIST EDITOR'].update(visible=True)
@@ -1200,7 +1200,7 @@ while True:
         window['COL LIST EDITOR'].update(visible=False)
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
-        window['-MENU BAR-'].update(menu_definition=menus['menu_bar'])
+        window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
         window['-COMBO-'].update(value=program_values['current_list'])
     
     # Rename List
@@ -1227,7 +1227,7 @@ while True:
         if window['COL LIST EDITOR'].visible == True:
             window['COL LIST EDITOR'].update(visible=False)
 
-        window['-MENU BAR-'].update(menu_definition=menus['disabled_menu_bar'])
+        window['-MENU BAR-'].update(menu_definition=MENUS['disabled_menu_bar'])
 
         program_values['current_list'] = 'SETTINGS'
         window['COL SETTINGS'].update(visible=True)

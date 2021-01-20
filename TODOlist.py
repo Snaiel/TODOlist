@@ -1169,7 +1169,7 @@ while True:
         delete_element()
 
 
-    # Show LIST EDITOR Page
+    # Show List Editor Page
     if event == 'Lists':
         temp_data['last_list_on'] = program_values['current_list']
 
@@ -1215,7 +1215,7 @@ while True:
     if 'List::MOVE' in event:
         move_todolist()
 
-    # Settings Page
+    # Show Settings Page
     if event == 'Settings':
         temp_data['last_list_on'] = program_values['current_list']
 

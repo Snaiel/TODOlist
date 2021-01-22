@@ -41,7 +41,7 @@ MENUS = {
         'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'section_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
-        }
+}
 
 program_values = {
                 'current_list': '',
@@ -50,7 +50,7 @@ program_values = {
                 'button_colour': '',
                 'text_colour_1': '',
                 'text_colour_2': ''
-                }
+}
 
 temp_data = {
             'list_index': '',
@@ -61,8 +61,9 @@ temp_data = {
             'last_element_right_clicked': '',
             'list_selected_to_edit': '',
             'last_list_on': '',
-            'element_copied': ('', None),
-            'element_to_move': ('', None),
+            'element_copied': None,
+            'element_to_move': None,
+            'last_action': ('added_task', None),
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
@@ -71,7 +72,7 @@ temp_data = {
                 'text_colour_1': '',
                 'text_colour_2': ''
                 }
-            }
+}
 
 data = []
 
@@ -656,7 +657,7 @@ def add_or_insert_element_calculations():
         else:
             element_name = list(temp_data['element_copied'][0][0].keys())[0]
 
-        if element_type[0] == 'T':
+        if element_type == 'Task':
             element_to_add = {element_name: temp_data['element_copied'][1]}
         else:
             if int(hierarchy_index) == 2:
@@ -671,7 +672,7 @@ def add_or_insert_element_calculations():
                 element_to_add = temp_data['element_copied'][0]
     elif 'Paste' not in event:
         element_name = get_text(f'{element_type} Name:')
-        if element_type[0] == 'T':
+        if element_type == 'Task':
             element_to_add = {element_name: False}
         else:
             element_to_add = [{element_name: False}]
@@ -691,11 +692,15 @@ def add_or_insert_element_calculations():
                     element_name_of_insert_position = temp_data['last_element_right_clicked'][22:]
                 
                 insert_element(element_to_add, element_name_of_insert_position, hierarchy_index, section_id)
+            if element_type == "Task":
+                temp_data['last_action'] = ('add_task', f"{temp_data['list_index']} {hierarchy_index} {section_id} TASK TEXT {element_name}")
+                pass
     else:
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
 def add_element(element_to_add, section_name_to_add_to, hierarchy_index):
+    print(element_to_add, section_name_to_add_to, hierarchy_index)
     if element_to_add is None:
         return
     for todolist in data:
@@ -805,9 +810,9 @@ def rename_element():
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
-def delete_element():
+def delete_element(element):
+    print(element)
 
-    element = temp_data['last_element_right_clicked']
     if 'TASK' in element:
         element_name = element[19:]
         element_type = 'Task'
@@ -819,6 +824,8 @@ def delete_element():
     section_id = element[6:8]
     
     local_section_id = 0
+
+    print(hierarchy_index, section_id, element_type, element_name)
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
@@ -891,10 +898,10 @@ def cut_element():
         element_key = ' '.join(element_key)
         temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
 
-        delete_element(element_name, element_type, hierarchy_index, section_id)
+        delete_element(temp_data['last_element_right_clicked'])
     else:   # A Section
         temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
-        delete_element(element_name, element_type, hierarchy_index, section_id)
+        delete_element(temp_data['last_element_right_clicked'])
 
 def move_element():
     element_key = temp_data['last_element_right_clicked']
@@ -1020,6 +1027,17 @@ def revert_settings():
     colours()
     create_new_window()
 
+def undo_previous_action():
+    last_action = temp_data['last_action']
+    print(last_action)
+
+    UNDO_SWITCH_CASE_DICT = {
+                            'add_task': delete_element(last_action[1]),
+                            'delete_task': None
+    }
+
+    UNDO_SWITCH_CASE_DICT[last_action[0]]
+
 def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
     return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
 
@@ -1096,7 +1114,7 @@ def create_new_window():
   
 while True:             
     event, values = window.read()
-    print(event)
+    print(event, values)
 
     if event == sg.WIN_CLOSED:
         temp_data['last_time_closed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
@@ -1166,7 +1184,7 @@ while True:
 
     # Delete Element
     if event == 'Delete':
-        delete_element()
+        delete_element(temp_data['last_element_right_clicked'])
 
 
     # Show List Editor Page
@@ -1241,6 +1259,9 @@ while True:
         apply_settings()
     elif event == 'Revert':
         revert_settings()
+
+    if event == 'Undo':
+        undo_previous_action()
 
     if event == 'Refresh':
         create_new_window()

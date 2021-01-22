@@ -2,6 +2,8 @@ import PySimpleGUI as sg
 from datetime import datetime
 from re import match
 
+from PySimpleGUI.PySimpleGUI import AddToReturnList
+
 #     TODOlist is a todo list application that features sections that enable the organisation of tasks
 #     Copyright (C) 2021  Snaiel
 #
@@ -629,26 +631,41 @@ def update_data(element_type, event):
                                             content_in_subsection[name] = not content_in_subsection[name]
                                             return
 
+def get_section_id_for_element_to_append(section_name_to_add_to, section_id_of_section):
+    local_section_id = 0
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            for section in [section for section in todolist if type(section) is list]:
+                local_section_id += 1
+                if section_name_to_add_to in section[0]:
+                    return local_section_id
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if section_name_to_add_to in subsection[0] and int(section_id_of_section) == local_section_id:
+                        return local_section_id + [subsection for subsection in section if type(subsection) is list].index(subsection) + 1
+                else:
+                    for _ in [subsection for subsection in section if type(subsection) is list]:
+                        local_section_id += 1
+
 def add_or_insert_element_calculations():
-    section_name_to_add_to = None
     hierarchy_index = '00'
     section_id = '00'
 
-    if 'ADD' in event:
-        if 'BUTTON' in event:
+    if 'ADD' in event: 
+        if 'ADDTO' in event: # Appending to a list
+            element_type = event[:-7]
+            section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
+            hierarchy_index = str((int(temp_data['last_element_right_clicked'][3:5]) + 1)).zfill(2)
+            section_id = str((int(get_section_id_for_element_to_append(section_name_to_add_to, temp_data['last_element_right_clicked'][6:8])))).zfill(2)
+        elif 'BUTTON' in event: # Adding to hierarchy level 0
             element_type = event[:-13]
+            section_name_to_add_to = None
         else:
             element_type = event[:-5]
+            section_name_to_add_to = None
     else:
         element_type = event[:-8]
+        section_name_to_add_to = None
         section_id = temp_data['last_element_right_clicked'][6:8]
-
-    if 'ADDTO' in event:
-        section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
-        hierarchy_index = temp_data['last_element_right_clicked'][3:5]
-        hierarchy_index = str((int(hierarchy_index) + 1)).zfill(2)
-        section_id = str((int(temp_data['last_element_right_clicked'][6:8]) + 1)).zfill(2)
-        element_type = event[:-7]
 
     if 'Paste' in event and temp_data['element_copied'][1] is not None:
         element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
@@ -684,7 +701,7 @@ def add_or_insert_element_calculations():
         if element_name not in ('', None):
             temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
             if 'ADD' in event:
-                add_element(element_to_add, section_name_to_add_to, hierarchy_index)
+                add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id)
             else:
                 if temp_data['last_element_right_clicked'][9:10] == 'T':
                     element_name_of_insert_position = temp_data['last_element_right_clicked'][19:]
@@ -699,32 +716,25 @@ def add_or_insert_element_calculations():
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
-def add_element(element_to_add, section_name_to_add_to, hierarchy_index):
-    print(element_to_add, section_name_to_add_to, hierarchy_index)
+def add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id):
     if element_to_add is None:
         return
+    local_section_id = 0
     for todolist in data:
-        current_list = program_values['current_list']
-        if todolist[0] == current_list:
-            if hierarchy_index == '00':
-                todolist.append(element_to_add)
+        if todolist[0] == program_values['current_list']:
+            if section_name_to_add_to is None:
+                todolist.insert(len(todolist), element_to_add)
                 return create_new_window()
-            elif hierarchy_index == '01':
-                for content in todolist:
-                    if type(content) is list and section_name_to_add_to in content[0]:
-                        content.append(element_to_add)
+            for section in [section for section in todolist if type(section) is list]:
+                local_section_id += 1
+                if section_name_to_add_to in section[0] and hierarchy_index == '01':
+                    section.insert(len(section), element_to_add)
+                    return create_new_window()
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    local_section_id += 1
+                    if section_name_to_add_to in subsection[0] and int(section_id) == local_section_id:
+                        subsection.insert(len(subsection), element_to_add)
                         return create_new_window()
-            elif hierarchy_index == '02':
-                for content in todolist:
-                    if type(content) is list:
-                        for content_in_section in content:
-                            if type(content_in_section) is list and section_name_to_add_to in content_in_section[0]:
-                                if type(element_to_add) is tuple:
-                                    for task in element_to_add:
-                                        content_in_section.append(task)
-                                else:
-                                    content_in_section.append(element_to_add)
-                                return create_new_window()
 
 def insert_element(element_to_insert, element_name_of_insert_position, hierarchy_index, section_id):
     if element_to_insert is None:
@@ -811,7 +821,6 @@ def rename_element():
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
 def delete_element(element):
-    print(element)
 
     if 'TASK' in element:
         element_name = element[19:]
@@ -824,8 +833,6 @@ def delete_element(element):
     section_id = element[6:8]
     
     local_section_id = 0
-
-    print(hierarchy_index, section_id, element_type, element_name)
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
@@ -897,11 +904,10 @@ def cut_element():
         element_key.insert(4, 'CHECKBOX')
         element_key = ' '.join(element_key)
         temp_data['element_copied'] = (temp_data['last_element_right_clicked'], values[element_key])
-
-        delete_element(temp_data['last_element_right_clicked'])
     else:   # A Section
         temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
-        delete_element(temp_data['last_element_right_clicked'])
+
+    delete_element(temp_data['last_element_right_clicked'])
 
 def move_element():
     element_key = temp_data['last_element_right_clicked']
@@ -1114,7 +1120,7 @@ def create_new_window():
   
 while True:             
     event, values = window.read()
-    print(event, values)
+    print(event)
 
     if event == sg.WIN_CLOSED:
         temp_data['last_time_closed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')

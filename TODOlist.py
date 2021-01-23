@@ -63,7 +63,7 @@ temp_data = {
             'last_list_on': '',
             'element_copied': None,
             'element_to_move': None,
-            'last_action': ('added_task', None),
+            'last_action': ('', None),
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
@@ -790,8 +790,13 @@ def undo_delete_element():
                         return create_new_window()
 
 def rename_element():
-    element = temp_data['last_element_right_clicked']
-    new_name = get_text('Rename to:')
+
+    if event != 'Undo':
+        element = temp_data['last_element_right_clicked']
+        new_name = get_text('Rename to:')
+    else:
+        element = temp_data['last_action'][1]
+        new_name = temp_data['last_action'][2]
 
     hierarchy_index = element[3:5]
     section_id = element[6:8]
@@ -811,19 +816,27 @@ def rename_element():
                 if todolist[0] == program_values['current_list']:
                     for task in [task for task in todolist if type(task) is dict]:
                         if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
+                            if event != 'Undo':
+                                temp_data['last_action'] = ('rename_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}", old_name)
                             task[new_name] = task.pop(old_name)
                             return create_new_window()
                     for section in [section for section in todolist if type(section) is list]:
                         if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
+                            if event != 'Undo':
+                                temp_data['last_action'] = ('rename_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}", old_name)
                             section[0][new_name] = section[0].pop(old_name)
                             return create_new_window()
                         local_section_id += 1
                         for task in [task for task in section if type(task) is dict]:
                             if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
+                                if event != 'Undo':
+                                    temp_data['last_action'] = ('rename_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}", old_name)
                                 task[new_name] = task.pop(old_name)
                                 return create_new_window()
                         for subsection in [subsection for subsection in section if type(subsection) is list]:
                             if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
+                                if event != 'Undo':
+                                    temp_data['last_action'] = ('rename_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}", old_name)
                                 subsection[0][new_name] = subsection[0].pop(old_name)
                                 return create_new_window()
                         else:
@@ -831,6 +844,8 @@ def rename_element():
                                 local_section_id += 1
                                 for task in [task for task in subsection if type(task) is dict]:
                                     if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
+                                        if event != 'Undo':
+                                            temp_data['last_action'] = ('rename_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}", old_name)
                                         task[new_name] = task.pop(old_name)
                                         return create_new_window()
     else:
@@ -1067,6 +1082,7 @@ def revert_settings():
 UNDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
                         'delete_element': undo_delete_element,
+                        'rename_element': rename_element
 }
 
 def get_text(message):

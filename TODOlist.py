@@ -2,8 +2,6 @@ import PySimpleGUI as sg
 from datetime import datetime
 from re import match
 
-from PySimpleGUI.PySimpleGUI import AddToReturnList
-
 #     TODOlist is a todo list application that features sections that enable the organisation of tasks
 #     Copyright (C) 2021  Snaiel
 #
@@ -90,7 +88,7 @@ data = []
 # |__/       \______/ |__/  |__/ \_______/   \___/  |__/ \______/ |__/  |__/|_______/
 
 def read_data_file():
-    tasks = ['(T)', '(F)']
+    tasks = ('(T)', '(F)')
     booleans = {
         '(T)': True,
         '(F)': False,
@@ -471,7 +469,7 @@ def create_layout(list_to_create):
         default_value_of_combo_box = temp_data['combo'][temp_data['combo'].index(program_values['current_list'] if program_values['current_list'] != 'LIST EDITOR' else temp_data['combo'][0])]
 
     add_buttons_column = [
-        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD(BUTTON)', pad=((0,0),(2,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD(BUTTON)', pad=((18,0),(2,0)), border_width=0))]
+        [sg.pin(sg.Button('Add Task', size=(15,2), key='Task::ADD', pad=((0,0),(2,0)), border_width=0)), sg.pin(sg.Button('Add Section', size=(15,2), key='Section::ADD', pad=((18,0),(2,0)), border_width=0))]
     ]
 
     apply_revert_buttons_columns = [
@@ -647,26 +645,27 @@ def get_section_id_for_element_to_append(section_name_to_add_to, section_id_of_s
                         local_section_id += 1
 
 def add_or_insert_element_calculations():
-    hierarchy_index = '00'
-    section_id = '00'
 
     if 'ADD' in event: 
         if 'ADDTO' in event: # Appending to a list
             element_type = event[:-7]
-            section_name_to_add_to = temp_data['last_element_right_clicked'][22:]
+            element_point_of_reference = temp_data['last_element_right_clicked'][22:]
             hierarchy_index = str((int(temp_data['last_element_right_clicked'][3:5]) + 1)).zfill(2)
-            section_id = str((int(get_section_id_for_element_to_append(section_name_to_add_to, temp_data['last_element_right_clicked'][6:8])))).zfill(2)
-        elif 'BUTTON' in event: # Adding to hierarchy level 0
-            element_type = event[:-13]
-            section_name_to_add_to = None
-        else:
+            section_id = str((int(get_section_id_for_element_to_append(element_point_of_reference, temp_data['last_element_right_clicked'][6:8])))).zfill(2)
+        else: # Just adding to the end of the todolist
             element_type = event[:-5]
-            section_name_to_add_to = None
+            element_point_of_reference = None
+            hierarchy_index = '00'
+            section_id = '00'
     else:
         element_type = event[:-8]
-        section_name_to_add_to = None
+        if temp_data['last_element_right_clicked'][9:10] == 'T':
+            element_point_of_reference = temp_data['last_element_right_clicked'][19:]
+        else:
+            element_point_of_reference = temp_data['last_element_right_clicked'][22:]
+        hierarchy_index = temp_data['last_element_right_clicked'][3:5]
         section_id = temp_data['last_element_right_clicked'][6:8]
-
+        
     if 'Paste' in event and temp_data['element_copied'][1] is not None:
         element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
         if element_type == 'Task':
@@ -694,24 +693,18 @@ def add_or_insert_element_calculations():
         else:
             element_to_add = [{element_name: False}]
     else:
-        element_name = None
-        element_to_add = None
+        return
 
-    if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, element_name) == False:
+    # Creating the element
+    if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" not in temp_data['element_keys']:
         if element_name not in ('', None):
             temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
             if 'ADD' in event:
-                add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id)
+                add_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
             else:
-                if temp_data['last_element_right_clicked'][9:10] == 'T':
-                    element_name_of_insert_position = temp_data['last_element_right_clicked'][19:]
-                else:
-                    element_name_of_insert_position = temp_data['last_element_right_clicked'][22:]
-                
-                insert_element(element_to_add, element_name_of_insert_position, hierarchy_index, section_id)
-            if element_type == "Task":
-                temp_data['last_action'] = ('add_task', f"{temp_data['list_index']} {hierarchy_index} {section_id} TASK TEXT {element_name}")
-                pass
+                insert_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
+
+            temp_data['last_action'] = ('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}")
     else:
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
@@ -772,6 +765,30 @@ def insert_element(element_to_insert, element_name_of_insert_position, hierarchy
                                     subsection.insert(subsection.index(task), element_to_insert)
                                 return create_new_window()
 
+def undo_delete_element():
+    section_id = temp_data['last_action'][1]
+    element_to_add = temp_data['last_action'][2]
+    element_index = temp_data['last_action'][3]
+
+    local_section_id = 0
+
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            if local_section_id == int(section_id):
+                todolist.insert(element_index, element_to_add)
+                return create_new_window()
+            for section in [section for section in todolist if type(section) is list]:
+                local_section_id += 1
+                print(section[0], local_section_id)
+                if local_section_id == int(section_id):
+                    section.insert(element_index, element_to_add)
+                    return create_new_window()
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    local_section_id += 1
+                    if local_section_id == int(section_id):
+                        subsection.insert(element_index, element_to_add)
+                        return create_new_window()
+
 def rename_element():
     element = temp_data['last_element_right_clicked']
     new_name = get_text('Rename to:')
@@ -786,7 +803,7 @@ def rename_element():
         element_type = 'Section'
         old_name = element[22:]
 
-    if check_if_element_exists(temp_data['list_index'], hierarchy_index, section_id, element_type, new_name) == False:
+    if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {new_name}" not in temp_data['element_keys']:
         if new_name not in ('', None):
             local_section_id = 0
 
@@ -820,7 +837,11 @@ def rename_element():
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
-def delete_element(element):
+def delete_element():
+    if event == 'Undo':
+        element = temp_data['last_action'][1]
+    else:
+        element = temp_data['last_element_right_clicked']
 
     if 'TASK' in element:
         element_name = element[19:]
@@ -831,26 +852,34 @@ def delete_element(element):
 
     hierarchy_index = element[3:5]
     section_id = element[6:8]
-    
+
     local_section_id = 0
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
                 if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
+                    if event != 'Undo':
+                        temp_data['last_action'] = ('delete_element', section_id, task, todolist.index(task))
                     todolist.remove(task)
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
+                    if event != 'Undo':
+                        temp_data['last_action'] = ('delete_element', section_id, section, todolist.index(section))
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
                     if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
+                        if event != 'Undo':
+                            temp_data['last_action'] = ('delete_element', section_id, task, section.index(task))
                         section.remove(task)
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
+                        if event != 'Undo':
+                            temp_data['last_action'] = ('delete_element', section_id, subsection, section.index(subsection))
                         section.remove(subsection)
                         return create_new_window()
                 else:
@@ -858,8 +887,11 @@ def delete_element(element):
                         local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
                             if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
+                                if event != 'Undo':
+                                    temp_data['last_action'] = ('delete_element', section_id, task, subsection.index(task))
                                 subsection.remove(task)
                                 return create_new_window()
+    print('idk')
 
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
@@ -895,7 +927,6 @@ def cut_element():
     element_key = temp_data['last_element_right_clicked']
     element_key = element_key.split(' ')
     element_name = ' '.join(element_key[5:])
-    element_type = element_key[3].title()
     hierarchy_index = element_key[1]
     section_id = element_key[2]
 
@@ -907,7 +938,7 @@ def cut_element():
     else:   # A Section
         temp_data['element_copied'] = copy_section(element_name, hierarchy_index, section_id)
 
-    delete_element(temp_data['last_element_right_clicked'])
+    delete_element()
 
 def move_element():
     element_key = temp_data['last_element_right_clicked']
@@ -1033,19 +1064,10 @@ def revert_settings():
     colours()
     create_new_window()
 
-def undo_previous_action():
-    last_action = temp_data['last_action']
-    print(last_action)
-
-    UNDO_SWITCH_CASE_DICT = {
-                            'add_task': delete_element(last_action[1]),
-                            'delete_task': None
-    }
-
-    UNDO_SWITCH_CASE_DICT[last_action[0]]
-
-def check_if_element_exists(listIndex, hierarchy_index, section_id, element_type, element_name):
-    return(f"{listIndex} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" in temp_data['element_keys'])
+UNDO_SWITCH_CASE_DICT = {
+                        'add_element': delete_element,
+                        'delete_element': undo_delete_element,
+}
 
 def get_text(message):
     current_location = window.CurrentLocation()
@@ -1190,7 +1212,7 @@ while True:
 
     # Delete Element
     if event == 'Delete':
-        delete_element(temp_data['last_element_right_clicked'])
+        delete_element()
 
 
     # Show List Editor Page
@@ -1267,7 +1289,7 @@ while True:
         revert_settings()
 
     if event == 'Undo':
-        undo_previous_action()
+        UNDO_SWITCH_CASE_DICT[temp_data['last_action'][0]]()
 
     if event == 'Refresh':
         create_new_window()

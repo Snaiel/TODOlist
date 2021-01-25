@@ -1085,6 +1085,11 @@ UNDO_SWITCH_CASE_DICT = {
                         'move_element': move_element
 }
 
+def undo_last_action():
+    if len(temp_data['last_action']) > 0:
+        UNDO_SWITCH_CASE_DICT[temp_data['last_action'][-1][0]]()
+        temp_data['last_action'].pop(-1)
+
 def add_to_last_action(tuple_of_data):
     if len(temp_data['last_action']) >= int(program_values['undo_limit']):
         temp_data['last_action'].pop(0)
@@ -1112,6 +1117,7 @@ def bindings():
         element_key.insert(4, 'TEXT')
         window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
+    window.bind('<Control-z>', 'Undo')
 
 def startup():
     read_data_file()
@@ -1311,8 +1317,7 @@ while True:
         revert_settings()
 
     if event == 'Undo':
-        UNDO_SWITCH_CASE_DICT[temp_data['last_action'][-1][0]]()
-        temp_data['last_action'].pop(-1)
+        undo_last_action()
 
     if event == 'Refresh':
         create_new_window()

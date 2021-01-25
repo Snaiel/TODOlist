@@ -1,5 +1,6 @@
 Settings:
     time_to_reset_daily_sections: 01:15:00
+    undo_limit: 5
     background_colour: #575757
     button_colour: #ffffff
     text_colour_1: #abc9cf

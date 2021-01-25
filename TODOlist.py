@@ -30,7 +30,9 @@ from re import match
 #   \  $$$/   /$$__  $$| $$      | $$ /$$__  $$| $$  | $$| $$| $$_____/ \____  $$
 #    \  $/   |  $$$$$$$| $$      | $$|  $$$$$$$| $$$$$$$/| $$|  $$$$$$$ /$$$$$$$/
 #     \_/     \_______/|__/      |__/ \_______/|_______/ |__/ \_______/|_______/   
-                                                                                                                                                      
+
+COLOUR_PICKER = b'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAD6UlEQVR4Xu2aSchOURjHfx8ZyrCTqRTKvJCNhYVsLKQIhQxlWBoW7ExlKtkgUUjJTsjGlIVSNiLEhg2RlAULUzL21716v+u+7z3n3HPOe97v+8723jP8f+c5z32e554uennr6uX66QPQZwGdRWAMsACYD0wERgG/gLfAM+AGcB14byqrU47AeGA3sAboXyHuK3ASOAS8qwLRCQDWASeAwVViCs8/AKsyi2jaNWUAWtsxYJOl8MbXdTy2AUeajZEqAK3rFLCxhvi8629gCXClbKwUAfgUn2v+DEwFXhchpAZA6zkNbPCw88UhzpaNmxKAkOIF4ycwAXjVSCYkAH2jDwILMw9+B9gBPC7ZXa3jDLA+wM43DrkZOB4DwAjgPjCuIEjfaDkkBSx565eZfWjxmu9qtiH/Jg9lAUeBLU128xuwOIMg8dp5fetjtOfA5BgW8BSY3kKRIMgSlkUUr+V8BIbHAPAEmBFjSy3n+AQMiwFAkddWy8XFeD3aEZATfAiMjaHKYg5lisomgztBTTAFuJ2lrBZrDPqqrFL5RRQAmkQeVxBGB5VlNrgSI9UQXsYEkFvCI2CQ2TqDvXUeWFscPVQckM8TIrFxIaQAbFpx9zVQSACpiJfO5cCFMnKhAKQkXqW0fc3MJgSAlMTvB3a1OjO+AXSUeN8+wDafvwbMBFTq9t0qd77RS/uY3Fb8ZWAFoHK34gSfEIzF+7IAV/HfM/KTPEKwEu8DQF3xufX5gGAtvi4AX+J9QHASXweAbQ1PZ17ByI8Kh+NiCc7iXQGEEq/1DAFuAnMMPbMqvYuyWp9hl+6v2cYBocWraDnXUonKa0tdIdgASFF8zsoZgikA29L1pew7X3Xmc7N32fmioXzJ6pAvbCzIBIBt6bod4nPNpTl/nVwgJfGq6A6t2N3/ip5V1tDKAlISr0+ddrcqbL4HzK4S3fi8GYDUxOcpbVWcsBM44AOAfleZ/qK+CKw0CHJcHF5ZkCMI+reoRKqx3QXmAXmOYcShzAJUODxn1Btii8+XJV+wPQuY9Am8lf31VWBk1coAPABmGYzSLvEGSzN/pQyAiA6sGKJHiJfGMgC6VNSq9RjxrgAGRHR45rbs+KaLBZhEj8rqbMLbWimto/a/3UIA6BjxIQB0lHjfADpOvCuAbldMsvOni8z6OpgWM9p25ov+wsUH1PE56puMeFcLqAMgKfGxASQnPiaAJMU3A/Cmnf/q6pwvl75lTlCVl9Uug5X0SXbn87WWARgJ6FKTbnvXaXuBPXUGiNG3WVyvi466VqIKi81lR5WmBe9wVqSIoaHWHCaJTa0JUu/cByD1HQq9vl5vAX8A3sTXQVWJ5CgAAAAASUVORK5CYII='
+
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
@@ -46,6 +48,7 @@ MENUS = {
 program_values = {
                 'current_list': '',
                 'time_to_reset_daily_sections': '',
+                'undo_limit': 0,
                 'background_colour': '',
                 'button_colour': '',
                 'text_colour_1': '',
@@ -110,22 +113,9 @@ def read_data_file():
         subsection = []
 
         for i in settings:
-            i = i.split()
-    
-            if i[0] == 'time_to_reset_daily_sections:':
-                program_values['time_to_reset_daily_sections'] = i[1]
-            if i[0] == 'background_colour:':
-                program_values['background_colour'] = i[1]
-                continue
-            if i[0] == 'button_colour:':
-                program_values['button_colour'] = i[1]
-                continue
-            if i[0] == 'text_colour_1:':
-                program_values['text_colour_1'] = i[1]
-                continue
-            if i[0] == 'text_colour_2:':
-                program_values['text_colour_2'] = i[1]
-                continue
+            i = i.split(': ')
+            i[0] = i[0].strip()
+            program_values[i[0]] = i[1]
 
         for i in task_data:
             i = i.split()
@@ -204,6 +194,7 @@ def write_data_file():
         lines = ['Settings:' ,'Data:']
         file_settings = [
                             f"    time_to_reset_daily_sections: {program_values['time_to_reset_daily_sections']}", 
+                            f"    undo_limit: {program_values['undo_limit']}",
                             f"    background_colour: {program_values['background_colour']}", 
                             f"    button_colour: {program_values['button_colour']}",
                             f"    text_colour_1: {program_values['text_colour_1']}",
@@ -442,16 +433,17 @@ def create_row_of_columns(list_to_create):
     ]
 
     settings_layout = [
-        [sg.Text('Reset Daily at', pad=(6, 20)), sg.Input(default_text=program_values['time_to_reset_daily_sections'], key='-TIME_TO_RESET_DAILY_SECTIONS-', size=(18,1), pad=((31,5),(0,0)))],
-        [sg.Text('Background Colour', pad=(6,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(9,1), pad=((3,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Button Colour', pad=(6,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(9,1), pad=((34,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Text('Text Colour 1', pad=(6,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
-        [sg.Text('Text Colour 2', pad=(6,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(9,1), pad=((36,5),(0,0))), sg.ColorChooserButton('Colour...', target=(sg.ThisRow, -1), border_width=0, pad=(5,5))],
+        [sg.Text('Reset Daily at', pad=((10,0),(10,0))), sg.Input(default_text=program_values['time_to_reset_daily_sections'], key='-TIME_TO_RESET_DAILY_SECTIONS-', size=(10,1), pad=((53,5),(10,0)))],
+        [sg.Text('Undo Limit', pad=((10, 0), (5, 15))), sg.Input(default_text=program_values['undo_limit'], key='-UNDO_LIMIT-', size=(10,1), pad=((73,5),(0,10)))],
+        [sg.Text('Background Colour', pad=(10,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(10,1), pad=((15,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Button Colour', pad=(10,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(10,1), pad=((46,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Text Colour 1', pad=(10,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Text Colour 2', pad=(10,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
         [sg.Frame('Result', frame_layout, pad=(25,50), title_color=program_values['text_colour_1'])]
     ]
 
     list_of_columns.append(sg.Column(layout=list_editor_layout, visible=True if program_values['current_list'] == 'LIST EDITOR' else False, size=(300,400), key=f'COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
-    list_of_columns.append(sg.Column(layout=settings_layout, visible=True if program_values['current_list'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, pad=((0,5),(10,10))))
+    list_of_columns.append(sg.Column(layout=settings_layout, visible=True if program_values['current_list'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, vertical_scroll_only=True, pad=((0,5),(10,10))))
     return(list_of_columns)
 
 def create_layout(list_to_create):
@@ -1049,22 +1041,24 @@ def apply_settings():
         return
 
     for colour in (values['-BACKGROUND_COLOUR-'], values['-BUTTON_COLOUR-'], values['-TEXT_COLOUR_1-'], values['-TEXT_COLOUR_2-']):
-        if match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour):
-            pass
-        else:
+        if match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour) == False:
             location = (current_location[0] - 30, current_location[1] + 100)
             sg.popup(f'Please use correct format for colour (Hex). Wrong: {colour}', location=location, line_width=100, icon='icon.ico')
             return
 
-    previous_settings['background_colour'] = program_values['background_colour']
-    previous_settings['button_colour'] = program_values['button_colour']
-    previous_settings['text_colour_1'] = program_values['text_colour_1']
-    previous_settings['text_colour_2'] = program_values['text_colour_2']
+    if match('^[0-9]+$', values['-UNDO_LIMIT-']) and int(values['-UNDO_LIMIT-']) > 0:
+        previous_settings['undo_limit'] = program_values['undo_limit']
+        program_values['undo_limit'] = values['-UNDO_LIMIT-']
+    else:
+        location = (current_location[0] + 10, current_location[1] + 100)
+        sg.popup('Please use correct format for numbers (int)', title='Error', location=location, icon='icon.ico')
+        return
 
-    program_values['background_colour'] = values['-BACKGROUND_COLOUR-']
-    program_values['button_colour'] = values['-BUTTON_COLOUR-']
-    program_values['text_colour_1'] = values['-TEXT_COLOUR_1-']
-    program_values['text_colour_2'] = values['-TEXT_COLOUR_2-']
+    for key in previous_settings.keys():
+        previous_settings[key] = program_values[key]
+
+    for key in previous_settings.keys():
+        program_values[key] = values[f"-{key.upper()}-"]
         
     colours()
     create_new_window()
@@ -1072,13 +1066,12 @@ def apply_settings():
 def revert_settings():
     previous_settings = temp_data['previous_settings']
 
-    program_values['background_colour'] = previous_settings['background_colour']
-    program_values['button_colour'] = previous_settings['button_colour']
-    program_values['text_colour_1'] = previous_settings['text_colour_1']
-    program_values['text_colour_2'] = previous_settings['text_colour_2']
+    for key in previous_settings.keys():
+        program_values[key] = previous_settings[key]
 
     colours()
     create_new_window()
+
 
 UNDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
@@ -1087,7 +1080,7 @@ UNDO_SWITCH_CASE_DICT = {
 }
 
 def add_to_last_action(tuple_of_data):
-    if len(temp_data['last_action']) >= 5:
+    if len(temp_data['last_action']) >= int(program_values['undo_limit']):
         temp_data['last_action'].pop(0)
     
     temp_data['last_action'].append(tuple_of_data)

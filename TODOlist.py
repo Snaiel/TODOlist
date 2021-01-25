@@ -65,7 +65,6 @@ temp_data = {
             'list_selected_to_edit': '',
             'last_list_on': '',
             'element_copied': None,
-            'element_to_move': None,
             'last_action': [],
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
@@ -949,21 +948,27 @@ def cut_element():
     delete_element()
 
 def move_element():
-    element_key = temp_data['last_element_right_clicked']
-    element_key = element_key.split(' ')
+    if event == 'Undo':
+        element_key = temp_data['last_action'][-1][1]
+        direction = temp_data['last_action'][-1][2]
+    else:
+        element_key = temp_data['last_element_right_clicked']
+        direction = event[:-6]
 
-    element_to_move = ' '.join(element_key[5:])
+    element_key = element_key.split(' ')
+    element_name = ' '.join(element_key[5:])
+
     hierarchy_index = element_key[1]
     section_id = element_key[2]
 
-    direction = event[:-6]
-
     local_section_id = 0
+
+    add_to_last_action(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
-                if element_to_move in task and hierarchy_index == '00':
+                if element_name in task and hierarchy_index == '00':
                     if direction == 'Up':
                         a, b = todolist.index(task), todolist.index(task) - 1
                         if a == 1:
@@ -975,7 +980,7 @@ def move_element():
                     todolist[b], todolist[a] = todolist[a], todolist[b]
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                if element_to_move in section[0] and hierarchy_index == '00':
+                if element_name in section[0] and hierarchy_index == '00':
                     if direction == 'Up':
                         a, b = todolist.index(section), todolist.index(section) - 1
                         if a == 1:
@@ -988,7 +993,7 @@ def move_element():
                     return create_new_window()
                 local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
-                    if element_to_move in task and int(section_id) == local_section_id:
+                    if element_name in task and int(section_id) == local_section_id:
                         if direction == 'Up':
                             a, b = section.index(task), section.index(task) - 1
                             if a == 1:
@@ -1000,7 +1005,7 @@ def move_element():
                         section[b], section[a] = section[a], section[b]
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_to_move in subsection[0] and int(section_id) == local_section_id:
+                    if element_name in subsection[0] and int(section_id) == local_section_id:
                         if direction == 'Up':
                             a, b = section.index(subsection), section.index(subsection) - 1
                             if a == 1:
@@ -1015,7 +1020,7 @@ def move_element():
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
                         local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
-                            if element_to_move in task and int(section_id) == local_section_id:
+                            if element_name in task and int(section_id) == local_section_id:
                                 if direction == 'Up':
                                     a, b = subsection.index(task), subsection.index(task) - 1
                                     if a == 1:
@@ -1076,7 +1081,8 @@ def revert_settings():
 UNDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
                         'delete_element': undo_delete_element,
-                        'rename_element': rename_element
+                        'rename_element': rename_element,
+                        'move_element': move_element
 }
 
 def add_to_last_action(tuple_of_data):

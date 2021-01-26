@@ -66,6 +66,7 @@ temp_data = {
             'last_list_on': '',
             'element_copied': None,
             'last_action': [],
+            'last_undo': [],
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
@@ -492,7 +493,6 @@ def add_todolist():
         sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
 
 def rename_todolist():
-    print(len(values['LISTS LISTBOX']))
     if len(values['LISTS LISTBOX']) != 0:
         new_list_name = get_text('Rename to:')
         if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
@@ -697,7 +697,7 @@ def add_or_insert_element_calculations():
             else:
                 insert_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
 
-            add_to_last_action(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
+            add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
     else:
         current_location = window.CurrentLocation()
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
@@ -759,9 +759,16 @@ def insert_element(element_to_insert, element_name_of_insert_position, hierarchy
                                 return create_new_window()
 
 def undo_delete_element():
-    section_id = temp_data['last_action'][-1][1]
-    element_to_add = temp_data['last_action'][-1][2]
-    element_index = temp_data['last_action'][-1][3]
+    if event == 'Undo':
+        key = 'last_action'
+    else:
+        key = 'last_undo'
+
+    section_id = temp_data[key][-1][1].split()[2]
+    element_to_add = temp_data[key][-1][2]
+    element_index = temp_data[key][-1][3]
+
+    add_to_last_action_or_last_undo(('add_element', temp_data[key][-1][1]))
 
     local_section_id = 0
 
@@ -772,7 +779,6 @@ def undo_delete_element():
                 return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 local_section_id += 1
-                print(section[0], local_section_id)
                 if local_section_id == int(section_id):
                     section.insert(element_index, element_to_add)
                     return create_new_window()
@@ -784,12 +790,16 @@ def undo_delete_element():
 
 def rename_element():
 
-    if event != 'Undo':
+    if event not in ('Undo', 'Redo'):
         element = temp_data['last_element_right_clicked']
         new_name = get_text('Rename to:')
     else:
-        element = temp_data['last_action'][-1][1]
-        new_name = temp_data['last_action'][-1][2]
+        if event == 'Undo':
+            key = 'last_action'
+        else:
+            key = 'last_undo'
+        element = temp_data[key][-1][1]
+        new_name = temp_data[key][-1][2]
 
     hierarchy_index = element[3:5]
     section_id = element[6:8]
@@ -811,27 +821,23 @@ def rename_element():
                 if todolist[0] == program_values['current_list']:
                     for task in [task for task in todolist if type(task) is dict]:
                         if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
-                            if event != 'Undo':
-                                add_to_last_action(('rename_element', new_key, old_name))
+                            add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
                             task[new_name] = task.pop(old_name)
                             return create_new_window()
                     for section in [section for section in todolist if type(section) is list]:
                         if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
-                            if event != 'Undo':
-                                add_to_last_action(('rename_element', new_key, old_name))
+                            add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
                             section[0][new_name] = section[0].pop(old_name)
                             return create_new_window()
                         local_section_id += 1
                         for task in [task for task in section if type(task) is dict]:
                             if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
-                                if event != 'Undo':
-                                    add_to_last_action(('rename_element', new_key, old_name))
+                                add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
                                 task[new_name] = task.pop(old_name)
                                 return create_new_window()
                         for subsection in [subsection for subsection in section if type(subsection) is list]:
                             if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
-                                if event != 'Undo':
-                                    add_to_last_action(('rename_element', new_key, old_name))
+                                add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
                                 subsection[0][new_name] = subsection[0].pop(old_name)
                                 return create_new_window()
                         else:
@@ -839,8 +845,7 @@ def rename_element():
                                 local_section_id += 1
                                 for task in [task for task in subsection if type(task) is dict]:
                                     if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
-                                        if event != 'Undo':
-                                            add_to_last_action(('rename_element', new_key, old_name))
+                                        add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
                                         task[new_name] = task.pop(old_name)
                                         return create_new_window()
     else:
@@ -848,8 +853,12 @@ def rename_element():
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
 def delete_element():
-    if event == 'Undo':
-        element = temp_data['last_action'][-1][1]
+    if event in ('Undo', 'Redo'):
+        if event == 'Undo':
+            key = 'last_action'
+        else:
+            key = 'last_undo'
+        element = temp_data[key][-1][1]
     else:
         element = temp_data['last_element_right_clicked']
 
@@ -869,27 +878,23 @@ def delete_element():
         if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
                 if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
-                    if event != 'Undo':
-                        add_to_last_action(('delete_element', section_id, task, todolist.index(task)))
+                    add_to_last_action_or_last_undo(('delete_element', element, task, todolist.index(task)))
                     todolist.remove(task)
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    if event != 'Undo':
-                        add_to_last_action(('delete_element', section_id, section, todolist.index(section)))
+                    add_to_last_action_or_last_undo(('delete_element', element, section, todolist.index(section)))
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
                     if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
-                        if event != 'Undo':
-                            add_to_last_action(('delete_element', section_id, task, section.index(task)))
+                        add_to_last_action_or_last_undo(('delete_element', element, task, section.index(task)))
                         section.remove(task)
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        if event != 'Undo':
-                            add_to_last_action(('delete_element', section_id, subsection, section.index(subsection)))
+                        add_to_last_action_or_last_undo(('delete_element', element, subsection, section.index(subsection)))
                         section.remove(subsection)
                         return create_new_window()
                 else:
@@ -897,8 +902,7 @@ def delete_element():
                         local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
                             if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
-                                if event != 'Undo':
-                                    add_to_last_action(('delete_element', section_id, task, subsection.index(task)))
+                                add_to_last_action_or_last_undo(('delete_element', element, task, subsection.index(task)))
                                 subsection.remove(task)
                                 return create_new_window()
 
@@ -950,9 +954,13 @@ def cut_element():
     delete_element()
 
 def move_element():
-    if event == 'Undo':
-        element_key = temp_data['last_action'][-1][1]
-        direction = temp_data['last_action'][-1][2]
+    if event in ('Undo', 'Redo'):
+        if event == 'Undo':
+            key = 'last_action'
+        else:
+            key = 'last_undo'
+        element_key = temp_data[key][-1][1]
+        direction = temp_data[key][-1][2]
     else:
         element_key = temp_data['last_element_right_clicked']
         direction = event[:-6]
@@ -965,7 +973,7 @@ def move_element():
 
     local_section_id = 0
 
-    add_to_last_action(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
+    add_to_last_action_or_last_undo(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
@@ -1080,23 +1088,35 @@ def revert_settings():
     create_new_window()
 
 
-UNDO_SWITCH_CASE_DICT = {
+UNDO_REDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
                         'delete_element': undo_delete_element,
                         'rename_element': rename_element,
                         'move_element': move_element
 }
 
-def undo_last_action():
-    if len(temp_data['last_action']) > 0:
-        UNDO_SWITCH_CASE_DICT[temp_data['last_action'][-1][0]]()
-        temp_data['last_action'].pop(-1)
+def undo_last_action_or_redo_last_undo():
+    if event == 'Undo':
+        key = 'last_action'
+    else:
+        key = 'last_undo'
 
-def add_to_last_action(tuple_of_data):
-    if len(temp_data['last_action']) >= int(program_values['undo_limit']):
-        temp_data['last_action'].pop(0)
-    
-    temp_data['last_action'].append(tuple_of_data)
+    if len(temp_data[key]) > 0:
+        UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][-1][0]]()
+        temp_data[key].pop(-1)
+
+def redo_last_undo():
+    pass
+
+def add_to_last_action_or_last_undo(tuple_of_data):
+    if event == 'Undo':
+        key = 'last_undo'
+    else:
+        key = 'last_action'
+
+    if len(temp_data[key]) >= int(program_values['undo_limit']):
+        temp_data[key].pop(0)
+    temp_data[key].append(tuple_of_data)
 
 def get_text(message):
     current_location = window.CurrentLocation()
@@ -1120,6 +1140,8 @@ def bindings():
         window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
     window.bind('<Control-z>', 'Undo')
+    window.bind('<Control-Shift-Key-Z>', 'Redo')
+    window.bind('<Control-r>', 'Refresh')
 
 def startup():
     read_data_file()
@@ -1318,8 +1340,8 @@ while True:
     elif event == 'Revert':
         revert_settings()
 
-    if event == 'Undo':
-        undo_last_action()
+    if event in ('Undo', 'Redo'):
+        undo_last_action_or_redo_last_undo()
 
     if event == 'Refresh':
         create_new_window()

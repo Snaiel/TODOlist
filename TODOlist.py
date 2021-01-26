@@ -134,6 +134,9 @@ def read_data_file():
                 if len(subsection) != 0:
                     section.append(subsection.copy())
                     subsection.clear() 
+                if i[0] == '--':
+                    list_data.append(section.copy())
+                    section.clear() 
 
             if i[0] == '----' and previous_line[0] == '----':
                 subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
@@ -150,7 +153,6 @@ def read_data_file():
                     subsection.append({' '.join(i[1:-1]): booleans[i[-1]]})
 
             if i[0] == '--':
-
                 if i[-1] not in tasks and previous_line[0] == '--' and previous_line[-1] not in tasks:
                     list_data.append(section.copy())
                     section.clear() 

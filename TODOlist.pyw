@@ -31,14 +31,14 @@ from re import match
 #    \  $/   |  $$$$$$$| $$      | $$|  $$$$$$$| $$$$$$$/| $$|  $$$$$$$ /$$$$$$$/
 #     \_/     \_______/|__/      |__/ \_______/|_______/ |__/ \_______/|_______/   
 
-COLOUR_PICKER = b'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAD6UlEQVR4Xu2aSchOURjHfx8ZyrCTqRTKvJCNhYVsLKQIhQxlWBoW7ExlKtkgUUjJTsjGlIVSNiLEhg2RlAULUzL21716v+u+7z3n3HPOe97v+8723jP8f+c5z32e554uennr6uX66QPQZwGdRWAMsACYD0wERgG/gLfAM+AGcB14byqrU47AeGA3sAboXyHuK3ASOAS8qwLRCQDWASeAwVViCs8/AKsyi2jaNWUAWtsxYJOl8MbXdTy2AUeajZEqAK3rFLCxhvi8629gCXClbKwUAfgUn2v+DEwFXhchpAZA6zkNbPCw88UhzpaNmxKAkOIF4ycwAXjVSCYkAH2jDwILMw9+B9gBPC7ZXa3jDLA+wM43DrkZOB4DwAjgPjCuIEjfaDkkBSx565eZfWjxmu9qtiH/Jg9lAUeBLU128xuwOIMg8dp5fetjtOfA5BgW8BSY3kKRIMgSlkUUr+V8BIbHAPAEmBFjSy3n+AQMiwFAkddWy8XFeD3aEZATfAiMjaHKYg5lisomgztBTTAFuJ2lrBZrDPqqrFL5RRQAmkQeVxBGB5VlNrgSI9UQXsYEkFvCI2CQ2TqDvXUeWFscPVQckM8TIrFxIaQAbFpx9zVQSACpiJfO5cCFMnKhAKQkXqW0fc3MJgSAlMTvB3a1OjO+AXSUeN8+wDafvwbMBFTq9t0qd77RS/uY3Fb8ZWAFoHK34gSfEIzF+7IAV/HfM/KTPEKwEu8DQF3xufX5gGAtvi4AX+J9QHASXweAbQ1PZ17ByI8Kh+NiCc7iXQGEEq/1DAFuAnMMPbMqvYuyWp9hl+6v2cYBocWraDnXUonKa0tdIdgASFF8zsoZgikA29L1pew7X3Xmc7N32fmioXzJ6pAvbCzIBIBt6bod4nPNpTl/nVwgJfGq6A6t2N3/ip5V1tDKAlISr0+ddrcqbL4HzK4S3fi8GYDUxOcpbVWcsBM44AOAfleZ/qK+CKw0CHJcHF5ZkCMI+reoRKqx3QXmAXmOYcShzAJUODxn1Btii8+XJV+wPQuY9Am8lf31VWBk1coAPABmGYzSLvEGSzN/pQyAiA6sGKJHiJfGMgC6VNSq9RjxrgAGRHR45rbs+KaLBZhEj8rqbMLbWimto/a/3UIA6BjxIQB0lHjfADpOvCuAbldMsvOni8z6OpgWM9p25ov+wsUH1PE56puMeFcLqAMgKfGxASQnPiaAJMU3A/Cmnf/q6pwvl75lTlCVl9Uug5X0SXbn87WWARgJ6FKTbnvXaXuBPXUGiNG3WVyvi466VqIKi81lR5WmBe9wVqSIoaHWHCaJTa0JUu/cByD1HQq9vl5vAX8A3sTXQVWJ5CgAAAAASUVORK5CYII='
+COLOUR_PICKER_SYMBOL = b'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAD6UlEQVR4Xu2aSchOURjHfx8ZyrCTqRTKvJCNhYVsLKQIhQxlWBoW7ExlKtkgUUjJTsjGlIVSNiLEhg2RlAULUzL21716v+u+7z3n3HPOe97v+8723jP8f+c5z32e554uennr6uX66QPQZwGdRWAMsACYD0wERgG/gLfAM+AGcB14byqrU47AeGA3sAboXyHuK3ASOAS8qwLRCQDWASeAwVViCs8/AKsyi2jaNWUAWtsxYJOl8MbXdTy2AUeajZEqAK3rFLCxhvi8629gCXClbKwUAfgUn2v+DEwFXhchpAZA6zkNbPCw88UhzpaNmxKAkOIF4ycwAXjVSCYkAH2jDwILMw9+B9gBPC7ZXa3jDLA+wM43DrkZOB4DwAjgPjCuIEjfaDkkBSx565eZfWjxmu9qtiH/Jg9lAUeBLU128xuwOIMg8dp5fetjtOfA5BgW8BSY3kKRIMgSlkUUr+V8BIbHAPAEmBFjSy3n+AQMiwFAkddWy8XFeD3aEZATfAiMjaHKYg5lisomgztBTTAFuJ2lrBZrDPqqrFL5RRQAmkQeVxBGB5VlNrgSI9UQXsYEkFvCI2CQ2TqDvXUeWFscPVQckM8TIrFxIaQAbFpx9zVQSACpiJfO5cCFMnKhAKQkXqW0fc3MJgSAlMTvB3a1OjO+AXSUeN8+wDafvwbMBFTq9t0qd77RS/uY3Fb8ZWAFoHK34gSfEIzF+7IAV/HfM/KTPEKwEu8DQF3xufX5gGAtvi4AX+J9QHASXweAbQ1PZ17ByI8Kh+NiCc7iXQGEEq/1DAFuAnMMPbMqvYuyWp9hl+6v2cYBocWraDnXUonKa0tdIdgASFF8zsoZgikA29L1pew7X3Xmc7N32fmioXzJ6pAvbCzIBIBt6bod4nPNpTl/nVwgJfGq6A6t2N3/ip5V1tDKAlISr0+ddrcqbL4HzK4S3fi8GYDUxOcpbVWcsBM44AOAfleZ/qK+CKw0CHJcHF5ZkCMI+reoRKqx3QXmAXmOYcShzAJUODxn1Btii8+XJV+wPQuY9Am8lf31VWBk1coAPABmGYzSLvEGSzN/pQyAiA6sGKJHiJfGMgC6VNSq9RjxrgAGRHR45rbs+KaLBZhEj8rqbMLbWimto/a/3UIA6BjxIQB0lHjfADpOvCuAbldMsvOni8z6OpgWM9p25ov+wsUH1PE56puMeFcLqAMgKfGxASQnPiaAJMU3A/Cmnf/q6pwvl75lTlCVl9Uug5X0SXbn87WWARgJ6FKTbnvXaXuBPXUGiNG3WVyvi466VqIKi81lR5WmBe9wVqSIoaHWHCaJTa0JUu/cByD1HQq9vl5vAX8A3sTXQVWJ5CgAAAAASUVORK5CYII='
 
 SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 MENUS = {
-        'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh']]], ['Help', ['About', 'Wiki']]],
-        'disabled_menu_bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh']]], ['Help', ['About', 'Wiki']]],
+        'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
+        'disabled_menu_bar': [['Edit', ['!Undo', '!Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
@@ -437,10 +437,10 @@ def create_row_of_columns(list_to_create):
     settings_layout = [
         [sg.Text('Reset Daily at', pad=((10,0),(10,0))), sg.Input(default_text=program_values['time_to_reset_daily_sections'], key='-TIME_TO_RESET_DAILY_SECTIONS-', size=(10,1), pad=((53,5),(10,0)))],
         [sg.Text('Undo Limit', pad=((10, 0), (5, 15))), sg.Input(default_text=program_values['undo_limit'], key='-UNDO_LIMIT-', size=(10,1), pad=((73,5),(0,10)))],
-        [sg.Text('Background Colour', pad=(10,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(10,1), pad=((15,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Button Colour', pad=(10,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(10,1), pad=((46,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Text Colour 1', pad=(10,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Text Colour 2', pad=(10,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Background Colour', pad=(10,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(10,1), pad=((15,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Button Colour', pad=(10,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(10,1), pad=((46,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Text Colour 1', pad=(10,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Text Colour 2', pad=(10,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
         [sg.Frame('Result', frame_layout, pad=(25,50), title_color=program_values['text_colour_1'])]
     ]
 
@@ -1143,6 +1143,7 @@ def bindings():
     window.bind('<Control-z>', 'Undo')
     window.bind('<Control-Shift-Key-Z>', 'Redo')
     window.bind('<Control-r>', 'Refresh')
+    window.bind('<Control-s>', 'Save')
 
 def startup():
     read_data_file()
@@ -1347,6 +1348,9 @@ while True:
 
     if event == 'Refresh':
         create_new_window()
+
+    if event == 'Save':
+        write_data_file()
     
 
 window.close()

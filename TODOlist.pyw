@@ -1075,8 +1075,9 @@ def apply_settings():
     for key in previous_settings.keys():
         program_values[key] = values[f"-{key.upper()}-"]
         
-    colours()
-    create_new_window()
+    if event == 'Apply':
+        colours()
+        create_new_window()
 
 def revert_settings():
     previous_settings = temp_data['previous_settings']
@@ -1315,6 +1316,7 @@ while True:
 
     # Show Settings Page
     if event == 'Settings':
+        apply_settings()
         temp_data['last_list_on'] = program_values['current_list']
 
         for i in temp_data['combo']:

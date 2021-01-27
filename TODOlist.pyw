@@ -65,8 +65,8 @@ temp_data = {
             'list_selected_to_edit': '',
             'last_list_on': '',
             'element_copied': None,
-            'last_action': [],
-            'last_undo': [],
+            'last_action_and_undo_todolists': [[], []],     # first list is last action, second list is last undo
+            'last_action_and_undo_list_editor': [[], []],
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
@@ -484,6 +484,7 @@ def add_todolist():
         data.append([list_name])
         if 'MENU' in event:
             program_values['current_list'] = list_name
+        add_to_last_action_or_last_undo(('add_todolist', list_name))
         create_combo()
         temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
         create_new_window()
@@ -521,24 +522,30 @@ def rename_todolist():
 def delete_todolist():
     current_location = window.CurrentLocation()
     location = (current_location[0] + 4, current_location[1] + 100)
-    if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
-        if window[f'COL LIST EDITOR'].visible == True:
-            list_to_delete = values['LISTS LISTBOX'][0]
+    if event != 'Undo':
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
+            if window[f'COL LIST EDITOR'].visible == True:
+                list_to_delete = values['LISTS LISTBOX'][0]
+            else:
+                list_to_delete = program_values['current_list']
         else:
-            list_to_delete = program_values['current_list']
+            return
+    else:
+        index = 0 if event == 'Undo' else 1
+        list_to_delete = temp_data['last_action_and_undo_list_editor'][index][-1][1]
             
-        for i in data:
-            if i[0] == list_to_delete:
-                data.remove(i)
-                temp_data['combo'].remove(list_to_delete)
-                for list_name in temp_data['combo']:
-                    if list_name is not list_to_delete:
-                        if window[f'COL LIST EDITOR'].visible == True:
-                            program_values['current_list'] = 'LIST EDITOR'
-                        else:
-                            program_values['current_list'] = list_name
-                        break
-                return create_new_window()
+    for i in data:
+        if i[0] == list_to_delete:
+            data.remove(i)
+            temp_data['combo'].remove(list_to_delete)
+            for list_name in temp_data['combo']:
+                if list_name is not list_to_delete:
+                    if window[f'COL LIST EDITOR'].visible == True:
+                        program_values['current_list'] = 'LIST EDITOR'
+                    else:
+                        program_values['current_list'] = list_name
+                    break
+            return create_new_window()
 
 def move_todolist():
     list_name = ''
@@ -759,16 +766,14 @@ def insert_element(element_to_insert, element_name_of_insert_position, hierarchy
                                 return create_new_window()
 
 def undo_delete_element():
-    if event == 'Undo':
-        key = 'last_action'
-    else:
-        key = 'last_undo'
 
-    section_id = temp_data[key][-1][1].split()[2]
-    element_to_add = temp_data[key][-1][2]
-    element_index = temp_data[key][-1][3]
+    index = 0 if event == 'Undo' else 1
 
-    add_to_last_action_or_last_undo(('add_element', temp_data[key][-1][1]))
+    section_id = temp_data['last_action_and_undo_todolists'][index][-1][1].split()[2]
+    element_to_add = temp_data['last_action_and_undo_todolists'][index][-1][2]
+    element_index = temp_data['last_action_and_undo_todolists'][index][-1][3]
+
+    add_to_last_action_or_last_undo(('add_element', temp_data['last_action_and_undo_todolists'][index][-1][1]))
 
     local_section_id = 0
 
@@ -794,12 +799,9 @@ def rename_element():
         element = temp_data['last_element_right_clicked']
         new_name = get_text('Rename to:')
     else:
-        if event == 'Undo':
-            key = 'last_action'
-        else:
-            key = 'last_undo'
-        element = temp_data[key][-1][1]
-        new_name = temp_data[key][-1][2]
+        index = 0 if event == 'Undo' else 1
+        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
+        new_name = temp_data['last_action_and_undo_todolists'][index][-1][2]
 
     hierarchy_index = element[3:5]
     section_id = element[6:8]
@@ -853,14 +855,11 @@ def rename_element():
         sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
 
 def delete_element():
-    if event in ('Undo', 'Redo'):
-        if event == 'Undo':
-            key = 'last_action'
-        else:
-            key = 'last_undo'
-        element = temp_data[key][-1][1]
-    else:
+    if event not in ('Undo', 'Redo'):
         element = temp_data['last_element_right_clicked']
+    else:
+        index = 0 if event == 'Undo' else 'Redo'
+        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
 
     if 'TASK' in element:
         element_name = element[19:]
@@ -1093,31 +1092,32 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
                         'delete_element': undo_delete_element,
                         'rename_element': rename_element,
-                        'move_element': move_element
+                        'move_element': move_element,
+                        'add_todolist': delete_todolist
 }
 
 def undo_last_action_or_redo_last_undo():
-    if event == 'Undo':
-        key = 'last_action'
-    else:
-        key = 'last_undo'
+    key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
+    index = 0 if event == 'Undo' else 1
 
-    if len(temp_data[key]) > 0:
-        UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][-1][0]]()
-        temp_data[key].pop(-1)
+    #print(index, temp_data[key][index])
+
+    if len(temp_data[key][index]) > 0:
+        UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][index][-1][0]]()
+        temp_data[key][index].pop(-1)
 
 def redo_last_undo():
     pass
 
 def add_to_last_action_or_last_undo(tuple_of_data):
-    if event == 'Undo':
-        key = 'last_undo'
-    else:
-        key = 'last_action'
-
-    if len(temp_data[key]) >= int(program_values['undo_limit']):
-        temp_data[key].pop(0)
-    temp_data[key].append(tuple_of_data)
+    key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
+    index = 1 if event == 'Undo' else 0
+    print(index)
+    
+    if len(temp_data[key][index]) >= int(program_values['undo_limit']):
+        temp_data[key][index].pop(0)
+    temp_data[key][index].append(tuple_of_data)
+    print(temp_data[key])
 
 def get_text(message):
     current_location = window.CurrentLocation()

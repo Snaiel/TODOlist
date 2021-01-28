@@ -69,6 +69,7 @@ temp_data = {
             'element_copied': None,
             'last_action_and_undo_todolists': [[], []],     # first list is last action, second list is last undo
             'last_action_and_undo_list_editor': [[], []],
+            'deleted_todolists': [],
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
@@ -548,14 +549,17 @@ def delete_todolist():
         else:
             return
     else:
+        key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
         index = 0 if 'Undo' in event.title() else 1
-        list_to_delete = temp_data['last_action_and_undo_list_editor'][index][-1][1]
+        list_to_delete = temp_data[key][index][-1][1]
 
-    add_to_last_action_or_last_undo(('delete_todolist', list_to_delete))
-
-    for i in data:
-        if i[0] == list_to_delete:
-            data.remove(i)
+    for todolist in data:
+        if todolist[0] == list_to_delete:
+            add_to_last_action_or_last_undo(('delete_todolist', list_to_delete, data.index(todolist)))
+            if len(temp_data['deleted_todolists']) >= int(program_values['undo_limit']):
+                temp_data['deleted_todolists'].pop(0)
+            temp_data['deleted_todolists'].append(todolist)
+            data.remove(todolist)
             temp_data['combo'].remove(list_to_delete)
             for list_name in temp_data['combo']:
                 if list_name is not list_to_delete:
@@ -564,6 +568,18 @@ def delete_todolist():
                     else:
                         program_values['current_list'] = list_name
                     break
+            return create_new_window()
+
+def undo_delete_todolist():
+    print(temp_data['deleted_todolists'])
+    key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
+    index = 0 if 'Undo' in event.title() else 1
+    
+    for todolist in temp_data['deleted_todolists']:
+        if todolist[0] == temp_data[key][index][-1][1]:
+            data.insert(temp_data[key][index][-1][2], todolist)
+            add_to_last_action_or_last_undo(('add_todolist', todolist[0]))
+            create_combo()
             return create_new_window()
 
 def move_todolist():
@@ -982,12 +998,10 @@ def cut_element():
 
 def move_element():
     if event in ('Undo', 'Redo'):
-        if event == 'Undo':
-            key = 'last_action'
-        else:
-            key = 'last_undo'
-        element_key = temp_data[key][-1][1]
-        direction = temp_data[key][-1][2]
+        key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
+        index = 0 if 'Undo' in event.title() else 1
+        element_key = temp_data[key][index][-1][1]
+        direction = temp_data[key][index][-1][2]
     else:
         element_key = temp_data['last_element_right_clicked']
         direction = event[:-6]
@@ -1122,7 +1136,7 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'rename_element': rename_element,
                         'move_element': move_element,
                         'add_todolist': delete_todolist,
-                        'delete_todolist': add_todolist,
+                        'delete_todolist': undo_delete_todolist,
                         'rename_todolist': rename_todolist,
                         'move_todolist': move_todolist
 }
@@ -1228,7 +1242,7 @@ def save():
 #                                                                                        | $$      
 #                                                                                        | $$      
 #                                                                                        |__/      
-  
+
 while True:             
     event, values = window.read()
     print(event)

@@ -2,6 +2,8 @@ import PySimpleGUI as sg
 from datetime import datetime
 from re import match
 
+from PySimpleGUI.PySimpleGUI import SetOptions
+
 #     TODOlist is a todo list application that features sections that enable the organisation of tasks
 #     Copyright (C) 2021  Snaiel
 #
@@ -496,7 +498,7 @@ def add_todolist():
     elif list_name in temp_data['combo']:
         current_location = window.CurrentLocation()
         location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+        sg.popup('List already exists', title='Error', location=location)
 
 def rename_todolist():
     if len(values['LISTS LISTBOX']) != 0 or any(x in event.title() for x in ('Undo', 'Redo')):
@@ -524,11 +526,11 @@ def rename_todolist():
         elif new_list_name in temp_data['combo']:
             current_location = window.CurrentLocation()
             location = (current_location[0] + 80, current_location[1] + 100)
-            sg.popup('List already exists', title='Error', location=location, icon='icon.ico')
+            sg.popup('List already exists', title='Error', location=location)
     elif len(values['LISTS LISTBOX']) == 0:
         current_location = window.CurrentLocation()
         location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
+        sg.popup('Select a list first', title='Error', location=location)
 
     create_combo()
     window['-COMBO-'].update(values=temp_data['combo'])
@@ -538,7 +540,7 @@ def delete_todolist():
     current_location = window.CurrentLocation()
     location = (current_location[0] + 4, current_location[1] + 100)
     if any(x in event.title() for x in ('Undo', 'Redo')) is False:
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location, icon='icon.ico') == 'OK':
+        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location) == 'OK':
             if window[f'COL LIST EDITOR'].visible == True:
                 list_to_delete = values['LISTS LISTBOX'][0]
             else:
@@ -575,7 +577,7 @@ def move_todolist():
     else:
         current_location = window.CurrentLocation()
         location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location, icon='icon.ico')
+        sg.popup('Select a list first', title='Error', location=location)
         return
 
     if any(x in event.title() for x in ('Undo', 'Redo')) is False:
@@ -704,12 +706,12 @@ def add_or_insert_element_calculations():
         else:
             if int(hierarchy_index) == 2:
                 current_location = window.CurrentLocation()
-                sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100), icon='icon.ico')
+                sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100))
                 element_to_add = tuple(x for x in temp_data['element_copied'][0][1:] if type(x) is dict)
             elif int(hierarchy_index) > 0 and temp_data['element_copied'][1] == 2:
                 element_to_add = [x for x in temp_data['element_copied'][0] if type(x) is dict]
                 current_location = window.CurrentLocation()
-                sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100), icon='icon.ico')
+                sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100))
             else:
                 element_to_add = temp_data['element_copied'][0]
     elif 'Paste' not in event:
@@ -733,7 +735,7 @@ def add_or_insert_element_calculations():
             add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
     else:
         current_location = window.CurrentLocation()
-        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
+        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100))
 
 def add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id):
     if element_to_add is None:
@@ -878,7 +880,7 @@ def rename_element():
                                         return create_new_window()
     else:
         current_location = window.CurrentLocation()
-        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100), icon='icon.ico')
+        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100))
 
 def delete_element():
     if event not in ('Undo', 'Redo'):
@@ -1077,13 +1079,13 @@ def apply_settings():
         program_values['time_to_reset_daily_sections'] = values['-TIME_TO_RESET_DAILY_SECTIONS-']
     else:
         location = (current_location[0] - 5, current_location[1] + 100)
-        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=location, icon='icon.ico')
+        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=location)
         return
 
     for colour in (values['-BACKGROUND_COLOUR-'], values['-BUTTON_COLOUR-'], values['-TEXT_COLOUR_1-'], values['-TEXT_COLOUR_2-']):
         if match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour) == False:
             location = (current_location[0] - 30, current_location[1] + 100)
-            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colour}', location=location, line_width=100, icon='icon.ico')
+            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colour}', location=location, line_width=100)
             return
 
     if match('^[0-9]+$', values['-UNDO_LIMIT-']) and int(values['-UNDO_LIMIT-']) > 0:
@@ -1091,7 +1093,7 @@ def apply_settings():
         program_values['undo_limit'] = values['-UNDO_LIMIT-']
     else:
         location = (current_location[0] + 10, current_location[1] + 100)
-        sg.popup('Please use correct format for numbers (int)', title='Error', location=location, icon='icon.ico')
+        sg.popup('Please use correct format for numbers (int)', title='Error', location=location)
         return
 
     for key in previous_settings.keys():
@@ -1148,7 +1150,7 @@ def add_to_last_action_or_last_undo(tuple_of_data):
 def get_text(message):
     current_location = window.CurrentLocation()
     location = (current_location[0] - 25, current_location[1] + 100)
-    return sg.popup_get_text(message, location=location, icon='icon.ico')
+    return sg.popup_get_text(message, location=location)
 
 def element_right_clicked(event):
     element_key = event[:-14]
@@ -1193,13 +1195,15 @@ def startup():
     
 startup()
 
-window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True, icon='icon.ico', ttk_theme='vista')
+SetOptions(icon='icon.ico', ttk_theme='vista')
+
+window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True)
 bindings()
 
 def create_new_window():
     temp_data['element_keys'].clear()
     global window
-    window1 = sg.Window('TODOlist', layout=create_layout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico', ttk_theme='vista')
+    window1 = sg.Window('TODOlist', layout=create_layout(None), location=window.CurrentLocation(), size=(300,500), finalize=True)
     if program_values['current_list'] not in ('LIST EDITOR', "SETTINGS"):
         window1[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.canvas.yview_moveto(temp_data['last_scrollbar_position'][0])
     window.Close()
@@ -1265,7 +1269,7 @@ while True:
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
         window['-COMBO-'].Widget.selection_clear()
-        window['COL ADD BUTTONS'].set_focus()
+    window['COL ADD BUTTONS'].set_focus()
 
 
     # Appending or Inserting an element

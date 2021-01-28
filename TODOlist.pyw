@@ -1206,6 +1206,11 @@ def create_new_window():
     window = window1
     bindings()
 
+def save():
+    write_data_file()
+    current_location = window.current_location()
+    sg.Window(None, [[sg.Text('Saved', size=(300,550), enable_events=True, justification='c', pad=(0,230))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.9, auto_close=True, auto_close_duration=0.5,finalize=True).read(close=True)
+
 
 
 #  /$$$$$$$$                                  /$$           /$$                                    
@@ -1376,7 +1381,7 @@ while True:
         create_new_window()
 
     if event == 'Save':
-        write_data_file()
+        save()
     
 
 window.close()

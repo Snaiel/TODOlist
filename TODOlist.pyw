@@ -1193,13 +1193,13 @@ def startup():
     
 startup()
 
-window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True, icon='icon.ico')
+window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True, icon='icon.ico', ttk_theme='vista')
 bindings()
 
 def create_new_window():
     temp_data['element_keys'].clear()
     global window
-    window1 = sg.Window('TODOlist', layout=create_layout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico')
+    window1 = sg.Window('TODOlist', layout=create_layout(None), location=window.CurrentLocation(), size=(300,500), finalize=True, icon='icon.ico', ttk_theme='vista')
     if program_values['current_list'] not in ('LIST EDITOR', "SETTINGS"):
         window1[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.canvas.yview_moveto(temp_data['last_scrollbar_position'][0])
     window.Close()
@@ -1264,6 +1264,8 @@ while True:
 
         window['COL ADD BUTTONS'].update(visible=True)
         window['COL ADD BUTTONS'].unhide_row()
+        window['-COMBO-'].Widget.selection_clear()
+        window['COL ADD BUTTONS'].set_focus()
 
 
     # Appending or Inserting an element

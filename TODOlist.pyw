@@ -446,8 +446,8 @@ def create_row_of_columns(list_to_create):
         [sg.Frame('Result', frame_layout, pad=(25,50), title_color=program_values['text_colour_1'])]
     ]
 
-    list_of_columns.append(sg.Column(layout=list_editor_layout, visible=True if program_values['current_list'] == 'LIST EDITOR' else False, size=(300,400), key=f'COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
-    list_of_columns.append(sg.Column(layout=settings_layout, visible=True if program_values['current_list'] == 'SETTINGS' else False, size=(300,390), key=f'COL SETTINGS', scrollable=False, vertical_scroll_only=True, pad=((0,5),(10,10))))
+    list_of_columns.append(sg.Column(layout=list_editor_layout, visible=True if program_values['current_list'] == 'LIST EDITOR' else False, size=(300,400), key='COL LIST EDITOR', scrollable=False, pad=((0,5),(10,10))))
+    list_of_columns.append(sg.Column(layout=settings_layout, visible=True if program_values['current_list'] == 'SETTINGS' else False, size=(300,390), key='COL SETTINGS', scrollable=False, vertical_scroll_only=True, pad=((0,5),(10,10))))
     return(list_of_columns)
 
 def create_layout(list_to_create):
@@ -1083,6 +1083,9 @@ def move_element():
                                 return create_new_window()
 
 def apply_settings():
+    if window.find_element_with_focus() is not None:
+        add_to_last_action_or_last_undo(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
+
     current_location = window.CurrentLocation()
 
     previous_settings = temp_data['previous_settings']
@@ -1127,6 +1130,63 @@ def revert_settings():
 
     colours()
     create_new_window()
+
+def change_todolist():
+    program_values['current_list'] = values['-COMBO-']
+    temp_data['list_index'] = str(temp_data['combo'].index(values['-COMBO-'])).zfill(2)
+    for i in data:
+        if i[0] == program_values['current_list']:
+            window[f'COL{data.index(i)}'].update(visible=True)
+        else:
+            window[f'COL{data.index(i)}'].update(visible=False)
+
+    for i in ['LIST EDITOR', 'SETTINGS']:
+        if window[f'COL {i}'].visible == True:
+            window[f'COL {i}'].update(visible=False)
+
+            window['COL APPLY REVERT BUTTONS'].update(visible=False)
+
+            window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
+
+    window['COL ADD BUTTONS'].update(visible=True)
+    window['COL ADD BUTTONS'].unhide_row()
+    window['-COMBO-'].Widget.selection_clear()
+
+def go_to_list_editor_or_settings_page():
+    temp_data['last_list_on'] = program_values['current_list']
+
+    for i in temp_data['combo']:
+        if i == program_values['current_list']:
+            window[f"COL{temp_data['combo'].index(i)}"].update(visible=False)
+            break
+    
+    if event == 'Lists':
+        window['COL SETTINGS'].update(visible=False) if window['COL SETTINGS'].visible == True else None
+    else:
+        window['COL LIST EDITOR'].update(visible=False) if window['COL LIST EDITOR'].visible == True else None
+
+    window['-MENU BAR-'].update(menu_definition=MENUS['disabled_menu_bar'])
+
+    program_values['current_list'] = 'LIST EDITOR' if event == 'Lists' else 'SETTINGS'
+    window['COL LIST EDITOR'].update(visible=True) if event == 'Lists' else window['COL SETTINGS'].update(visible=True)
+    window['COL ADD BUTTONS'].update(visible=False)
+    window['-COMBO-'].update(value='List Editor' if event == 'Lists' else 'Settings')
+    window['COL APPLY REVERT BUTTONS'].update(visible=True) if event == 'Settings' else window['COL APPLY REVERT BUTTONS'].update(visible=False)
+
+def go_to_todolist():
+    program_values['current_list'] = values['LISTS LISTBOX'][0]
+    temp_data['list_index'] = str(temp_data['combo'].index(program_values['current_list'])).zfill(2)
+    for i in data:
+        if i[0] == program_values['current_list']:
+            window[f'COL{data.index(i)}'].update(visible=True)
+        else:
+            window[f'COL{data.index(i)}'].update(visible=False)
+
+    window['COL LIST EDITOR'].update(visible=False)
+    window['COL ADD BUTTONS'].update(visible=True)
+    window['COL ADD BUTTONS'].unhide_row()
+    window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
+    window['-COMBO-'].update(value=program_values['current_list'])
 
 def undo_value_change():
     index = 0 if 'Undo' in event.title() else 1
@@ -1240,11 +1300,33 @@ def create_new_window():
     window = window1
     bindings()
 
-def save():
+def save_data():
     write_data_file()
     current_location = window.current_location()
     sg.Window(None, [[sg.Text('Saved', size=(300,550), enable_events=True, justification='c', pad=(0,230))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.9, auto_close=True, auto_close_duration=0.5,finalize=True).read(close=True)
 
+FUNCTIONS_SWITCH_CASE_DICT = {
+    'Copy': copy_element,
+    'Cut': cut_element,
+    'Rename': rename_element,
+    'Delete': delete_element,
+    'List::ADD': add_todolist,
+    'List::RENAME': rename_todolist,
+    'List::RENAME': delete_todolist,
+    'List::MOVE': move_todolist,
+    '-COMBO-': change_todolist,
+    'Lists': go_to_list_editor_or_settings_page,
+    'LISTS LISTBOX +DOUBLE CLICK+': go_to_todolist,
+    'Settings': go_to_list_editor_or_settings_page,
+    'Apply': apply_settings,
+    'Revert': revert_settings,
+    'Refresh': create_new_window,
+    'Save': save_data,
+    'Undo': undo_last_action_or_redo_last_undo,
+    'Redo': undo_last_action_or_redo_last_undo, 
+    'List::UNDO': undo_last_action_or_redo_last_undo,
+    'List::REDO': undo_last_action_or_redo_last_undo
+}
 
 
 #  /$$$$$$$$                                  /$$           /$$                                    
@@ -1274,33 +1356,8 @@ while True:
     if '+RIGHT CLICK+' in event:
         element_right_clicked(event)
 
-    # Add a to do list
-    if 'List::ADD' in event:
-        add_todolist()
-
-    # Change which list your on
-    if event == '-COMBO-':
-        program_values['current_list'] = values['-COMBO-']
-        temp_data['list_index'] = str(temp_data['combo'].index(values['-COMBO-'])).zfill(2)
-        for i in data:
-            if i[0] == program_values['current_list']:
-                window[f'COL{data.index(i)}'].update(visible=True)
-            else:
-                window[f'COL{data.index(i)}'].update(visible=False)
-
-        for i in ['LIST EDITOR', 'SETTINGS']:
-            if window[f'COL {i}'].visible == True:
-                window[f'COL {i}'].update(visible=False)
-
-                window['COL APPLY REVERT BUTTONS'].update(visible=False)
-
-                window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
-
-        window['COL ADD BUTTONS'].update(visible=True)
-        window['COL ADD BUTTONS'].unhide_row()
-        window['-COMBO-'].Widget.selection_clear()
-    window['COL ADD BUTTONS'].set_focus()
-
+    if event in FUNCTIONS_SWITCH_CASE_DICT:
+        FUNCTIONS_SWITCH_CASE_DICT[event]()
 
     # Appending or Inserting an element
     if any(x in event for x in ('ADD', 'INSERT')) and 'List' not in event:
@@ -1310,7 +1367,6 @@ while True:
     if 'SECTION' in event and not any(x in event for x in ('RIGHT CLICK', 'Copy', 'Cut')):
         update_data('Section', event)
 
-
     # Updating the checkbox
     if 'TASK' in event and 'RIGHT CLICK' not in event:
         update_data('Task', event)
@@ -1319,111 +1375,8 @@ while True:
     if 'MOVE' in event and 'List' not in event:
         move_element()
 
-    # Copy
-    if 'Copy' in event:
-        copy_element()
-
-    # Cut
-    if 'Cut' in event:
-        cut_element()
-
-    # Rename
-    if event == 'Rename':
-        rename_element()
-
-    # Delete Element
-    if event == 'Delete':
-        delete_element()
-
-
-    # Show List Editor Page
-    if event == 'Lists':
-        temp_data['last_list_on'] = program_values['current_list']
-
-        for i in temp_data['combo']:
-            if i == program_values['current_list']:
-                window[f"COL{temp_data['combo'].index(i)}"].update(visible=False)
-                break
-        
-        if window['COL SETTINGS'].visible == True:
-            window['COL SETTINGS'].update(visible=False)
-
-        window['-MENU BAR-'].update(menu_definition=MENUS['disabled_menu_bar'])
-
-        program_values['current_list'] = 'LIST EDITOR'
-        window['COL LIST EDITOR'].update(visible=True)
-        window['COL ADD BUTTONS'].hide_row()
-        window['-COMBO-'].update(value='List Editor')
-
-    if event == 'LISTS LISTBOX +DOUBLE CLICK+':
-        program_values['current_list'] = values['LISTS LISTBOX'][0]
-        temp_data['list_index'] = str(temp_data['combo'].index(program_values['current_list'])).zfill(2)
-        for i in data:
-            if i[0] == program_values['current_list']:
-                window[f'COL{data.index(i)}'].update(visible=True)
-            else:
-                window[f'COL{data.index(i)}'].update(visible=False)
-
-        window['COL LIST EDITOR'].update(visible=False)
-        window['COL ADD BUTTONS'].update(visible=True)
-        window['COL ADD BUTTONS'].unhide_row()
-        window['-MENU BAR-'].update(menu_definition=MENUS['menu_bar'])
-        window['-COMBO-'].update(value=program_values['current_list'])
-    
-    # Rename List
-    if event == 'List::RENAME':
-        rename_todolist()
-
-    # Delete List
-    if event == 'List::DELETE':
-        delete_todolist()
-
-    # Move a list up or down
-    if 'List::MOVE' in event:
-        move_todolist()
-
-    # Show Settings Page
-    if event == 'Settings':
-        apply_settings()
-        temp_data['last_list_on'] = program_values['current_list']
-
-        for i in temp_data['combo']:
-            if i == program_values['current_list']:
-                window[f"COL{temp_data['combo'].index(i)}"].update(visible=False)
-                break
-
-        if window['COL LIST EDITOR'].visible == True:
-            window['COL LIST EDITOR'].update(visible=False)
-
-        window['-MENU BAR-'].update(menu_definition=MENUS['disabled_menu_bar'])
-
-        program_values['current_list'] = 'SETTINGS'
-        window['COL SETTINGS'].update(visible=True)
-        window['COL APPLY REVERT BUTTONS'].update(visible=True)
-        window['COL APPLY REVERT BUTTONS'].unhide_row()
-        window['COL ADD BUTTONS'].update(visible=False)
-        window['-COMBO-'].update(value='Settings')
-    
-    # Applying or Reverting Settings
-    if event == 'Apply':
-        if window.find_element_with_focus() is not None:
-            add_to_last_action_or_last_undo(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
-        apply_settings()
-    elif event == 'Revert':
-        revert_settings()
-
-    if event in ('Undo', 'Redo', 'List::UNDO', 'List::REDO'):
-        undo_last_action_or_redo_last_undo()
-
     if '<Save to last action>' in event:
         key = event.split()[0].lower().strip('-') if 'CHOOSER' not in event else event.split()[0].replace('_CHOOSER', '').lower().strip('-')
         add_to_last_action_or_last_undo(('changed_value', event.split()[0].replace('_CHOOSER', ''), temp_data['previous_settings'][key]))
-
-    if event == 'Refresh':
-        create_new_window()
-
-    if event == 'Save':
-        save()
-    
 
 window.close()

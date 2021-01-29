@@ -2,8 +2,6 @@ import PySimpleGUI as sg
 from datetime import datetime
 from re import match
 
-from PySimpleGUI.PySimpleGUI import SetOptions
-
 #     TODOlist is a todo list application that features sections that enable the organisation of tasks
 #     Copyright (C) 2021  Snaiel
 #
@@ -69,6 +67,7 @@ temp_data = {
             'element_copied': None,
             'last_action_and_undo_todolists': [[], []],     # first list is last action, second list is last undo
             'last_action_and_undo_list_editor': [[], []],
+            'last_action_and_undo_settings': [[], []],
             'deleted_todolists': [],
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
@@ -440,10 +439,10 @@ def create_row_of_columns(list_to_create):
     settings_layout = [
         [sg.Text('Reset Daily at', pad=((10,0),(10,0))), sg.Input(default_text=program_values['time_to_reset_daily_sections'], key='-TIME_TO_RESET_DAILY_SECTIONS-', size=(10,1), pad=((53,5),(10,0)))],
         [sg.Text('Undo Limit', pad=((10, 0), (5, 15))), sg.Input(default_text=program_values['undo_limit'], key='-UNDO_LIMIT-', size=(10,1), pad=((73,5),(0,10)))],
-        [sg.Text('Background Colour', pad=(10,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(10,1), pad=((15,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Button Colour', pad=(10,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(10,1), pad=((46,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Text Colour 1', pad=(10,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
-        [sg.Text('Text Colour 2', pad=(10,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0)],
+        [sg.Text('Background Colour', pad=(10,0)), sg.Input(default_text=program_values['background_colour'], key='-BACKGROUND_COLOUR-', size=(10,1), pad=((15,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0, key='-BACKGROUND_COLOUR_CHOOSER-')],
+        [sg.Text('Button Colour', pad=(10,0)), sg.Input(default_text=program_values['button_colour'], key='-BUTTON_COLOUR-', size=(10,1), pad=((46,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0, key='-BUTTON_COLOUR_CHOOSER-')],
+        [sg.Text('Text Colour 1', pad=(10,0)), sg.Input(default_text=program_values['text_colour_1'], key='-TEXT_COLOUR_1-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0, key='-TEXT_COLOUR_1_CHOOSER-')],
+        [sg.Text('Text Colour 2', pad=(10,0)), sg.Input(default_text=program_values['text_colour_2'], key='-TEXT_COLOUR_2-', size=(10,1), pad=((48,5),(0,0))), sg.ColorChooserButton('', image_data=COLOUR_PICKER_SYMBOL, image_size=(20,20), image_subsample=4, target=(sg.ThisRow, -1), border_width=0, key='-TEXT_COLOUR_2_CHOOSER-')],
         [sg.Frame('Result', frame_layout, pad=(25,50), title_color=program_values['text_colour_1'])]
     ]
 
@@ -1129,6 +1128,11 @@ def revert_settings():
     colours()
     create_new_window()
 
+def undo_value_change():
+    index = 0 if 'Undo' in event.title() else 1
+    last_thing = temp_data['last_action_and_undo_settings'][index][-1]
+    add_to_last_action_or_last_undo(('changed_value', last_thing[1], window[last_thing[1]].get()))
+    window[last_thing[1]].update(value=last_thing[2])
 
 UNDO_REDO_SWITCH_CASE_DICT = {
                         'add_element': delete_element,
@@ -1138,14 +1142,15 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'add_todolist': delete_todolist,
                         'delete_todolist': undo_delete_todolist,
                         'rename_todolist': rename_todolist,
-                        'move_todolist': move_todolist
+                        'move_todolist': move_todolist,
+                        'changed_value': undo_value_change
 }
 
 def undo_last_action_or_redo_last_undo():
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
     index = 0 if 'Undo' in event.title() else 1
 
-    print(temp_data[key][index])
+    print(temp_data[key])
 
     if len(temp_data[key][index]) > 0:
         UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][index][-1][0]]()
@@ -1153,7 +1158,7 @@ def undo_last_action_or_redo_last_undo():
 
 def add_to_last_action_or_last_undo(tuple_of_data):
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
-    index = 1 if 'Undo' in event.title() else 0
+    index = 1 if 'Undo' in event.title() and 'Limit' not in event.title() else 0
     print(index)
     
     if len(temp_data[key][index]) >= int(program_values['undo_limit']):
@@ -1181,11 +1186,22 @@ def bindings():
         element_key = i.split(' ')
         element_key.insert(4, 'TEXT')
         window[' '.join(element_key)].bind('<Button-3>', ' +RIGHT CLICK+')
+
     window['LISTS LISTBOX'].bind('<Double-Button-1>', ' +DOUBLE CLICK+')
+
+    # Shortcuts
     window.bind('<Control-z>', 'Undo')
     window.bind('<Control-Shift-Key-Z>', 'Redo')
     window.bind('<Control-r>', 'Refresh')
     window.bind('<Control-s>', 'Save')
+    window.bind('<Control-k>', 'Settings')
+    window.bind('<Control-l>', 'Lists')
+
+    # Settings bindings
+    for x in ['-TIME_TO_RESET_DAILY_SECTIONS-','-UNDO_LIMIT-','-BACKGROUND_COLOUR-','-BUTTON_COLOUR-','-TEXT_COLOUR_1-','-TEXT_COLOUR_2-']:
+        window[x].bind('<FocusOut>', ' <Save to last action>')
+    for x in ['-BACKGROUND_COLOUR_CHOOSER-','-BUTTON_COLOUR_CHOOSER-','-TEXT_COLOUR_1_CHOOSER-','-TEXT_COLOUR_2_CHOOSER-']:
+        window[x].bind('<1>', ' <Save to last action>')
 
 def startup():
     read_data_file()
@@ -1209,7 +1225,7 @@ def startup():
     
 startup()
 
-SetOptions(icon='icon.ico', ttk_theme='vista')
+sg.SetOptions(icon='icon.ico', ttk_theme='vista', border_width=0)
 
 window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True)
 bindings()
@@ -1390,12 +1406,18 @@ while True:
     
     # Applying or Reverting Settings
     if event == 'Apply':
+        if window.find_element_with_focus() is not None:
+            add_to_last_action_or_last_undo(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
         apply_settings()
     elif event == 'Revert':
         revert_settings()
 
     if event in ('Undo', 'Redo', 'List::UNDO', 'List::REDO'):
         undo_last_action_or_redo_last_undo()
+
+    if '<Save to last action>' in event:
+        key = event.split()[0].lower().strip('-') if 'CHOOSER' not in event else event.split()[0].replace('_CHOOSER', '').lower().strip('-')
+        add_to_last_action_or_last_undo(('changed_value', event.split()[0].replace('_CHOOSER', ''), temp_data['previous_settings'][key]))
 
     if event == 'Refresh':
         create_new_window()

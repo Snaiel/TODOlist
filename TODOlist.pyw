@@ -39,10 +39,10 @@ SYMBOL_DOWN =  '▼'
 MENUS = {
         'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
-        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
-        'task_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_2': ['Right', ['Move', ['Up::MOVE', 'Down::MOVE'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
+        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
+        'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'section_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
 }
 
 program_values = {
@@ -1009,7 +1009,7 @@ def move_element():
         direction = temp_data[key][index][-1][2]
     else:
         element_key = temp_data['last_element_right_clicked']
-        direction = event[:-6]
+        direction = event[:-14]
 
     element_key = element_key.split(' ')
     element_name = ' '.join(element_key[5:])
@@ -1313,6 +1313,8 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'Cut': cut_element,
     'Rename': rename_element,
     'Delete': delete_element,
+    'Down::MOVE_ELEMENT': move_element,
+    'Up::MOVE_ELEMENT': move_element,
     'List::ADD(MENU)': add_todolist,
     'List::ADD(BUTTON)': add_todolist,
     'List::RENAME': rename_todolist,
@@ -1377,10 +1379,6 @@ while True:
     # Updating the checkbox
     if 'TASK' in event and 'RIGHT CLICK' not in event:
         update_data('Task', event)
-
-    # Move element up or down
-    if 'MOVE' in event and 'List' not in event:
-        move_element()
     
     # Stops the combobox from highlighting itself
     if window.find_element_with_focus() is not None and window.find_element_with_focus().Key == '-COMBO-':

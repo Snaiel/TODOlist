@@ -72,6 +72,7 @@ temp_data = {
             'last_scrollbar_position': (0.0, 1.0),
             'previous_settings': {
                 'time_to_reset_daily_sections': '',
+                'undo_limit': 0,
                 'background_colour': '',
                 'button_colour': '',
                 'text_colour_1': '',
@@ -482,7 +483,10 @@ def create_layout(list_to_create):
 
 def add_todolist():
     if any(x in event.title() for x in ('Undo', 'Redo')) is False:
-        list_name = get_text('List Name:')
+        current_location = window.current_location()
+        todolist_name_popup = sg.Window(None, [[sg.Text(f'Todolist name:', justification='c', pad=((100, 0),(200, 5)))], [sg.Input(size=(50, 1), pad=(20,5), key='-INPUT_TODOLIST_NAME-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+        popup_event, popup_values = todolist_name_popup.read(close=True)
+        list_name = popup_values['-INPUT_TODOLIST_NAME-'] if popup_event == 'Ok' else None
     else:
         index = 0 if 'Undo' in event.title() else 1
         list_name = temp_data['last_action_and_undo_list_editor'][index][-1][1]
@@ -496,24 +500,28 @@ def add_todolist():
         temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
         create_new_window()
     elif list_name in temp_data['combo']:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('List already exists', title='Error', location=location)
+        message_popup('List already exists')
+        return
 
 def rename_todolist():
     if len(values['LISTS LISTBOX']) != 0 or any(x in event.title() for x in ('Undo', 'Redo')):
         if any(x in event.title() for x in ('Undo', 'Redo')) is False:
-            new_list_name = get_text('Rename to:')
+                list_to_rename = values['LISTS LISTBOX'][0]
+        else:
+            index = 0 if 'Undo' in event.title() else 1
+            list_to_rename = temp_data['last_action_and_undo_list_editor'][index][-1][1]
+
+        if any(x in event.title() for x in ('Undo', 'Redo')) is False:
+            current_location = window.current_location()
+            rename_todolist_popup = sg.Window(None, [[sg.Text('Rename todolist to:', justification='c', pad=((80, 0),(200, 5)))], [sg.Input(default_text=list_to_rename, size=(50, 1), pad=(20,5), key='-INPUT_RENAME_TODOLIST-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+            rename_todolist_popup['-INPUT_RENAME_TODOLIST-'].update(select=True)
+            popup_event, popup_values = rename_todolist_popup.read(close=True)
+            new_list_name = popup_values['-INPUT_RENAME_TODOLIST-'] if popup_event == 'Ok' else None
         else:
             index = 0 if 'Undo' in event.title() else 1
             new_list_name = temp_data['last_action_and_undo_list_editor'][index][-1][2]
 
         if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
-            if any(x in event.title() for x in ('Undo', 'Redo')) is False:
-                list_to_rename = values['LISTS LISTBOX'][0]
-            else:
-                index = 0 if 'Undo' in event.title() else 1
-                list_to_rename = temp_data['last_action_and_undo_list_editor'][index][-1][1]
             add_to_last_action_or_last_undo(('rename_todolist', new_list_name, list_to_rename))
             for i in data:
                 if i[0] is list_to_rename:
@@ -524,23 +532,23 @@ def rename_todolist():
                     list_name_in_combo = new_list_name
                     break
         elif new_list_name in temp_data['combo']:
-            current_location = window.CurrentLocation()
-            location = (current_location[0] + 80, current_location[1] + 100)
-            sg.popup('List already exists', title='Error', location=location)
+            message_popup('List already exists')
+            return
+        else:
+            return
     elif len(values['LISTS LISTBOX']) == 0:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location)
+        message_popup('Select a list first')
 
     create_combo()
     window['-COMBO-'].update(values=temp_data['combo'])
     window['LISTS LISTBOX'].update(values=tuple(temp_data['combo']))
 
 def delete_todolist():
-    current_location = window.CurrentLocation()
-    location = (current_location[0] + 4, current_location[1] + 100)
     if any(x in event.title() for x in ('Undo', 'Redo')) is False:
-        if sg.popup_ok_cancel("This will delete the list and all of it's contents", title='Delete?', location=location) == 'OK':
+        current_location = window.current_location()
+        element_name_popup = sg.Window(None, [[sg.Text(f"This will delete the list and all of it's contents", justification='c', pad=((10, 0),(200, 5)))], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+        popup_event = element_name_popup.read(close=True)[0]
+        if popup_event == 'Ok':
             if window[f'COL LIST EDITOR'].visible == True:
                 list_to_delete = values['LISTS LISTBOX'][0]
             else:
@@ -590,9 +598,7 @@ def move_todolist():
         index = 0 if 'Undo' in event.title() else 1
         list_name = temp_data['last_action_and_undo_list_editor'][index][-1][1]
     else:
-        current_location = window.CurrentLocation()
-        location = (current_location[0] + 80, current_location[1] + 100)
-        sg.popup('Select a list first', title='Error', location=location)
+        message_popup('Select a list first')
         return
 
     if any(x in event.title() for x in ('Undo', 'Redo')) is False:
@@ -720,17 +726,18 @@ def add_or_insert_element_calculations():
             element_to_add = {element_name: temp_data['element_copied'][1]}
         else:
             if int(hierarchy_index) == 2:
-                current_location = window.CurrentLocation()
-                sg.popup('Cannot support more subsections\nPasting tasks within copied section...', title='Error', location=(current_location[0] + 25, current_location[1] + 100))
+                message_popup('Cannot support more subsections\nPasting tasks within copied section...')
                 element_to_add = tuple(x for x in temp_data['element_copied'][0][1:] if type(x) is dict)
             elif int(hierarchy_index) > 0 and temp_data['element_copied'][1] == 2:
                 element_to_add = [x for x in temp_data['element_copied'][0] if type(x) is dict]
-                current_location = window.CurrentLocation()
-                sg.popup('Cannot support more subsections\nPasting without subsections...', title='Error', location=(current_location[0] + 30, current_location[1] + 100))
+                message_popup('Cannot support more subsections\nPasting without subsections...')
             else:
                 element_to_add = temp_data['element_copied'][0]
     elif 'Paste' not in event:
-        element_name = get_text(f'{element_type} Name:')
+        current_location = window.current_location()
+        element_name_popup = sg.Window(None, [[sg.Text(f'{element_type} name:', justification='c', pad=((105 if element_type == 'Task' else 95, 0),(200, 5)))], [sg.Input(size=(50, 1), pad=(20,5), key='-INPUT_ELEMENT_NAME-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+        popup_event, popup_values = element_name_popup.read(close=True)
+        element_name = popup_values['-INPUT_ELEMENT_NAME-'] if popup_event == 'Ok' else None
         if element_type == 'Task':
             element_to_add = {element_name: False}
         else:
@@ -749,8 +756,7 @@ def add_or_insert_element_calculations():
 
             add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
     else:
-        current_location = window.CurrentLocation()
-        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100))
+        message_popup('Element already exists within\ncurrent area/ section')
 
 def add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id):
     if element_to_add is None:
@@ -840,26 +846,27 @@ def rename_element():
 
     if event not in ('Undo', 'Redo'):
         element = temp_data['last_element_right_clicked']
-        new_name = get_text('Rename to:')
+        current_location = window.current_location()
+        rename_todolist_popup = sg.Window(None, [[sg.Text(f'Rename {element.split()[3].lower()} to:', justification='c', pad=((90 if element.split()[3].title() == 'Task' else 82, 0),(200, 5)))], [sg.Input(default_text=' '.join(element.split()[5:]), size=(50, 1), pad=(20,5), key='-INPUT_RENAME_ELEMENT-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+        rename_todolist_popup['-INPUT_RENAME_ELEMENT-'].update(select=True)
+        popup_event, popup_values = rename_todolist_popup.read(close=True)
+        new_element_name = popup_values['-INPUT_RENAME_ELEMENT-'] if popup_event == 'Ok' else None
     else:
         index = 0 if event == 'Undo' else 1
         element = temp_data['last_action_and_undo_todolists'][index][-1][1]
-        new_name = temp_data['last_action_and_undo_todolists'][index][-1][2]
+        new_element_name = temp_data['last_action_and_undo_todolists'][index][-1][2]
 
-    hierarchy_index = element[3:5]
-    section_id = element[6:8]
+    element = element.split()
 
-    if 'TASK' in element:
-        element_type = 'Task'
-        old_name = element[19:]
-    else:
-        element_type = 'Section'
-        old_name = element[22:]
+    hierarchy_index = element[1]
+    section_id = element[2]
+    element_type = element[3].title()
+    old_name = ' '.join(element[5:])
 
-    new_key = f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_name}"
+    new_key = f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_element_name}"
 
-    if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {new_name}" not in temp_data['element_keys']:
-        if new_name not in ('', None):
+    if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {new_element_name}" not in temp_data['element_keys']:
+        if new_element_name not in ('', None):
             local_section_id = 0
 
             for todolist in data:
@@ -867,23 +874,23 @@ def rename_element():
                     for task in [task for task in todolist if type(task) is dict]:
                         if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
                             add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
-                            task[new_name] = task.pop(old_name)
+                            task[new_element_name] = task.pop(old_name)
                             return create_new_window()
                     for section in [section for section in todolist if type(section) is list]:
                         if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
                             add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
-                            section[0][new_name] = section[0].pop(old_name)
+                            section[0][new_element_name] = section[0].pop(old_name)
                             return create_new_window()
                         local_section_id += 1
                         for task in [task for task in section if type(task) is dict]:
                             if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
                                 add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
-                                task[new_name] = task.pop(old_name)
+                                task[new_element_name] = task.pop(old_name)
                                 return create_new_window()
                         for subsection in [subsection for subsection in section if type(subsection) is list]:
                             if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
                                 add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
-                                subsection[0][new_name] = subsection[0].pop(old_name)
+                                subsection[0][new_element_name] = subsection[0].pop(old_name)
                                 return create_new_window()
                         else:
                             for subsection in [subsection for subsection in section if type(subsection) is list]:
@@ -891,11 +898,10 @@ def rename_element():
                                 for task in [task for task in subsection if type(task) is dict]:
                                     if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
                                         add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
-                                        task[new_name] = task.pop(old_name)
+                                        task[new_element_name] = task.pop(old_name)
                                         return create_new_window()
     else:
-        current_location = window.CurrentLocation()
-        sg.popup(f'Element already exists within current area/ section', title='Error', location=(current_location[0] - 14, current_location[1] + 100))
+        message_popup('Element already exists within\ncurrent area/ section')
 
 def delete_element():
     if event not in ('Undo', 'Redo'):
@@ -1086,30 +1092,26 @@ def apply_settings():
     if window.find_element_with_focus() is not None:
         add_to_last_action_or_last_undo(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
 
-    current_location = window.CurrentLocation()
-
     previous_settings = temp_data['previous_settings']
 
     if match('^(2[0-3]|[01]{1}[0-9]):([0-5]{1}[0-9]):([0-5]{1}[0-9])$', values['-TIME_TO_RESET_DAILY_SECTIONS-']):
         previous_settings['time_to_reset_daily_sections'] = program_values['time_to_reset_daily_sections']
         program_values['time_to_reset_daily_sections'] = values['-TIME_TO_RESET_DAILY_SECTIONS-']
     else:
-        location = (current_location[0] - 5, current_location[1] + 100)
-        sg.popup('Please use correct format for time (HH:MM:SS)', title='Error', location=location)
+        message_popup('Please use correct format for time\n(HH:MM:SS)')
         return
 
     for colour in (values['-BACKGROUND_COLOUR-'], values['-BUTTON_COLOUR-'], values['-TEXT_COLOUR_1-'], values['-TEXT_COLOUR_2-']):
-        if match('^#(?:[0-9a-fA-F]{3}){1,2}$', colour) == False:
-            location = (current_location[0] - 30, current_location[1] + 100)
-            sg.popup(f'Please use correct format for colour (Hex). Wrong: {colour}', location=location, line_width=100)
+        print(colour, match('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', colour))
+        if match('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', colour) is None:
+            message_popup(f'Please use correct format for colour (Hex)\nWrong: {colour}')
             return
 
     if match('^[0-9]+$', values['-UNDO_LIMIT-']) and int(values['-UNDO_LIMIT-']) > 0:
         previous_settings['undo_limit'] = program_values['undo_limit']
         program_values['undo_limit'] = values['-UNDO_LIMIT-']
     else:
-        location = (current_location[0] + 10, current_location[1] + 100)
-        sg.popup('Please use correct format for numbers (int)', title='Error', location=location)
+        message_popup('Please use correct format for numbers (int)')
         return
 
     for key in previous_settings.keys():
@@ -1172,6 +1174,7 @@ def go_to_list_editor_or_settings_page():
     window['COL ADD BUTTONS'].update(visible=False)
     window['-COMBO-'].update(value='List Editor' if event == 'Lists' else 'Settings')
     window['COL APPLY REVERT BUTTONS'].update(visible=True) if event == 'Settings' else window['COL APPLY REVERT BUTTONS'].update(visible=False)
+    apply_settings() if event == 'Settings' else None
 
 def go_to_todolist():
     program_values['current_list'] = values['LISTS LISTBOX'][0]
@@ -1226,10 +1229,11 @@ def add_to_last_action_or_last_undo(tuple_of_data):
     temp_data[key][index].append(tuple_of_data)
     print(temp_data[key])
 
-def get_text(message):
-    current_location = window.CurrentLocation()
-    location = (current_location[0] - 25, current_location[1] + 100)
-    return sg.popup_get_text(message, location=location)
+def message_popup(message, time=5):
+    current_location = window.current_location()
+    message_popup_window = sg.Window(None, [[sg.Text(message, size=(300,550), justification='c', pad=(0,230))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.95, auto_close=True, auto_close_duration= time, keep_on_top=True, finalize=True)
+    message_popup_window.bind('<1>', '')
+    message_popup_window.read(close=True)
 
 def element_right_clicked(event):
     element_key = event[:-14]
@@ -1302,18 +1306,19 @@ def create_new_window():
 
 def save_data():
     write_data_file()
-    current_location = window.current_location()
-    sg.Window(None, [[sg.Text('Saved', size=(300,550), enable_events=True, justification='c', pad=(0,230))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.9, auto_close=True, auto_close_duration=0.5,finalize=True).read(close=True)
+    message_popup('Data saved')
 
 FUNCTIONS_SWITCH_CASE_DICT = {
     'Copy': copy_element,
     'Cut': cut_element,
     'Rename': rename_element,
     'Delete': delete_element,
-    'List::ADD': add_todolist,
+    'List::ADD(MENU)': add_todolist,
+    'List::ADD(BUTTON)': add_todolist,
     'List::RENAME': rename_todolist,
-    'List::RENAME': delete_todolist,
-    'List::MOVE': move_todolist,
+    'List::DELETE': delete_todolist,
+    'List::MOVEUP': move_todolist,
+    'List::MOVEDOWN': move_todolist,
     '-COMBO-': change_todolist,
     'Lists': go_to_list_editor_or_settings_page,
     'LISTS LISTBOX +DOUBLE CLICK+': go_to_todolist,
@@ -1345,6 +1350,7 @@ while True:
     event, values = window.read()
     print(event)
 
+    # Closing the window
     if event == sg.WIN_CLOSED:
         temp_data['last_time_closed'] = datetime.now().strftime(r'%d/%m/%Y %H:%M:%S')
         if program_values['current_list'] in ('LIST EDITOR', 'SETTINGS'):
@@ -1356,6 +1362,7 @@ while True:
     if '+RIGHT CLICK+' in event:
         element_right_clicked(event)
 
+    # Handles most of the function calls
     if event in FUNCTIONS_SWITCH_CASE_DICT:
         FUNCTIONS_SWITCH_CASE_DICT[event]()
 
@@ -1374,7 +1381,12 @@ while True:
     # Move element up or down
     if 'MOVE' in event and 'List' not in event:
         move_element()
+    
+    # Stops the combobox from highlighting itself
+    if window.find_element_with_focus() is not None and window.find_element_with_focus().Key == '-COMBO-':
+        window['COL ADD BUTTONS'].set_focus()
 
+    # Saving what the user changed in the settings so it can be undone
     if '<Save to last action>' in event:
         key = event.split()[0].lower().strip('-') if 'CHOOSER' not in event else event.split()[0].replace('_CHOOSER', '').lower().strip('-')
         add_to_last_action_or_last_undo(('changed_value', event.split()[0].replace('_CHOOSER', ''), temp_data['previous_settings'][key]))

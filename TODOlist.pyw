@@ -40,9 +40,9 @@ MENUS = {
         'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']],
-        'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
+        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']],
+        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']]
 }
 
 program_values = {
@@ -347,9 +347,9 @@ def create_section(header, opened, content, list_name, hierarchy_index, section_
             sectionTextKey = f'{element_indexes} SECTION TEXT {header}'
             section_contentKey = f'{element_indexes} SECTION CONTENT {header}'
 
-            right_click_menu = MENUS['section_level_0_and_1']
+            right_click_menu = MENUS['section_level_0']
             if hierarchy_index == '01':
-                right_click_menu = MENUS['section_level_2']
+                right_click_menu = MENUS['section_level_1']
 
             if len(header) > 30:
                 tooltip = header
@@ -954,6 +954,48 @@ def delete_element():
                                 subsection.remove(task)
                                 return create_new_window()
 
+def convert_element():
+    element = temp_data['last_element_right_clicked']
+    element = element.split()
+
+    if 'TASK' in element:
+        element_name = ' '.join(element[5:])
+        element_type = 'Task'
+    else:
+        element_name = ' '.join(element[5:])
+        element_type = 'Section'
+
+    hierarchy_index = element[1]
+    section_id = element[2]
+
+    local_section_id = 0
+
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            for task in [task for task in todolist if type(task) is dict]:
+                if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
+                    todolist.insert(todolist.index(task), [{element_name: False}])
+                    todolist.remove(task)
+                    return create_new_window()
+            for section in [section for section in todolist if type(section) is list]:
+                print(element_type, element_name, section[0], hierarchy_index)
+                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
+                    todolist.insert(todolist.index(section), {element_name: False})
+                    todolist.remove(section)
+                    return create_new_window()
+                local_section_id += 1
+                for task in [task for task in section if type(task) is dict]:
+                    if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
+                        section.insert(section.index(task), [{element_name: False}])
+                        section.remove(task)
+                        return create_new_window()
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
+                        section.insert(section.index(subsection), {element_name: False})
+                        section.remove(subsection)
+                        return create_new_window()
+                    local_section_id += 1
+
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
     for todolist in data:
@@ -1313,6 +1355,7 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'Copy::SECTION': copy_element,
     'Cut::TASK': cut_element,
     'Cut::SECTION': cut_element,
+    'Convert': convert_element,
     'Rename': rename_element,
     'Delete': delete_element,
     'Down::MOVE_ELEMENT': move_element,

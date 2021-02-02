@@ -1309,8 +1309,10 @@ def save_data():
     message_popup('Data saved')
 
 FUNCTIONS_SWITCH_CASE_DICT = {
-    'Copy': copy_element,
-    'Cut': cut_element,
+    'Copy::TASK': copy_element,
+    'Copy::SECTION': copy_element,
+    'Cut::TASK': cut_element,
+    'Cut::SECTION': cut_element,
     'Rename': rename_element,
     'Delete': delete_element,
     'Down::MOVE_ELEMENT': move_element,

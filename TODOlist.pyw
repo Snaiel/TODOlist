@@ -39,7 +39,7 @@ SYMBOL_DOWN =  '▼'
 MENUS = {
         'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
-        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
+        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']],
         'section_level_0_and_1': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'],  'Rename', 'Delete']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
         'section_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete'], '&Insert', ['Task::INSERT', 'Section::INSERT']]
@@ -715,7 +715,7 @@ def add_or_insert_element_calculations():
         hierarchy_index = temp_data['last_element_right_clicked'][3:5]
         section_id = temp_data['last_element_right_clicked'][6:8]
         
-    if 'Paste' in event and temp_data['element_copied'][1] is not None:
+    if 'Paste' in event and temp_data['element_copied'] is not None:
         element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
         if element_type == 'Task':
             element_name = temp_data['element_copied'][0][19:]

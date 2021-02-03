@@ -39,10 +39,10 @@ SYMBOL_DOWN =  '▼'
 MENUS = {
         'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
-        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']],
+        'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']],
-        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Convert', 'Rename', 'Delete']]
+        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
+        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']]
 }
 
 program_values = {
@@ -335,7 +335,6 @@ def create_task(name, checked, list_name, hierarchy_index, section_id):
             return [sg.Checkbox('', default=checked, enable_events=True, key=checkbox_key, pad=((10, 0),(3,3))), sg.T(name, right_click_menu=right_click_menu, pad=(0,0), key=checkbox_text_key, enable_events=True, tooltip=tooltip)]
 
 def create_section(header, opened, content, list_name, hierarchy_index, section_id):
-    temp_data['sections_open'][f'{header}'] = opened
     for i in data:
         if i[0] == list_name:
             list_index = str(data.index(i)).zfill(2)
@@ -356,6 +355,7 @@ def create_section(header, opened, content, list_name, hierarchy_index, section_
             else:
                 tooltip = None
 
+            temp_data['sections_open'][f"{element_indexes} SECTION {header}"] = opened
             temp_data['element_keys'].append(f"{element_indexes} SECTION {header}")
             return [[sg.T(symbol(opened), enable_events=True, k=sectionArrowKey, pad=((10, 0),(3,3))), sg.T(header, enable_events=True, k=sectionTextKey, right_click_menu=right_click_menu, tooltip=tooltip)], [collapse(content, section_contentKey, opened)]]
 
@@ -627,25 +627,23 @@ def move_todolist():
 
         
 def update_data(element_type, event):
+    element_indexes = event[:8]
     if element_type == 'Task':
         if 'TEXT' in event:
                 name = event[19:]
-                element_indexes = event[:8]
                 checked =  window[f"{element_indexes} TASK CHECKBOX {name}"].Get()
                 window[f"{element_indexes} TASK CHECKBOX {name}"].update(value=not checked)
         else:
             name = event[23:]
     else:
-        element_indexes = event[:8]
-
         if 'ARROW' in event:
             name = event[23:]
         else:
             name = event[22:]
 
-        temp_data['sections_open'][name] = not temp_data['sections_open'][name]
-        window[f"{element_indexes} SECTION ARROW {name}"].update(SYMBOL_DOWN if temp_data['sections_open'][name] else SYMBOL_RIGHT)
-        window[f"{element_indexes} SECTION CONTENT {name}"].update(visible=temp_data['sections_open'][name]) 
+        temp_data['sections_open'][f"{element_indexes} SECTION {name}"] = not temp_data['sections_open'][f"{element_indexes} SECTION {name}"]
+        window[f"{element_indexes} SECTION ARROW {name}"].update(SYMBOL_DOWN if temp_data['sections_open'][f"{element_indexes} SECTION {name}"] else SYMBOL_RIGHT)
+        window[f"{element_indexes} SECTION CONTENT {name}"].update(visible=temp_data['sections_open'][f"{element_indexes} SECTION {name}"]) 
 
     for todolist in data:
             if todolist[0] == program_values['current_list']:
@@ -653,12 +651,12 @@ def update_data(element_type, event):
                     if element_type == 'Section':
                         if type(content) is list:
                             if name in content[0]:
-                                content[0][name] = temp_data['sections_open'][name]
+                                content[0][name] = temp_data['sections_open'][f"{element_indexes} SECTION {name}"]
                                 return
                             for content_in_section in content:
                                 if type(content_in_section) is list:
                                     if name in content_in_section[0]:
-                                        content_in_section[0][name] = temp_data['sections_open'][name]
+                                        content_in_section[0][name] = temp_data['sections_open'][f"{element_indexes} SECTION {name}"]
                                         return
 
                     if element_type == 'Task':
@@ -955,18 +953,33 @@ def delete_element():
                                 return create_new_window()
 
 def convert_element():
-    element = temp_data['last_element_right_clicked']
+    if event not in ('Undo', 'Redo'):
+        element = temp_data['last_element_right_clicked']
+    else:
+        index = 0 if event == 'Undo' else 1
+        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
     element = element.split()
 
-    if 'TASK' in element:
-        element_name = ' '.join(element[5:])
-        element_type = 'Task'
-    else:
-        element_name = ' '.join(element[5:])
-        element_type = 'Section'
-
+    element_name = ' '.join(element[5:])
+    element_type = element[3].title()
     hierarchy_index = element[1]
     section_id = element[2]
+    
+    new_element = [x for x in element if x != element_type.upper()]
+    new_element.insert(3, 'TASK' if element_type == 'Section' else 'SECTION')
+    new_element = ' '.join(new_element)
+
+    if element_type == 'Task':
+        if event != 'Undo':
+            element_to_put_in = [{element_name: False}]
+            add_to_last_action_or_last_undo(('convert_element', new_element, values[f"{' '.join(element[:3])} TASK CHECKBOX {' '.join(element[5:])}"]))
+        else:
+            index = 0 if event == 'Undo' else 1
+            element_to_put_in = temp_data['last_action_and_undo_todolists'][index][-1][2]
+            add_to_last_action_or_last_undo(('convert_element', new_element, temp_data['last_action_and_undo_todolists'][index][-1][2]))
+    else:
+        index = 0 if event == 'Undo' else 1
+        element_to_put_in = {element_name: False} if event != 'Undo' else {element_name: temp_data['last_action_and_undo_todolists'][index][-1][2]}
 
     local_section_id = 0
 
@@ -974,27 +987,31 @@ def convert_element():
         if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
                 if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
-                    todolist.insert(todolist.index(task), [{element_name: False}])
+                    todolist.insert(todolist.index(task), element_to_put_in)
                     todolist.remove(task)
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
-                print(element_type, element_name, section[0], hierarchy_index)
                 if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    todolist.insert(todolist.index(section), {element_name: False})
+                    add_to_last_action_or_last_undo(('convert_element', new_element, section))
+                    todolist.insert(todolist.index(section), element_to_put_in)
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
                     if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
-                        section.insert(section.index(task), [{element_name: False}])
+                        section.insert(section.index(task), element_to_put_in)
                         section.remove(task)
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    print(element_name, subsection[0], section_id, local_section_id)
                     if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        section.insert(section.index(subsection), {element_name: False})
+                        add_to_last_action_or_last_undo(('convert_element', new_element, subsection))
+                        section.insert(section.index(subsection), element_to_put_in)
                         section.remove(subsection)
                         return create_new_window()
-                    local_section_id += 1
+                else:
+                    for _ in [subsection for subsection in section if type(subsection) is list]:
+                        local_section_id += 1
 
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
@@ -1244,6 +1261,7 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'delete_element': undo_delete_element,
                         'rename_element': rename_element,
                         'move_element': move_element,
+                        'convert_element': convert_element,
                         'add_todolist': delete_todolist,
                         'delete_todolist': undo_delete_todolist,
                         'rename_todolist': rename_todolist,

@@ -41,8 +41,8 @@ MENUS = {
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
-        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']]
+        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert', 'Extract']],
+        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert', 'Extract']]
 }
 
 program_values = {
@@ -1013,6 +1013,40 @@ def convert_element():
                     for _ in [subsection for subsection in section if type(subsection) is list]:
                         local_section_id += 1
 
+def extract_element():
+    if event not in ('Undo', 'Redo'):
+        element = temp_data['last_element_right_clicked']
+    else:
+        index = 0 if event == 'Undo' else 1
+        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
+    element = element.split()
+
+    element_name = ' '.join(element[5:])
+    element_type = element[3].title()
+    hierarchy_index = element[1]
+    section_id = element[2]
+
+    local_section_id = 0
+
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            for section in [section for section in todolist if type(section) is list]:
+                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
+                    for element in section[1:]:
+                        todolist.insert(todolist.index(section), element)
+                    todolist.remove(section)
+                    return create_new_window()
+                local_section_id += 1
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
+                        for element in subsection[1:]:
+                            section.insert(section.index(subsection), element)
+                        section.remove(subsection)
+                        return create_new_window()
+                else:
+                    local_section_id += len([subsection for subsection in section if type(subsection) is list])
+    print('fail')
+
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
     for todolist in data:
@@ -1262,6 +1296,7 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'rename_element': rename_element,
                         'move_element': move_element,
                         'convert_element': convert_element,
+                        'extract_element': extract_element,
                         'add_todolist': delete_todolist,
                         'delete_todolist': undo_delete_todolist,
                         'rename_todolist': rename_todolist,
@@ -1374,6 +1409,7 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'Cut::TASK': cut_element,
     'Cut::SECTION': cut_element,
     'Convert': convert_element,
+    'Extract': extract_element,
     'Rename': rename_element,
     'Delete': delete_element,
     'Down::MOVE_ELEMENT': move_element,

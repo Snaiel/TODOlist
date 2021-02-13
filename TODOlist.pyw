@@ -1,3 +1,4 @@
+from os import dup
 import PySimpleGUI as sg
 from datetime import datetime
 from re import match
@@ -1014,13 +1015,13 @@ def convert_element():
                         local_section_id += 1
 
 def extract_element():
-    element = temp_data['last_element_right_clicked']
-    element = element.split()
+    section_to_extract = temp_data['last_element_right_clicked']
+    section_to_extract = section_to_extract.split()
 
-    element_name = ' '.join(element[5:])
+    element_name = ' '.join(section_to_extract[5:])
     # element_type = element[3].title()
-    hierarchy_index = element[1]
-    section_id = element[2]
+    hierarchy_index = section_to_extract[1]
+    section_id = section_to_extract[2]
 
     local_section_id = 0
     duplicates = 0
@@ -1029,17 +1030,32 @@ def extract_element():
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
                 if element_name in section[0] and hierarchy_index == '00':
-                    add_to_last_action_or_last_undo(('extract_element', ' '.join(element), todolist.index(section), section, duplicates))
-                    for element in section[1:]:
-                        todolist.insert(todolist.index(section), element)
+                    for element_to_extract in section[1:]:
+                        for element in todolist:
+                            if list(element_to_extract.keys())[0] not in element:
+                                continue
+                            else:
+                                duplicates += 1
+                                break
+                        else:
+                            todolist.insert(todolist.index(section), element_to_extract)
+                    add_to_last_action_or_last_undo(('extract_element', ' '.join(section_to_extract), todolist.index(section) - len(section) + 1, section, duplicates))
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    print(section)
                     if element_name in subsection[0] and int(section_id) == local_section_id:
-                        add_to_last_action_or_last_undo(('extract_element', ' '.join(element), section.index(subsection), subsection, duplicates))
-                        for element in subsection[1:]:
-                            section.insert(section.index(subsection), element)
+                        for element_to_extract in subsection[1:]:
+                            for element in section:
+                                if list(element_to_extract.keys())[0] not in element:
+                                    continue
+                                else:
+                                    duplicates += 1
+                                    break
+                            else:
+                                section.insert(section.index(subsection), element_to_extract)
+                        add_to_last_action_or_last_undo(('extract_element', ' '.join(section_to_extract), section.index(subsection) - len(subsection) + 1, subsection, duplicates))
                         section.remove(subsection)
                         return create_new_window()
                 else:
@@ -1065,14 +1081,14 @@ def undo_extract():
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             if hierarchy_index == '00':
-                del todolist[element_index:element_index + len(extracted_section) - 1 - duplicates]
-                todolist.insert(element_index, extracted_section)
+                del todolist[element_index + duplicates:element_index + len(extracted_section) - 1]
+                todolist.insert(element_index + duplicates, extracted_section)
                 return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 local_section_id += 1
                 if int(section_id) == local_section_id:
-                    del section[element_index:element_index + len(extracted_section) - 1 - duplicates]
-                    section.insert(element_index, extracted_section)
+                    del section[element_index + duplicates:element_index + len(extracted_section) - 1]
+                    section.insert(element_index + duplicates, extracted_section)
                     return create_new_window()
             else:
                 local_section_id += len([subsection for subsection in section if type(subsection) is list])

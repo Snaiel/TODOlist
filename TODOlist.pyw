@@ -1014,37 +1014,68 @@ def convert_element():
                         local_section_id += 1
 
 def extract_element():
-    if event not in ('Undo', 'Redo'):
-        element = temp_data['last_element_right_clicked']
-    else:
-        index = 0 if event == 'Undo' else 1
-        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
+    element = temp_data['last_element_right_clicked']
     element = element.split()
 
     element_name = ' '.join(element[5:])
-    element_type = element[3].title()
+    # element_type = element[3].title()
     hierarchy_index = element[1]
     section_id = element[2]
 
     local_section_id = 0
+    duplicates = 0
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
-                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
+                if element_name in section[0] and hierarchy_index == '00':
+                    add_to_last_action_or_last_undo(('extract_element', ' '.join(element), todolist.index(section), section, duplicates))
                     for element in section[1:]:
                         todolist.insert(todolist.index(section), element)
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
+                    if element_name in subsection[0] and int(section_id) == local_section_id:
+                        add_to_last_action_or_last_undo(('extract_element', ' '.join(element), section.index(subsection), subsection, duplicates))
                         for element in subsection[1:]:
                             section.insert(section.index(subsection), element)
                         section.remove(subsection)
                         return create_new_window()
                 else:
                     local_section_id += len([subsection for subsection in section if type(subsection) is list])
+    print('fail')
+
+def undo_extract():
+    index = 0 if event == 'Undo' else 1
+    element = temp_data['last_action_and_undo_todolists'][index][-1][1]
+    element = element.split()
+
+    element_name = ' '.join(element[5:])
+    # element_type = element[3].title()
+    hierarchy_index = element[1]
+    section_id = element[2]
+
+    element_index = temp_data['last_action_and_undo_todolists'][index][-1][2]
+    extracted_section = temp_data['last_action_and_undo_todolists'][index][-1][3]
+    duplicates = temp_data['last_action_and_undo_todolists'][index][-1][4]
+
+    local_section_id = 0
+
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            if hierarchy_index == '00':
+                del todolist[element_index:element_index + len(extracted_section) - 1 - duplicates]
+                todolist.insert(element_index, extracted_section)
+                return create_new_window()
+            for section in [section for section in todolist if type(section) is list]:
+                local_section_id += 1
+                if int(section_id) == local_section_id:
+                    del section[element_index:element_index + len(extracted_section) - 1 - duplicates]
+                    section.insert(element_index, extracted_section)
+                    return create_new_window()
+            else:
+                local_section_id += len([subsection for subsection in section if type(subsection) is list])
     print('fail')
 
 def copy_section(element_name, hierarchy_index, section_id):
@@ -1296,7 +1327,7 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'rename_element': rename_element,
                         'move_element': move_element,
                         'convert_element': convert_element,
-                        'extract_element': extract_element,
+                        'extract_element': undo_extract,
                         'add_todolist': delete_todolist,
                         'delete_todolist': undo_delete_todolist,
                         'rename_todolist': rename_todolist,
@@ -1308,7 +1339,7 @@ def undo_last_action_or_redo_last_undo():
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
     index = 0 if 'Undo' in event.title() else 1
 
-    print(temp_data[key])
+    print(temp_data[key][index][-1])
 
     if len(temp_data[key][index]) > 0:
         UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][index][-1][0]]()

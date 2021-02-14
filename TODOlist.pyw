@@ -1353,7 +1353,7 @@ def undo_last_action_or_redo_last_undo():
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
     index = 0 if 'Undo' in event.title() else 1
 
-    print(temp_data[key][index][-1])
+    print(temp_data[key][index][-1]) if len(temp_data[key][index]) > 0 else None
 
     if len(temp_data[key][index]) > 0:
         UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][index][-1][0]]()
@@ -1446,7 +1446,7 @@ def create_new_window():
 
 def save_data():
     write_data_file()
-    message_popup('Data saved')
+    message_popup('Data saved', time=1)
 
 FUNCTIONS_SWITCH_CASE_DICT = {
     'Copy::TASK': copy_element,

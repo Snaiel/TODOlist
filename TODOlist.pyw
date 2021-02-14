@@ -1019,7 +1019,6 @@ def extract_element():
     section_to_extract = section_to_extract.split()
 
     element_name = ' '.join(section_to_extract[5:])
-    # element_type = element[3].title()
     hierarchy_index = section_to_extract[1]
     section_id = section_to_extract[2]
 
@@ -1032,11 +1031,14 @@ def extract_element():
                 if element_name in section[0] and hierarchy_index == '00':
                     for element_to_extract in section[1:]:
                         for element in todolist:
-                            if list(element_to_extract.keys())[0] not in element:
-                                continue
-                            else:
+                            if type(element_to_extract) is dict and type(element) is dict and list(element_to_extract.keys())[0] in element:
                                 duplicates += 1
                                 break
+                            elif type(element_to_extract) is list and type(element) is list and list(element_to_extract[0].keys())[0] in element[0]:
+                                duplicates += 1
+                                break
+                            else:
+                                continue
                         else:
                             todolist.insert(todolist.index(section), element_to_extract)
                     add_to_last_action_or_last_undo(('extract_element', ' '.join(section_to_extract), todolist.index(section) - len(section) + 1, section, duplicates))
@@ -1060,15 +1062,12 @@ def extract_element():
                         return create_new_window()
                 else:
                     local_section_id += len([subsection for subsection in section if type(subsection) is list])
-    print('fail')
 
 def undo_extract():
     index = 0 if event == 'Undo' else 1
     element = temp_data['last_action_and_undo_todolists'][index][-1][1]
     element = element.split()
 
-    element_name = ' '.join(element[5:])
-    # element_type = element[3].title()
     hierarchy_index = element[1]
     section_id = element[2]
 
@@ -1092,7 +1091,6 @@ def undo_extract():
                     return create_new_window()
             else:
                 local_section_id += len([subsection for subsection in section if type(subsection) is list])
-    print('fail')
 
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0

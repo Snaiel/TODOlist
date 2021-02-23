@@ -42,8 +42,8 @@ MENUS = {
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
-        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert', 'Extract']],
-        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert', 'Extract']]
+        'section_level_0': ['&Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Section::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Clear', 'Convert', 'Extract']],
+        'section_level_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::SECTION', 'Cut::SECTION', '---', 'Add', ['Task::ADDTO', 'Paste::ADDTO'], '&Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Clear', 'Convert', 'Extract']]
 }
 
 program_values = {
@@ -1092,6 +1092,26 @@ def undo_extract():
             else:
                 local_section_id += len([subsection for subsection in section if type(subsection) is list])
 
+def clear_section():
+    element_key = temp_data['last_element_right_clicked']
+    element_key = element_key.split(' ')
+    element_name = ' '.join(element_key[5:])
+    hierarchy_index = element_key[1]
+    section_id = element_key[2]
+
+    local_section_id = 0
+    for todolist in data:
+        if todolist[0] == program_values['current_list']:
+            for section in [section for section in todolist if type(section) is list]:
+                if element_name in section[0] and hierarchy_index == '00':
+                    todolist[:] = [[section[0]] if x == section else x for x in todolist]
+                    return create_new_window()
+                local_section_id += 1
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    if element_name in subsection[0] and int(section_id) == local_section_id:
+                        section[:] = [[subsection[0]] if x == subsection else x for x in section]
+                        return create_new_window()
+
 def copy_section(element_name, hierarchy_index, section_id):
     local_section_id = 0
     for todolist in data:
@@ -1455,6 +1475,7 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'Cut::SECTION': cut_element,
     'Convert': convert_element,
     'Extract': extract_element,
+    'Clear': clear_section,
     'Rename': rename_element,
     'Delete': delete_element,
     'Down::MOVE_ELEMENT': move_element,

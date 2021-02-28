@@ -37,7 +37,7 @@ SYMBOL_RIGHT ='►'
 SYMBOL_DOWN =  '▼'
 
 MENUS = {
-        'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
+        'menu_bar': [['&Edit', ['Undo', 'Redo', '---', 'Add', ['Task::ADD', 'Section::ADD', 'List::ADD(MENU)', 'Paste::ADD'], ['Delete', ['List::DELETE', 'Content'], '---', 'Lists', 'Settings', '---', '&Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'disabled_menu_bar': [['Edit', ['Undo', 'Redo', '---', '!Add', ['Task'], ['!Delete', ['List'], '---', 'Lists', 'Settings', '---', '!Refresh', 'Save']]], ['Help', ['About', 'Wiki']]],
         'task_level_0_and_1': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Section::INSERT', 'Paste::INSERT'], 'Rename', 'Delete', '---', 'Convert']],
         'task_level_2': ['Right', ['Move', ['Up::MOVE_ELEMENT', 'Down::MOVE_ELEMENT'], '---', 'Copy::TASK', 'Cut::TASK', '---', 'Insert', ['Task::INSERT', 'Paste::INSERT'], 'Rename', 'Delete']],
@@ -625,6 +625,15 @@ def move_todolist():
     create_combo()
     create_new_window()
 
+def delete_list_contents():
+    current_location = window.current_location()
+    element_name_popup = sg.Window(None, [[sg.Text('This will delete the contents of this list\n are you sure?', justification='c', pad=((25, 0),(200, 5)))], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
+    popup_event = element_name_popup.read(close=True)[0]
+    if popup_event == 'Ok':
+        for todolist in data:
+            if todolist[0] == program_values['current_list']:
+                todolist[1:] = []
+                return create_new_window()
         
 def update_data(element_type, event):
     element_indexes = event[:8]
@@ -1498,6 +1507,7 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'List::DELETE': delete_todolist,
     'List::MOVEUP': move_todolist,
     'List::MOVEDOWN': move_todolist,
+    'Content': delete_list_contents,
     '-COMBO-': change_todolist,
     'Lists': go_to_list_editor_or_settings_page,
     'LISTS LISTBOX +DOUBLE CLICK+': go_to_todolist,

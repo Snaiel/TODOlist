@@ -745,12 +745,14 @@ def add_or_insert_element_calculations():
         element_name_popup = sg.Window(None, [[sg.Text(f'{element_type} name:', justification='c', pad=((105 if element_type == 'Task' else 95, 0),(200, 5)))], [sg.Input(size=(50, 1), pad=(20,5), key='-INPUT_ELEMENT_NAME-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
         popup_event, popup_values = element_name_popup.read(close=True)
         element_name = popup_values['-INPUT_ELEMENT_NAME-'] if popup_event == 'Ok' else None
+        if element_name in ('', None):
+            return
         if element_type == 'Task':
             if ';;' not in element_name:
                 element_to_add = {element_name: False}
             else:
                 tasks = element_name.split(';;')
-                element_to_add = [{' '.join(tasks): True}]
+                element_to_add = [{element_name: True}]
                 for task in tasks:
                     element_to_add.append({task: False})
         else:
@@ -758,7 +760,7 @@ def add_or_insert_element_calculations():
                 element_to_add = [{element_name: False}]
             else:
                 tasks = element_name.split(';;')
-                element_to_add = [{' '.join(tasks): True}]
+                element_to_add = [{element_name: True}]
                 for task in tasks:
                     element_to_add.append([{task: False}])
     else:
@@ -766,14 +768,13 @@ def add_or_insert_element_calculations():
 
     # Creating the element
     if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" not in temp_data['element_keys']:
-        if element_name not in ('', None):
-            temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
-            if 'ADD' in event:
-                add_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
-            else:
-                insert_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
+        temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
+        if 'ADD' in event:
+            add_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
+        else:
+            insert_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
 
-            add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
+        add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
     else:
         message_popup('Element already exists within\ncurrent area/ section')
 
@@ -1035,8 +1036,7 @@ def convert_element():
                         local_section_id += 1
 
 def extract_element():
-    section_to_extract = temp_data['last_element_right_clicked']
-    section_to_extract = section_to_extract.split()
+    section_to_extract = temp_data['last_element_right_clicked'].split()
 
     element_name = ' '.join(section_to_extract[5:])
     hierarchy_index = section_to_extract[1]
@@ -1048,6 +1048,7 @@ def extract_element():
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
+                print(element_name,section[0])
                 if element_name in section[0] and hierarchy_index == '00':
                     for element_to_extract in section[1:]:
                         for element in todolist:
@@ -1066,7 +1067,6 @@ def extract_element():
                     return create_new_window()
                 local_section_id += 1
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    print(section)
                     if element_name in subsection[0] and int(section_id) == local_section_id:
                         for element_to_extract in subsection[1:]:
                             for element in section:
@@ -1082,6 +1082,7 @@ def extract_element():
                         return create_new_window()
                 else:
                     local_section_id += len([subsection for subsection in section if type(subsection) is list])
+    print('fail')
 
 def undo_extract():
     index = 0 if event == 'Undo' else 1

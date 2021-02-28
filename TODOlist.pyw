@@ -1,4 +1,3 @@
-from os import dup
 import PySimpleGUI as sg
 from datetime import datetime
 from re import match
@@ -738,9 +737,21 @@ def add_or_insert_element_calculations():
         popup_event, popup_values = element_name_popup.read(close=True)
         element_name = popup_values['-INPUT_ELEMENT_NAME-'] if popup_event == 'Ok' else None
         if element_type == 'Task':
-            element_to_add = {element_name: False}
+            if ';;' not in element_name:
+                element_to_add = {element_name: False}
+            else:
+                tasks = element_name.split(';;')
+                element_to_add = [{' '.join(tasks): True}]
+                for task in tasks:
+                    element_to_add.append({task: False})
         else:
-            element_to_add = [{element_name: False}]
+            if ';;' not in element_name:
+                element_to_add = [{element_name: False}]
+            else:
+                tasks = element_name.split(';;')
+                element_to_add = [{' '.join(tasks): True}]
+                for task in tasks:
+                    element_to_add.append([{task: False}])
     else:
         return
 
@@ -1104,6 +1115,7 @@ def clear_section():
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
                 if element_name in section[0] and hierarchy_index == '00':
+                    add_to_last_action_or_last_undo(('clear_seciton', section, todolist.index(section)))
                     todolist[:] = [[section[0]] if x == section else x for x in todolist]
                     return create_new_window()
                 local_section_id += 1

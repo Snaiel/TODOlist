@@ -495,7 +495,7 @@ def add_todolist():
         data.append([list_name])
         if 'MENU' in event:
             program_values['current_list'] = list_name
-        add_to_last_action_or_last_undo(('add_todolist', list_name))
+        add_to_last(('add_todolist', list_name))
         create_combo()
         temp_data['list_index'] = str(temp_data['combo'].index(list_name)).zfill(2)
         create_new_window()
@@ -522,7 +522,7 @@ def rename_todolist():
             new_list_name = temp_data['last_action_and_undo_list_editor'][index][-1][2]
 
         if new_list_name not in temp_data['combo'] and new_list_name not in ('', None):
-            add_to_last_action_or_last_undo(('rename_todolist', new_list_name, list_to_rename))
+            add_to_last(('rename_todolist', new_list_name, list_to_rename))
             for i in data:
                 if i[0] is list_to_rename:
                     i[0] = new_list_name
@@ -562,7 +562,7 @@ def delete_todolist():
 
     for todolist in data:
         if todolist[0] == list_to_delete:
-            add_to_last_action_or_last_undo(('delete_todolist', list_to_delete, data.index(todolist)))
+            add_to_last(('delete_todolist', list_to_delete, data.index(todolist)))
             if len(temp_data['deleted_todolists']) >= int(program_values['undo_limit']):
                 temp_data['deleted_todolists'].pop(0)
             temp_data['deleted_todolists'].append(todolist)
@@ -585,7 +585,7 @@ def undo_delete_todolist():
     for todolist in temp_data['deleted_todolists']:
         if todolist[0] == temp_data[key][index][-1][1]:
             data.insert(temp_data[key][index][-1][2], todolist)
-            add_to_last_action_or_last_undo(('add_todolist', todolist[0]))
+            add_to_last(('add_todolist', todolist[0]))
             create_combo()
             return create_new_window()
 
@@ -620,7 +620,7 @@ def move_todolist():
             data[b], data[a] = data[a], data[b]
             break
 
-    add_to_last_action_or_last_undo(('move_todolist', list_name, direction))
+    add_to_last(('move_todolist', list_name, direction))
     temp_data['list_selected_to_edit'] = list_name
     create_combo()
     create_new_window()
@@ -685,43 +685,42 @@ def update_data(element_type, event):
                                             content_in_subsection[name] = not content_in_subsection[name]
                                             return
 
-def get_section_id_for_element_to_append(section_name_to_add_to, section_id_of_section):
+def get_section_id_for_element_to_append(reference_element, section_id_of_section):
     local_section_id = 0
     for todolist in data:
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
                 local_section_id += 1
-                if section_name_to_add_to in section[0]:
+                if reference_element in section[0]:
                     return local_section_id
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if section_name_to_add_to in subsection[0] and int(section_id_of_section) == local_section_id:
+                    if reference_element in subsection[0] and int(section_id_of_section) == local_section_id:
                         return local_section_id + [subsection for subsection in section if type(subsection) is list].index(subsection) + 1
                 else:
                     for _ in [subsection for subsection in section if type(subsection) is list]:
                         local_section_id += 1
 
 def add_or_insert_element_calculations():
+    reference_key = temp_data['last_element_right_clicked'].split()
+    element_type = event.split('::')[0]
+    augment_type = event.split('::')[1]
 
     if 'ADD' in event: 
         if 'ADDTO' in event: # Appending to a list
-            element_type = event[:-7]
-            element_point_of_reference = temp_data['last_element_right_clicked'][22:]
-            hierarchy_index = str((int(temp_data['last_element_right_clicked'][3:5]) + 1)).zfill(2)
-            section_id = str((int(get_section_id_for_element_to_append(element_point_of_reference, temp_data['last_element_right_clicked'][6:8])))).zfill(2)
+            reference_element = ' '.join(reference_key[5:])
+            hierarchy_index = reference_key[1]
+            section_id = str((int(get_section_id_for_element_to_append(reference_element, reference_key[2])))).zfill(2)
         else: # Just adding to the end of the todolist
-            element_type = event[:-5]
-            element_point_of_reference = None
+            reference_element = None
             hierarchy_index = '00'
             section_id = '00'
     else:
-        element_type = event[:-8]
-        if temp_data['last_element_right_clicked'][9:10] == 'T':
-            element_point_of_reference = temp_data['last_element_right_clicked'][19:]
-        else:
-            element_point_of_reference = temp_data['last_element_right_clicked'][22:]
-        hierarchy_index = temp_data['last_element_right_clicked'][3:5]
-        section_id = temp_data['last_element_right_clicked'][6:8]
+        reference_element = ' '.join(reference_key[5:])
+        ' '.join(reference_key[5:])
+        hierarchy_index = reference_key[1]
+        section_id = reference_key[2]
         
+
     if 'Paste' in event and temp_data['element_copied'] is not None:
         element_type = 'Task' if type(temp_data['element_copied'][1]) is bool else 'Section'
         if element_type == 'Task':
@@ -740,7 +739,7 @@ def add_or_insert_element_calculations():
                 message_popup('Cannot support more subsections\nPasting without subsections...')
             else:
                 element_to_add = temp_data['element_copied'][0]
-    elif 'Paste' not in event:
+    elif 'Paste' not in event: # Get the name of the new task or section
         current_location = window.current_location()
         element_name_popup = sg.Window(None, [[sg.Text(f'{element_type} name:', justification='c', pad=((105 if element_type == 'Task' else 95, 0),(200, 5)))], [sg.Input(size=(50, 1), pad=(20,5), key='-INPUT_ELEMENT_NAME-', justification='c')], [sg.Ok(size=(7,1), pad=((70, 10),(5,0))), sg.Cancel(size=(7,1), pad=((0, 5),(5,0)))]], no_titlebar=True, size=(300,550), location=(current_location[0] + 8, current_location[1]), alpha_channel=0.98, keep_on_top=True, finalize=True)
         popup_event, popup_values = element_name_popup.read(close=True)
@@ -766,35 +765,33 @@ def add_or_insert_element_calculations():
     else:
         return
 
-    # Creating the element
+
+    # Putting the element into the list
     if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {element_name}" not in temp_data['element_keys']:
         temp_data['last_scrollbar_position'] = window[f"COL{temp_data['combo'].index(program_values['current_list'])}"].Widget.vscrollbar.get()
-        if 'ADD' in event:
-            add_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
-        else:
-            insert_element(element_to_add, element_point_of_reference, hierarchy_index, section_id)
+        augment_element_onto_list(element_to_add, augment_type, reference_element, hierarchy_index, section_id)
 
-        add_to_last_action_or_last_undo(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
+        add_to_last(('add_element', f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {element_name}"))
     else:
         message_popup('Element already exists within\ncurrent area/ section')
 
-def add_element(element_to_add, section_name_to_add_to, hierarchy_index, section_id):
+def add_element(element_to_add, reference_element, hierarchy_index, section_id):
     if element_to_add is None:
         return
     local_section_id = 0
     for todolist in data:
         if todolist[0] == program_values['current_list']:
-            if section_name_to_add_to is None:
+            if reference_element is None:
                 todolist.insert(len(todolist), element_to_add)
                 return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 local_section_id += 1
-                if section_name_to_add_to in section[0] and hierarchy_index == '01':
+                if reference_element in section[0] and hierarchy_index == '01':
                     section.insert(len(section), element_to_add)
                     return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     local_section_id += 1
-                    if section_name_to_add_to in subsection[0] and int(section_id) == local_section_id:
+                    if reference_element in subsection[0] and int(section_id) == local_section_id:
                         subsection.insert(len(subsection), element_to_add)
                         return create_new_window()
 
@@ -838,29 +835,97 @@ def undo_delete_element():
 
     index = 0 if event == 'Undo' else 1
 
+    hierarchy_index = temp_data['last_action_and_undo_todolists'][index][-1][1].split()[1]
     section_id = temp_data['last_action_and_undo_todolists'][index][-1][1].split()[2]
-    element_to_add = temp_data['last_action_and_undo_todolists'][index][-1][2]
+    element = temp_data['last_action_and_undo_todolists'][index][-1][2]
     element_index = temp_data['last_action_and_undo_todolists'][index][-1][3]
 
-    add_to_last_action_or_last_undo(('add_element', temp_data['last_action_and_undo_todolists'][index][-1][1]))
+    add_to_last(('add_element', temp_data['last_action_and_undo_todolists'][index][-1][1]))
 
+    augment_element_onto_list(element, 'UndoRedo', None, hierarchy_index, section_id, element_index)
+
+    # local_section_id = 0
+
+    # for todolist in data:
+    #     if todolist[0] == program_values['current_list']:
+    #         if local_section_id == int(section_id):
+    #             todolist.insert(element_index, element_to_add)
+    #             return create_new_window()
+    #         for section in [section for section in todolist if type(section) is list]:
+    #             local_section_id += 1
+    #             if local_section_id == int(section_id):
+    #                 section.insert(element_index, element_to_add)
+    #                 return create_new_window()
+    #             for subsection in [subsection for subsection in section if type(subsection) is list]:
+    #                 local_section_id += 1
+    #                 if local_section_id == int(section_id):
+    #                     subsection.insert(element_index, element_to_add)
+    #                     return create_new_window()
+
+
+
+
+
+
+def augment_element_onto_list(element, augment_type, reference_element, hierarchy_index, section_id, element_index=None):
+    print(element, augment_type, reference_element, hierarchy_index, section_id, element_index)
     local_section_id = 0
-
+    
     for todolist in data:
         if todolist[0] == program_values['current_list']:
-            if local_section_id == int(section_id):
-                todolist.insert(element_index, element_to_add)
+            if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                todolist.insert(element_index, element)
                 return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                local_section_id += 1
-                if local_section_id == int(section_id):
-                    section.insert(element_index, element_to_add)
+            elif reference_element is None and augment_type != 'UndoRedo':
+                todolist.insert(len(todolist), element)
+                return create_new_window()
+            for task in [task for task in todolist if type(task) is dict]:
+                if reference_element in task and hierarchy_index == '00':
+                    todolist.insert(todolist.index(task), element)
                     return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    local_section_id += 1
-                    if local_section_id == int(section_id):
-                        subsection.insert(element_index, element_to_add)
+            for section in [section for section in todolist if type(section) is list]:
+                if reference_element in section[0] and hierarchy_index == '00':
+                    todolist.insert(todolist.index(section), element) if augment_type == 'INSERT' else section.insert(len(section), element)
+                    return create_new_window()
+                local_section_id += 1
+                if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                    section.insert(element_index, element)
+                    return create_new_window()
+                for task in [task for task in section if type(task) is dict]:
+                    if reference_element in task and int(section_id) == local_section_id:
+                        section.insert(section.index(task), element)
                         return create_new_window()
+                for subsection in [subsection for subsection in section if type(subsection) is list]:
+                    local_section_id += 1 if augment_type == 'ADDTO' else 0
+                    if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                        subsection.insert(element_index, element)
+                        return create_new_window()
+                    if reference_element in subsection[0] and int(section_id) == local_section_id:
+                        print('hi')
+                        section.insert(section.index(subsection), element) if augment_type == 'INSERT' else subsection.insert(len(subsection), element)
+                        return create_new_window()
+                else:
+                    for subsection in [subsection for subsection in section if type(subsection) is list]:
+                        local_section_id += 1
+                        if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                            subsection.insert(element_index, element)
+                            return create_new_window()
+                        for task in [task for task in subsection if type(task) is dict]:
+                            if reference_element in task and int(section_id) == local_section_id:
+                                if type(element) is tuple:
+                                    for taskToInsert in element:
+                                        subsection.insert(subsection.index(task), taskToInsert)
+                                else:
+                                    subsection.insert(subsection.index(task), element)
+                                return create_new_window()
+
+
+
+
+
+
+
+
 
 def rename_element():
 
@@ -893,23 +958,23 @@ def rename_element():
                 if todolist[0] == program_values['current_list']:
                     for task in [task for task in todolist if type(task) is dict]:
                         if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
-                            add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
+                            add_to_last(('rename_element', new_key, old_name))
                             task[new_element_name] = task.pop(old_name)
                             return create_new_window()
                     for section in [section for section in todolist if type(section) is list]:
                         if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
-                            add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
+                            add_to_last(('rename_element', new_key, old_name))
                             section[0][new_element_name] = section[0].pop(old_name)
                             return create_new_window()
                         local_section_id += 1
                         for task in [task for task in section if type(task) is dict]:
                             if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
-                                add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
+                                add_to_last(('rename_element', new_key, old_name))
                                 task[new_element_name] = task.pop(old_name)
                                 return create_new_window()
                         for subsection in [subsection for subsection in section if type(subsection) is list]:
                             if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
-                                add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
+                                add_to_last(('rename_element', new_key, old_name))
                                 subsection[0][new_element_name] = subsection[0].pop(old_name)
                                 return create_new_window()
                         else:
@@ -917,7 +982,7 @@ def rename_element():
                                 local_section_id += 1
                                 for task in [task for task in subsection if type(task) is dict]:
                                     if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
-                                        add_to_last_action_or_last_undo(('rename_element', new_key, old_name))
+                                        add_to_last(('rename_element', new_key, old_name))
                                         task[new_element_name] = task.pop(old_name)
                                         return create_new_window()
     else:
@@ -946,23 +1011,23 @@ def delete_element():
         if todolist[0] == program_values['current_list']:
             for task in [task for task in todolist if type(task) is dict]:
                 if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
-                    add_to_last_action_or_last_undo(('delete_element', element, task, todolist.index(task)))
+                    add_to_last(('delete_element', element, task, todolist.index(task)))
                     todolist.remove(task)
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    add_to_last_action_or_last_undo(('delete_element', element, section, todolist.index(section)))
+                    add_to_last(('delete_element', element, section, todolist.index(section)))
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
                 for task in [task for task in section if type(task) is dict]:
                     if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
-                        add_to_last_action_or_last_undo(('delete_element', element, task, section.index(task)))
+                        add_to_last(('delete_element', element, task, section.index(task)))
                         section.remove(task)
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        add_to_last_action_or_last_undo(('delete_element', element, subsection, section.index(subsection)))
+                        add_to_last(('delete_element', element, subsection, section.index(subsection)))
                         section.remove(subsection)
                         return create_new_window()
                 else:
@@ -970,7 +1035,7 @@ def delete_element():
                         local_section_id += 1
                         for task in [task for task in subsection if type(task) is dict]:
                             if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
-                                add_to_last_action_or_last_undo(('delete_element', element, task, subsection.index(task)))
+                                add_to_last(('delete_element', element, task, subsection.index(task)))
                                 subsection.remove(task)
                                 return create_new_window()
 
@@ -994,11 +1059,11 @@ def convert_element():
     if element_type == 'Task':
         if event != 'Undo':
             element_to_put_in = [{element_name: False}]
-            add_to_last_action_or_last_undo(('convert_element', new_element, values[f"{' '.join(element[:3])} TASK CHECKBOX {' '.join(element[5:])}"]))
+            add_to_last(('convert_element', new_element, values[f"{' '.join(element[:3])} TASK CHECKBOX {' '.join(element[5:])}"]))
         else:
             index = 0 if event == 'Undo' else 1
             element_to_put_in = temp_data['last_action_and_undo_todolists'][index][-1][2]
-            add_to_last_action_or_last_undo(('convert_element', new_element, temp_data['last_action_and_undo_todolists'][index][-1][2]))
+            add_to_last(('convert_element', new_element, temp_data['last_action_and_undo_todolists'][index][-1][2]))
     else:
         index = 0 if event == 'Undo' else 1
         element_to_put_in = {element_name: False} if event != 'Undo' else {element_name: temp_data['last_action_and_undo_todolists'][index][-1][2]}
@@ -1014,7 +1079,7 @@ def convert_element():
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    add_to_last_action_or_last_undo(('convert_element', new_element, section))
+                    add_to_last(('convert_element', new_element, section))
                     todolist.insert(todolist.index(section), element_to_put_in)
                     todolist.remove(section)
                     return create_new_window()
@@ -1027,7 +1092,7 @@ def convert_element():
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     print(element_name, subsection[0], section_id, local_section_id)
                     if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        add_to_last_action_or_last_undo(('convert_element', new_element, subsection))
+                        add_to_last(('convert_element', new_element, subsection))
                         section.insert(section.index(subsection), element_to_put_in)
                         section.remove(subsection)
                         return create_new_window()
@@ -1062,7 +1127,7 @@ def extract_element():
                                 continue
                         else:
                             todolist.insert(todolist.index(section), element_to_extract)
-                    add_to_last_action_or_last_undo(('extract_element', ' '.join(section_to_extract), todolist.index(section) - len(section) + 1, section, duplicates))
+                    add_to_last(('extract_element', ' '.join(section_to_extract), todolist.index(section) - len(section) + 1, section, duplicates))
                     todolist.remove(section)
                     return create_new_window()
                 local_section_id += 1
@@ -1077,7 +1142,7 @@ def extract_element():
                                     break
                             else:
                                 section.insert(section.index(subsection), element_to_extract)
-                        add_to_last_action_or_last_undo(('extract_element', ' '.join(section_to_extract), section.index(subsection) - len(subsection) + 1, subsection, duplicates))
+                        add_to_last(('extract_element', ' '.join(section_to_extract), section.index(subsection) - len(subsection) + 1, subsection, duplicates))
                         section.remove(subsection)
                         return create_new_window()
                 else:
@@ -1125,7 +1190,7 @@ def clear_section():
         if todolist[0] == program_values['current_list']:
             for section in [section for section in todolist if type(section) is list]:
                 if element_name in section[0] and hierarchy_index == '00':
-                    add_to_last_action_or_last_undo(('clear_seciton', section, todolist.index(section)))
+                    add_to_last(('clear_section', ' '.join(element_key), section, todolist.index(section)))
                     todolist[:] = [[section[0]] if x == section else x for x in todolist]
                     return create_new_window()
                 local_section_id += 1
@@ -1199,7 +1264,7 @@ def move_element():
 
     local_section_id = 0
 
-    add_to_last_action_or_last_undo(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
+    add_to_last(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
 
     for todolist in data:
         if todolist[0] == program_values['current_list']:
@@ -1270,7 +1335,7 @@ def move_element():
 
 def apply_settings():
     if window.find_element_with_focus() is not None:
-        add_to_last_action_or_last_undo(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
+        add_to_last(('changed_value', window.find_element_with_focus().Key, temp_data['previous_settings'][window.find_element_with_focus().Key.lower().strip('-')]))
 
     previous_settings = temp_data['previous_settings']
 
@@ -1374,7 +1439,7 @@ def go_to_todolist():
 def undo_value_change():
     index = 0 if 'Undo' in event.title() else 1
     last_thing = temp_data['last_action_and_undo_settings'][index][-1]
-    add_to_last_action_or_last_undo(('changed_value', last_thing[1], window[last_thing[1]].get()))
+    add_to_last(('changed_value', last_thing[1], window[last_thing[1]].get()))
     window[last_thing[1]].update(value=last_thing[2])
 
 UNDO_REDO_SWITCH_CASE_DICT = {
@@ -1391,7 +1456,7 @@ UNDO_REDO_SWITCH_CASE_DICT = {
                         'changed_value': undo_value_change
 }
 
-def undo_last_action_or_redo_last_undo():
+def undo_redo():
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
     index = 0 if 'Undo' in event.title() else 1
 
@@ -1401,7 +1466,7 @@ def undo_last_action_or_redo_last_undo():
         UNDO_REDO_SWITCH_CASE_DICT[temp_data[key][index][-1][0]]()
         temp_data[key][index].pop(-1)
 
-def add_to_last_action_or_last_undo(tuple_of_data):
+def add_to_last(tuple_of_data):
     key = 'last_action_and_undo_todolists' if program_values['current_list'] not in ('LIST EDITOR', 'SETTINGS') else ('last_action_and_undo_list_editor' if program_values['current_list'] == 'LIST EDITOR' else 'last_action_and_undo_settings') 
     index = 1 if 'Undo' in event.title() and 'Limit' not in event.title() else 0
     print(index)
@@ -1517,10 +1582,10 @@ FUNCTIONS_SWITCH_CASE_DICT = {
     'Revert': revert_settings,
     'Refresh': create_new_window,
     'Save': save_data,
-    'Undo': undo_last_action_or_redo_last_undo,
-    'Redo': undo_last_action_or_redo_last_undo, 
-    'List::UNDO': undo_last_action_or_redo_last_undo,
-    'List::REDO': undo_last_action_or_redo_last_undo
+    'Undo': undo_redo,
+    'Redo': undo_redo, 
+    'List::UNDO': undo_redo,
+    'List::REDO': undo_redo
 }
 
 
@@ -1575,6 +1640,6 @@ while True:
     # Saving what the user changed in the settings so it can be undone
     if '<Save to last action>' in event:
         key = event.split()[0].lower().strip('-') if 'CHOOSER' not in event else event.split()[0].replace('_CHOOSER', '').lower().strip('-')
-        add_to_last_action_or_last_undo(('changed_value', event.split()[0].replace('_CHOOSER', ''), temp_data['previous_settings'][key]))
+        add_to_last(('changed_value', event.split()[0].replace('_CHOOSER', ''), temp_data['previous_settings'][key]))
 
 window.close()

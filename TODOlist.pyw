@@ -775,62 +775,6 @@ def add_or_insert_element_calculations():
     else:
         message_popup('Element already exists within\ncurrent area/ section')
 
-def add_element(element_to_add, reference_element, hierarchy_index, section_id):
-    if element_to_add is None:
-        return
-    local_section_id = 0
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            if reference_element is None:
-                todolist.insert(len(todolist), element_to_add)
-                return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                local_section_id += 1
-                if reference_element in section[0] and hierarchy_index == '01':
-                    section.insert(len(section), element_to_add)
-                    return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    local_section_id += 1
-                    if reference_element in subsection[0] and int(section_id) == local_section_id:
-                        subsection.insert(len(subsection), element_to_add)
-                        return create_new_window()
-
-def insert_element(element_to_insert, element_name_of_insert_position, hierarchy_index, section_id):
-    if element_to_insert is None:
-        return
-    local_section_id = 0
-
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            for task in [task for task in todolist if type(task) is dict]:
-                if element_name_of_insert_position in task and hierarchy_index == '00':
-                    todolist.insert(todolist.index(task), element_to_insert)
-                    return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                if element_name_of_insert_position in section[0] and hierarchy_index == '00':
-                    todolist.insert(todolist.index(section), element_to_insert)
-                    return create_new_window()
-                local_section_id += 1
-                for task in [task for task in section if type(task) is dict]:
-                    if element_name_of_insert_position in task and int(section_id) == local_section_id:
-                        section.insert(section.index(task), element_to_insert)
-                        return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_name_of_insert_position in subsection[0] and int(section_id) == local_section_id:
-                        section.insert(section.index(subsection), element_to_insert)
-                        return create_new_window()
-                else:
-                    for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        local_section_id += 1
-                        for task in [task for task in subsection if type(task) is dict]:
-                            if element_name_of_insert_position in task and int(section_id) == local_section_id:
-                                if type(element_to_insert) is tuple:
-                                    for taskToInsert in element_to_insert:
-                                        subsection.insert(subsection.index(task), taskToInsert)
-                                else:
-                                    subsection.insert(subsection.index(task), element_to_insert)
-                                return create_new_window()
-
 def undo_delete_element():
 
     index = 0 if event == 'Undo' else 1
@@ -842,72 +786,143 @@ def undo_delete_element():
 
     add_to_last(('add_element', temp_data['last_action_and_undo_todolists'][index][-1][1]))
 
-    augment_element_onto_list(element, 'UndoRedo', None, hierarchy_index, section_id, element_index)
+    augment_element_onto_list(element, 'UNDOREDO', None, hierarchy_index, section_id, element_index)
 
-    # local_section_id = 0
+def delete_element():
+    reference_key = temp_data['last_element_right_clicked'].split()
+    reference_element = ' '.join(reference_key[5:])
+    hierarchy_index = reference_key[1]
+    section_id = reference_key[2]
 
-    # for todolist in data:
-    #     if todolist[0] == program_values['current_list']:
-    #         if local_section_id == int(section_id):
-    #             todolist.insert(element_index, element_to_add)
-    #             return create_new_window()
-    #         for section in [section for section in todolist if type(section) is list]:
-    #             local_section_id += 1
-    #             if local_section_id == int(section_id):
-    #                 section.insert(element_index, element_to_add)
-    #                 return create_new_window()
-    #             for subsection in [subsection for subsection in section if type(subsection) is list]:
-    #                 local_section_id += 1
-    #                 if local_section_id == int(section_id):
-    #                     subsection.insert(element_index, element_to_add)
-    #                     return create_new_window()
+    augment_element_onto_list(None, 'DELETE', reference_element, hierarchy_index, section_id, None)
 
 
-
-
-
-
-def augment_element_onto_list(element, augment_type, reference_element, hierarchy_index, section_id, element_index=None):
+def augment_element_onto_list(element, augment_type, reference_element, hierarchy_index, section_id, element_index=None, metadata=None):
+    '''
+        a workhorse of a function
+        element: the list or dictionary element that's being put into the data
+        augment_type: ADD, INSERT, RENAME etc
+        reference_element: name of the element that you rick clicked to do an action
+        hierarchy_index: the level of hierarchy within a section
+        section_id: which section the element is in. The todolist is 0, the first section is 1, then it loops through the subsections
+        element_index: the index the element is supposed to be at. Used for undo and redo
+        metadata: custom extra data that is needed for certin operations
+    '''
     print(element, augment_type, reference_element, hierarchy_index, section_id, element_index)
     local_section_id = 0
     
     for todolist in data:
         if todolist[0] == program_values['current_list']:
-            if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+            if local_section_id == int(section_id) and augment_type == 'UNDOREDO':
                 todolist.insert(element_index, element)
                 return create_new_window()
-            elif reference_element is None and augment_type != 'UndoRedo':
+            elif reference_element is None and augment_type != 'UNDOREDO':
                 todolist.insert(len(todolist), element)
                 return create_new_window()
             for task in [task for task in todolist if type(task) is dict]:
                 if reference_element in task and hierarchy_index == '00':
-                    todolist.insert(todolist.index(task), element)
+                    if augment_type == 'DELETE':
+                        todolist.remove(task)
+                    elif augment_type == 'INSERT':
+                        todolist.insert(todolist.index(task), element)
+                    elif augment_type == 'RENAME':
+                        task[metadata] = task.pop(reference_element)
+                    elif augment_type == 'CONVERT' and metadata == 'TASK':
+                        todolist.insert(todolist.index(task), element)
+                        todolist.remove(task)
+                    elif augment_type == 'MOVE':
+                        if metadata == 'Up':
+                            a, b = todolist.index(task), todolist.index(task) - 1
+                            if a == 1:
+                                return
+                        else:
+                            a, b = todolist.index(task), todolist.index(task) + 1   
+                            if len(todolist) == b:
+                                return
+                        todolist[b], todolist[a] = todolist[a], todolist[b]
                     return create_new_window()
             for section in [section for section in todolist if type(section) is list]:
                 if reference_element in section[0] and hierarchy_index == '00':
-                    todolist.insert(todolist.index(section), element) if augment_type == 'INSERT' else section.insert(len(section), element)
+                    if augment_type == 'DELETE':
+                        todolist.remove(section)
+                    elif augment_type == 'INSERT':
+                        todolist.insert(todolist.index(section), element)
+                    elif augment_type == 'ADDTO':
+                        section.insert(len(section), element)
+                    elif augment_type == 'RENAME':
+                        section[0][metadata] = section[0].pop(reference_element)
+                    elif augment_type == 'CONVERT' and metadata == 'SECTION':
+                        todolist.insert(todolist.index(section), element)
+                        todolist.remove(section)
+                    elif augment_type == 'MOVE':
+                        if metadata == 'Up':
+                            a, b = todolist.index(section), todolist.index(section) - 1
+                            if a == 1:
+                                return
+                        else:
+                            a, b = todolist.index(section), todolist.index(section) + 1   
+                            if len(todolist) == b:
+                                return
+                        todolist[b], todolist[a] = todolist[a], todolist[b]
                     return create_new_window()
                 local_section_id += 1
-                if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                if local_section_id == int(section_id) and augment_type == 'UNDOREDO':
                     section.insert(element_index, element)
                     return create_new_window()
                 for task in [task for task in section if type(task) is dict]:
                     if reference_element in task and int(section_id) == local_section_id:
-                        section.insert(section.index(task), element)
+                        if augment_type == 'DELETE':
+                            section.remove(task)
+                        elif augment_type == 'INSERT':
+                            section.insert(section.index(task), element)
+                        elif augment_type == 'RENAME':
+                            task[metadata] = task.pop(reference_element)
+                        elif augment_type == 'CONVERT' and metadata == 'TASK':
+                            section.insert(section.index(task), element)
+                            section.remove(task)
+                        elif augment_type == 'MOVE':
+                            if metadata == 'Up':
+                                a, b = section.index(task), section.index(task) - 1
+                                if a == 1:
+                                    return
+                            else:
+                                a, b = section.index(task), section.index(task) + 1   
+                                if len(section) == b:
+                                    return
+                            section[b], section[a] = section[a], section[b]
                         return create_new_window()
                 for subsection in [subsection for subsection in section if type(subsection) is list]:
                     local_section_id += 1 if augment_type == 'ADDTO' else 0
-                    if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                    if local_section_id == int(section_id) and augment_type == 'UNDOREDO':
                         subsection.insert(element_index, element)
                         return create_new_window()
                     if reference_element in subsection[0] and int(section_id) == local_section_id:
-                        print('hi')
-                        section.insert(section.index(subsection), element) if augment_type == 'INSERT' else subsection.insert(len(subsection), element)
+                        if augment_type == 'DELETE':
+                            section.remove(subsection)
+                        elif augment_type == 'INSERT':
+                            section.insert(section.index(subsection), element)
+                        elif augment_type == 'ADDTO':
+                            subsection.insert(len(section), element)
+                        elif augment_type == 'RENAME':
+                            subsection[0][metadata] = subsection[0].pop(reference_element)
+                        elif augment_type == 'CONVERT' and metadata == 'SECTION':
+                            section.insert(section.index(subsection), element)
+                            section.remove(subsection)
+                        elif augment_type == 'MOVE':
+                            if metadata == 'Up':
+                                a, b = section.index(subsection), section.index(subsection) - 1
+                                if a == 1:
+                                    return
+                            else:
+                                a, b = section.index(subsection), section.index(subsection) + 1   
+                                if len(section) == b:
+                                    return
+                            section[b], section[a] = section[a], section[b]
                         return create_new_window()
                 else:
                     for subsection in [subsection for subsection in section if type(subsection) is list]:
                         local_section_id += 1
-                        if local_section_id == int(section_id) and augment_type == 'UndoRedo':
+                        if local_section_id == int(section_id) and augment_type == 'UNDOREDO':
                             subsection.insert(element_index, element)
                             return create_new_window()
                         for task in [task for task in subsection if type(task) is dict]:
@@ -916,16 +931,23 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
                                     for taskToInsert in element:
                                         subsection.insert(subsection.index(task), taskToInsert)
                                 else:
-                                    subsection.insert(subsection.index(task), element)
+                                    if augment_type == 'DELETE':
+                                        subsection.remove(task)
+                                    elif augment_type == 'INSERT':
+                                        subsection.insert(subsection.index(task), element)
+                                    elif augment_type == 'RENAME':
+                                        task[metadata] = task.pop(reference_element)
+                                    elif augment_type == 'MOVE':
+                                        if metadata == 'Up':
+                                            a, b = subsection.index(task), subsection.index(task) - 1
+                                            if a == 1:
+                                                return
+                                        else:
+                                            a, b = subsection.index(task), subsection.index(task) + 1   
+                                            if len(subsection) == b:
+                                                return
+                                        subsection[b], subsection[a] = subsection[a], subsection[b]
                                 return create_new_window()
-
-
-
-
-
-
-
-
 
 def rename_element():
 
@@ -951,93 +973,10 @@ def rename_element():
     new_key = f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} TEXT {new_element_name}"
 
     if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {new_element_name}" not in temp_data['element_keys']:
-        if new_element_name not in ('', None):
-            local_section_id = 0
-
-            for todolist in data:
-                if todolist[0] == program_values['current_list']:
-                    for task in [task for task in todolist if type(task) is dict]:
-                        if element_type == 'Task' and  old_name in task and hierarchy_index == '00':
-                            add_to_last(('rename_element', new_key, old_name))
-                            task[new_element_name] = task.pop(old_name)
-                            return create_new_window()
-                    for section in [section for section in todolist if type(section) is list]:
-                        if element_type == 'Section' and old_name in section[0] and hierarchy_index == '00':
-                            add_to_last(('rename_element', new_key, old_name))
-                            section[0][new_element_name] = section[0].pop(old_name)
-                            return create_new_window()
-                        local_section_id += 1
-                        for task in [task for task in section if type(task) is dict]:
-                            if element_type == 'Task' and  old_name in task and int(section_id) == local_section_id:
-                                add_to_last(('rename_element', new_key, old_name))
-                                task[new_element_name] = task.pop(old_name)
-                                return create_new_window()
-                        for subsection in [subsection for subsection in section if type(subsection) is list]:
-                            if element_type == 'Section' and old_name in subsection[0] and int(section_id) == local_section_id:
-                                add_to_last(('rename_element', new_key, old_name))
-                                subsection[0][new_element_name] = subsection[0].pop(old_name)
-                                return create_new_window()
-                        else:
-                            for subsection in [subsection for subsection in section if type(subsection) is list]:
-                                local_section_id += 1
-                                for task in [task for task in subsection if type(task) is dict]:
-                                    if element_type == 'Task' and old_name in task and int(section_id) == local_section_id:
-                                        add_to_last(('rename_element', new_key, old_name))
-                                        task[new_element_name] = task.pop(old_name)
-                                        return create_new_window()
+        add_to_last(('rename_element', new_key, old_name))
+        augment_element_onto_list(new_element_name, 'RENAME', old_name, hierarchy_index, section_id, None)
     else:
         message_popup('Element already exists within\ncurrent area/ section')
-
-def delete_element():
-    if event not in ('Undo', 'Redo'):
-        element = temp_data['last_element_right_clicked']
-    else:
-        index = 0 if event == 'Undo' else 'Redo'
-        element = temp_data['last_action_and_undo_todolists'][index][-1][1]
-
-    if 'TASK' in element:
-        element_name = element[19:]
-        element_type = 'Task'
-    else:
-        element_name = element[22:]
-        element_type = 'Section'
-
-    hierarchy_index = element[3:5]
-    section_id = element[6:8]
-
-    local_section_id = 0
-
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            for task in [task for task in todolist if type(task) is dict]:
-                if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
-                    add_to_last(('delete_element', element, task, todolist.index(task)))
-                    todolist.remove(task)
-                    return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    add_to_last(('delete_element', element, section, todolist.index(section)))
-                    todolist.remove(section)
-                    return create_new_window()
-                local_section_id += 1
-                for task in [task for task in section if type(task) is dict]:
-                    if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
-                        add_to_last(('delete_element', element, task, section.index(task)))
-                        section.remove(task)
-                        return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        add_to_last(('delete_element', element, subsection, section.index(subsection)))
-                        section.remove(subsection)
-                        return create_new_window()
-                else:
-                    for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        local_section_id += 1
-                        for task in [task for task in subsection if type(task) is dict]:
-                            if element_type == 'Task' and element_name in task and int(section_id) == local_section_id:
-                                add_to_last(('delete_element', element, task, subsection.index(task)))
-                                subsection.remove(task)
-                                return create_new_window()
 
 def convert_element():
     if event not in ('Undo', 'Redo'):
@@ -1068,37 +1007,7 @@ def convert_element():
         index = 0 if event == 'Undo' else 1
         element_to_put_in = {element_name: False} if event != 'Undo' else {element_name: temp_data['last_action_and_undo_todolists'][index][-1][2]}
 
-    local_section_id = 0
-
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            for task in [task for task in todolist if type(task) is dict]:
-                if element_type == 'Task' and  element_name in task and hierarchy_index == '00':
-                    todolist.insert(todolist.index(task), element_to_put_in)
-                    todolist.remove(task)
-                    return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                if element_type == 'Section' and element_name in section[0] and hierarchy_index == '00':
-                    add_to_last(('convert_element', new_element, section))
-                    todolist.insert(todolist.index(section), element_to_put_in)
-                    todolist.remove(section)
-                    return create_new_window()
-                local_section_id += 1
-                for task in [task for task in section if type(task) is dict]:
-                    if element_type == 'Task' and  element_name in task and int(section_id) == local_section_id:
-                        section.insert(section.index(task), element_to_put_in)
-                        section.remove(task)
-                        return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    print(element_name, subsection[0], section_id, local_section_id)
-                    if element_type == 'Section' and element_name in subsection[0] and int(section_id) == local_section_id:
-                        add_to_last(('convert_element', new_element, subsection))
-                        section.insert(section.index(subsection), element_to_put_in)
-                        section.remove(subsection)
-                        return create_new_window()
-                else:
-                    for _ in [subsection for subsection in section if type(subsection) is list]:
-                        local_section_id += 1
+    augment_element_onto_list(element_to_put_in, 'CONVERT', element_name, hierarchy_index, section_id, None, element_type.upper())
 
 def extract_element():
     section_to_extract = temp_data['last_element_right_clicked'].split()
@@ -1262,76 +1171,8 @@ def move_element():
     hierarchy_index = element_key[1]
     section_id = element_key[2]
 
-    local_section_id = 0
-
-    add_to_last(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down')) 
-
-    for todolist in data:
-        if todolist[0] == program_values['current_list']:
-            for task in [task for task in todolist if type(task) is dict]:
-                if element_name in task and hierarchy_index == '00':
-                    if direction == 'Up':
-                        a, b = todolist.index(task), todolist.index(task) - 1
-                        if a == 1:
-                            return
-                    else:
-                        a, b = todolist.index(task), todolist.index(task) + 1   
-                        if len(todolist) == b:
-                            return
-                    todolist[b], todolist[a] = todolist[a], todolist[b]
-                    return create_new_window()
-            for section in [section for section in todolist if type(section) is list]:
-                if element_name in section[0] and hierarchy_index == '00':
-                    if direction == 'Up':
-                        a, b = todolist.index(section), todolist.index(section) - 1
-                        if a == 1:
-                            return
-                    else:
-                        a, b = todolist.index(section), todolist.index(section) + 1   
-                        if len(todolist) == b:
-                            return
-                    todolist[b], todolist[a] = todolist[a], todolist[b]
-                    return create_new_window()
-                local_section_id += 1
-                for task in [task for task in section if type(task) is dict]:
-                    if element_name in task and int(section_id) == local_section_id:
-                        if direction == 'Up':
-                            a, b = section.index(task), section.index(task) - 1
-                            if a == 1:
-                                return
-                        else:
-                            a, b = section.index(task), section.index(task) + 1   
-                            if len(section) == b:
-                                return
-                        section[b], section[a] = section[a], section[b]
-                        return create_new_window()
-                for subsection in [subsection for subsection in section if type(subsection) is list]:
-                    if element_name in subsection[0] and int(section_id) == local_section_id:
-                        if direction == 'Up':
-                            a, b = section.index(subsection), section.index(subsection) - 1
-                            if a == 1:
-                                return
-                        else:
-                            a, b = section.index(subsection), section.index(subsection) + 1   
-                            if len(section) == b:
-                                return
-                        section[b], section[a] = section[a], section[b]
-                        return create_new_window()
-                else:
-                    for subsection in [subsection for subsection in section if type(subsection) is list]:
-                        local_section_id += 1
-                        for task in [task for task in subsection if type(task) is dict]:
-                            if element_name in task and int(section_id) == local_section_id:
-                                if direction == 'Up':
-                                    a, b = subsection.index(task), subsection.index(task) - 1
-                                    if a == 1:
-                                        return
-                                else:
-                                    a, b = subsection.index(task), subsection.index(task) + 1   
-                                    if len(subsection) == b:
-                                        return
-                                subsection[b], subsection[a] = subsection[a], subsection[b]
-                                return create_new_window()
+    add_to_last(('move_element', ' '.join(element_key), 'Up' if direction == 'Down' else 'Down'))
+    augment_element_onto_list(None, 'MOVE', element_name, hierarchy_index, section_id, None, direction)
 
 def apply_settings():
     if window.find_element_with_focus() is not None:

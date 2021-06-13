@@ -794,7 +794,7 @@ def delete_element():
     hierarchy_index = reference_key[1]
     section_id = reference_key[2]
 
-    augment_element_onto_list(None, 'DELETE', reference_element, hierarchy_index, section_id, None)
+    augment_element_onto_list(None, 'DELETE', reference_element, hierarchy_index, section_id, metadata=' '.join(reference_key))
 
 
 def augment_element_onto_list(element, augment_type, reference_element, hierarchy_index, section_id, element_index=None, metadata=None):
@@ -808,7 +808,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
         element_index: the index the element is supposed to be at. Used for undo and redo
         metadata: custom extra data that is needed for certin operations
     '''
-    print(element, augment_type, reference_element, hierarchy_index, section_id, element_index)
+    print(element, augment_type, reference_element, hierarchy_index, section_id, element_index, metadata)
     local_section_id = 0
     
     for todolist in data:
@@ -822,6 +822,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
             for task in [task for task in todolist if type(task) is dict]:
                 if reference_element in task and hierarchy_index == '00':
                     if augment_type == 'DELETE':
+                        add_to_last(('delete_element', metadata, task, todolist.index(task)))
                         todolist.remove(task)
                     elif augment_type == 'INSERT':
                         todolist.insert(todolist.index(task), element)
@@ -844,6 +845,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
             for section in [section for section in todolist if type(section) is list]:
                 if reference_element in section[0] and hierarchy_index == '00':
                     if augment_type == 'DELETE':
+                        add_to_last(('delete_element', metadata, section, todolist.index(section)))
                         todolist.remove(section)
                     elif augment_type == 'INSERT':
                         todolist.insert(todolist.index(section), element)
@@ -872,6 +874,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
                 for task in [task for task in section if type(task) is dict]:
                     if reference_element in task and int(section_id) == local_section_id:
                         if augment_type == 'DELETE':
+                            add_to_last(('delete_element', metadata, task, section.index(task)))
                             section.remove(task)
                         elif augment_type == 'INSERT':
                             section.insert(section.index(task), element)
@@ -898,6 +901,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
                         return create_new_window()
                     if reference_element in subsection[0] and int(section_id) == local_section_id:
                         if augment_type == 'DELETE':
+                            add_to_last(('delete_element', metadata, subsection, section.index(subsection)))
                             section.remove(subsection)
                         elif augment_type == 'INSERT':
                             section.insert(section.index(subsection), element)
@@ -932,6 +936,7 @@ def augment_element_onto_list(element, augment_type, reference_element, hierarch
                                         subsection.insert(subsection.index(task), taskToInsert)
                                 else:
                                     if augment_type == 'DELETE':
+                                        add_to_last(('delete_element', metadata, task, subsection.index(task)))
                                         subsection.remove(task)
                                     elif augment_type == 'INSERT':
                                         subsection.insert(subsection.index(task), element)

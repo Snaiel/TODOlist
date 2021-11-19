@@ -979,7 +979,7 @@ def rename_element():
 
     if f"{temp_data['list_index']} {hierarchy_index} {section_id} {element_type.upper()} {new_element_name}" not in temp_data['element_keys']:
         add_to_last(('rename_element', new_key, old_name))
-        augment_element_onto_list(new_element_name, 'RENAME', old_name, hierarchy_index, section_id, None)
+        augment_element_onto_list(None , 'RENAME', old_name, hierarchy_index, section_id, None, new_element_name)
     else:
         message_popup('Element already exists within\ncurrent area/ section')
 
@@ -1382,7 +1382,7 @@ def startup():
     
 startup()
 
-sg.SetOptions(icon='icon.ico', ttk_theme='vista', border_width=0)
+sg.SetOptions(icon='icon.ico', border_width=0)
 
 window = sg.Window('TODOlist', layout=create_layout(None), size=(300,500), finalize=True)
 bindings()
